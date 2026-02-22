@@ -1,0 +1,63 @@
+@use '../../styles/variables' as *;
+
+.text {
+  margin: 0;
+}
+
+// ----- Variantes de tamaño y peso -----
+.body {
+  font-size: $font-size-base;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+}
+
+.bodySmall {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+}
+
+.caption {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+}
+
+.overline {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.heading1 {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+}
+
+.heading2 {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+}
+
+.heading3 {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+}
+
+// ----- Colores -----
+.default {
+  color: $color-text;
+}
+
+.secondary {
+  color: $color-text-secondary;
+}
+
+.muted {
+  color: $color-text-muted;
+}

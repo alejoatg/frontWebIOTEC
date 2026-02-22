@@ -1,0 +1,88 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  font-family: var(--font-sans);
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  border-radius: $radius-md;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color $transition-base, color $transition-base,
+    border-color $transition-base, box-shadow $transition-base;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// ----- Tamaños -----
+.sm {
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+}
+
+.md {
+  padding: $spacing-3 $spacing-5;
+  font-size: $font-size-base;
+}
+
+.lg {
+  padding: $spacing-4 $spacing-6;
+  font-size: $font-size-lg;
+}
+
+// ----- Variantes -----
+.primary {
+  background-color: $color-primary-500;
+  color: #fff;
+  border-color: $color-primary-500;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-600;
+    border-color: $color-primary-600;
+  }
+}
+
+.secondary {
+  background-color: $color-neutral-100;
+  color: $color-text;
+  border-color: $color-neutral-200;
+
+  &:hover:not(:disabled) {
+    background-color: $color-neutral-200;
+    border-color: $color-neutral-300;
+  }
+}
+
+.outline {
+  background-color: transparent;
+  color: $color-primary-600;
+  border-color: $color-primary-500;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-50;
+  }
+}
+
+.ghost {
+  background-color: transparent;
+  color: $color-text;
+
+  &:hover:not(:disabled) {
+    background-color: $color-neutral-100;
+  }
+}
+
+.fullWidth {
+  width: 100%;
+}

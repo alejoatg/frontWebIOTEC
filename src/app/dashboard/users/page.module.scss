@@ -1,0 +1,7 @@
+@use "@/styles/variables" as *;
+
+.usersPage {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}

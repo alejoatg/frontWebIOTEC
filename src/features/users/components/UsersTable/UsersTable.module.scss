@@ -1,0 +1,188 @@
+@use "@/styles/variables" as *;
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    background: $color-background-subtle;
+    white-space: nowrap;
+  }
+}
+
+.row {
+  transition: background $transition-fast;
+
+  &:hover {
+    background: $color-neutral-50;
+  }
+}
+
+.cellUser {
+  min-width: 220px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.avatar {
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.avatarPlaceholder {
+  width: 36px;
+  height: 36px;
+  border-radius: $radius-full;
+  background: $color-primary-100;
+  color: $color-primary-700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  flex-shrink: 0;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+}
+
+.userName {
+  font-weight: $font-weight-medium;
+  color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cellRole,
+.cellStatus {
+  white-space: nowrap;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-transform: capitalize;
+}
+
+.roleADMIN {
+  background: $color-primary-100;
+  color: $color-primary-800;
+}
+
+.roleCORDINADOR {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.roleSUPERVISOR {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.roleCOLABORADOR {
+  background: $color-neutral-100;
+  color: $color-neutral-700;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+  }
+}
+
+.statusActive {
+  background: #d1fae5;
+  color: #065f46;
+
+  &::before {
+    background: #10b981;
+  }
+}
+
+.statusInactive {
+  background: $color-neutral-100;
+  color: $color-neutral-600;
+
+  &::before {
+    background: $color-neutral-400;
+  }
+}
+
+.cellLastLogin,
+.cellCreated {
+  color: $color-text-secondary;
+  white-space: nowrap;
+  font-size: $font-size-xs;
+}
+
+.empty {
+  padding: $spacing-12 $spacing-4;
+  text-align: center;
+  color: $color-text-muted;
+}
+
+// Ocultar columnas en móvil
+.thLastLogin,
+.thCreated,
+.cellLastLogin,
+.cellCreated {
+  @media (max-width: $breakpoint-md) {
+    display: none;
+  }
+}
+
+.thRole,
+.cellRole {
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
+}

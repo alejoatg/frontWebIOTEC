@@ -1,0 +1,35 @@
+@use '../../styles/variables' as *;
+
+.dashboardPage {
+  max-width: 36rem;
+}
+
+.dashboardWelcome {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.dashboardAvatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid $color-neutral-200;
+}
+
+.dashboardWelcomeText {
+  min-width: 0;
+}
+
+.dashboardName {
+  margin-bottom: 0.125rem;
+}
+
+.dashboardName + p,
+.dashboardWelcomeText p {
+  margin-bottom: 0.125rem;
+}
+
+.dashboardWelcomeText p:last-child {
+  margin-bottom: 0;
+}

@@ -1,0 +1,300 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 4.5rem;
+  background-color: $color-background;
+
+  @include md {
+    padding-bottom: 0;
+  }
+}
+
+// ----- Header naranja (identidad del sitio), compacto -----
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  background-color: $color-primary-500;
+  color: #fff;
+
+  @include md {
+    padding: $spacing-2 $spacing-5;
+  }
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.homeLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: $radius-md;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  color: #fff;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @include md {
+    font-size: $font-size-lg;
+  }
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+
+  @include md {
+    gap: $spacing-3;
+  }
+}
+
+.userInfo {
+  display: none;
+  align-items: center;
+  gap: $spacing-2;
+
+  @include md {
+    display: flex;
+  }
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.userName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  color: #fff;
+  max-width: 10rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.95;
+
+  @include lg {
+    max-width: 14rem;
+  }
+}
+
+.logoutLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  width: 2rem;
+  height: 2rem;
+  border-radius: $radius-md;
+  transition: background-color $transition-fast;
+  opacity: 0.9;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    opacity: 1;
+  }
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+// ----- Body -----
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+// ----- Sidebar: blanco, sutil -----
+.sidebar {
+  display: none;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 12rem;
+  background-color: $color-background;
+  border-right: 1px solid $color-neutral-200;
+  transition: width $transition-base;
+
+  @include md {
+    display: flex;
+  }
+}
+
+.sidebarCollapsed {
+  width: 4.5rem;
+
+  .sidebarNav {
+    padding: $spacing-2;
+  }
+
+  .sidebarLink span {
+    display: none;
+  }
+}
+
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: $spacing-3;
+  border: 0;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: background-color $transition-fast, color $transition-fast;
+
+  &:hover {
+    background-color: $color-neutral-50;
+    color: $color-text;
+  }
+  &:focus-visible {
+    outline: 2px solid $color-border-focus;
+    outline-offset: -2px;
+  }
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-3;
+  flex: 1;
+}
+
+.sidebarLink {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  transition: background-color $transition-fast, color $transition-fast;
+
+  &:hover {
+    background-color: $color-neutral-50;
+    color: $color-text;
+  }
+  &:focus-visible {
+    outline: 2px solid $color-border-focus;
+    outline-offset: 2px;
+  }
+}
+
+.sidebarLinkActive {
+  background-color: $color-primary-50;
+  color: $color-primary-600;
+  font-weight: $font-weight-medium;
+  &:hover {
+    background-color: $color-primary-100;
+    color: $color-primary-700;
+  }
+}
+
+// ----- Main: fondo blanco/liso -----
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: $spacing-5 $spacing-4;
+  background-color: $color-neutral-50;
+
+  @include md {
+    padding: $spacing-6 $spacing-6;
+  }
+}
+
+// ----- Bottom nav: blanco, discreto -----
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: $spacing-1;
+  padding: $spacing-2 $spacing-2;
+  background-color: $color-background;
+  border-top: 1px solid $color-neutral-200;
+  z-index: 50;
+
+  @include md {
+    display: none;
+  }
+}
+
+.bottomNavLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-1;
+  flex: 1;
+  padding: $spacing-3 $spacing-2;
+  border-radius: $radius-md;
+  color: $color-text-muted;
+  font-size: 0.6875rem;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  transition: background-color $transition-fast, color $transition-fast;
+
+  &:hover {
+    background-color: $color-neutral-50;
+    color: $color-text;
+  }
+  &:focus-visible {
+    outline: 2px solid $color-border-focus;
+    outline-offset: 2px;
+  }
+}
+
+.bottomNavLinkActive {
+  color: $color-primary-600;
+  background-color: $color-primary-50;
+  font-weight: $font-weight-medium;
+  &:hover {
+    background-color: $color-primary-100;
+    color: $color-primary-700;
+  }
+}

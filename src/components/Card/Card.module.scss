@@ -1,0 +1,23 @@
+@use '../../styles/variables' as *;
+
+.card {
+  background-color: $color-background;
+  border: 1px solid $color-neutral-200;
+  border-radius: $radius-lg;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
+  overflow: hidden;
+}
+
+.title {
+  padding: $spacing-4 $spacing-5;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $color-text;
+  border-bottom: 1px solid $color-neutral-200;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.content {
+  padding: $spacing-5;
+}

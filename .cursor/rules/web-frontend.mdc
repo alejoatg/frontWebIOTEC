@@ -1,0 +1,117 @@
+---
+description: Reglas de desarrollo Frontend (React, Next.js, TypeScript, SCSS). Componentes presentacionales/contenedores, hooks, mobile-first, código inmutable.
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# Frontend - Convenciones y arquitectura
+
+Aplica estas reglas al trabajar en `apps/web`. Stack: React 19, TypeScript, Next.js 16, SCSS, Zustand, React Table, React Hook Form (y librerías que se incorporen). Escribe código como un desarrollador senior: limpio, reutilizable, con buenas prácticas y patrones de diseño sólidos.
+
+---
+
+## 1. Diseño y responsividad
+
+- **Mobile-first**: Diseña y maqueta primero para móvil; luego escala con media queries a tablet y desktop. Los estilos base son para el viewport más pequeño.
+- **Interfaces responsivas**: Todos los componentes y páginas deben verse y usarse bien en móvil, tablet y desktop. Usa unidades relativas (rem, em, %), flex/grid, y breakpoints consistentes (ej. variables SCSS o tokens).
+- **Componentes compartidos**: Los que se reutilizan en varias features viven en una carpeta global de componentes (ej. `src/components/`). Los específicos de una feature van dentro de su feature folder.
+
+---
+
+## 2. Arquitectura de componentes
+
+- **Presentacionales (dumb)**: Solo reciben props y renderizan. Sin estado de negocio, sin llamadas a APIs ni lógica de datos. Pueden tener estado puramente de UI (ej. abierto/cerrado de un acordeón). Props tipadas con interfaces.
+- **Contenedores (containers)**: Orquestan datos y lógica. Obtienen datos mediante custom hooks, pasan props a componentes presentacionales y manejan callbacks de alto nivel (ej. "al enviar el formulario").
+- **Lógica de negocio**: Va en **custom hooks** (ej. `useAuth`, `useUsersList`). Los hooks encapsulan fetching, estado de negocio, validación y efectos. Los contenedores usan estos hooks y pasan datos/acciones a la presentación.
+- No mezcles en el mismo archivo: un componente presentacional no debe importar servicios/API ni hooks de negocio pesados; un contenedor no debe contener JSX de maquetación compleja sino composición de componentes.
+
+---
+
+## 3. Organización de archivos (por funcionalidad)
+
+Estructura moderna agrupada por feature o por tipo dentro de la feature:
+
+```
+src/
+  components/           # Componentes compartidos (botones, inputs, layout, etc.)
+  features/
+    auth/
+      components/       # Presentacionales de auth (LoginForm, UserBadge, etc.)
+      containers/       # Contenedores (LoginContainer, ProfileContainer)
+      hooks/            # useAuth, useLogin, useSession
+      styles/           # SCSS de la feature (o módulos por componente)
+      types.ts          # Interfaces de la feature
+      constants.ts      # Constantes de la feature
+  app/                  # Next.js App Router (pages, layouts)
+  lib/                  # Utilidades compartidas, clientes API, helpers
+  hooks/                # Hooks compartidos (si no son de una feature)
+  types/                # Interfaces/tipos globales
+  constants/            # Constantes globales
+  styles/               # Variables globales, mixins, reset (SCSS)
+```
+
+- **Container**: importa hooks de negocio y componentes presentacionales; mínima lógica en el JSX.
+- **Presentation**: solo props y JSX; estilos en `styles/` o módulos SCSS.
+- **Hooks**: lógica de datos, efectos, estado de negocio; retornan `{ data, loading, error, actions }` u otro contrato claro.
+- **Styles**: SCSS por componente o por feature; variables/mixins globales en `styles/`.
+
+---
+
+## 4. TypeScript, interfaces y constantes
+
+- **Interfaces**: Define interfaces para props, respuestas de API, modelos de dominio y estado. Usa `interface` para objetos públicos y tipos para uniones/permutaciones. Evita `any`.
+- **Constantes**: Magic numbers y strings extraídos a constantes (por feature en `constants.ts` o global en `constants/`). Nombres en MAYÚSCULAS_SNAKE_CASE para constantes puras.
+- **Utilidades**: Funciones puras y reutilizables en `lib/` o `utils/`. Sin efectos secundarios; entrada/salida tipada. Para transformaciones de datos (formateo, filtrado, ordenación) usar funciones que devuelvan valores nuevos, no mutar argumentos.
+
+---
+
+## 5. Inmutabilidad (no usar métodos mutables)
+
+- **Prohibido**: Mutar arrays u objetos in-place. No uses `Array.prototype.push`, `pop`, `shift`, `unshift`, `splice`, `sort` (sin copia previa), `reverse` (sin copia), ni asignación directa a propiedades de objetos que deban permanecer inmutables.
+- **Correcto**:
+  - Añadir a array: `[...arr, item]` o `arr.concat(item)`.
+  - Eliminar/actualizar: `arr.filter(...)`, `arr.map(...)`.
+  - Ordenar: `[...arr].sort(...)` (ordenar sobre una copia).
+  - Objetos: `{ ...obj, key: newValue }`.
+  - Anidado: desestructuración y spread por nivel o usar una utilidad de “update inmutable” si hace falta.
+- **Strings**: No modificar “en sitio”; usar métodos que retornan nuevo string (ej. `trim()`, `slice()`, `replace()`) y asignar el resultado a una variable o retorno.
+
+Ejemplo:
+
+```ts
+// ❌ Evitar
+items.push(newItem);
+list.sort((a, b) => a.id - b.id);
+user.name = 'New Name';
+
+// ✅ Preferir
+const nextItems = [...items, newItem];
+const sortedList = [...list].sort((a, b) => a.id - b.id);
+const updatedUser = { ...user, name: 'New Name' };
+```
+
+---
+
+## 6. Buenas prácticas y patrones
+
+- **Componentes**: Nombres en PascalCase. Un componente por archivo; export por defecto del componente y export nombrado de tipos si se usan fuera.
+- **Hooks**: Nombres con prefijo `use`. Un hook por archivo; retorno estable (memoizar objetos/arrays con `useMemo` si forman parte de dependencias de otros hooks).
+- **SCSS**: Preferir clases semánticas; evitar anidamiento excesivo. Usar variables para colores, espaciado y breakpoints. Módulos CSS/SCSS cuando convenga para evitar colisiones.
+- **Next.js**: Usar App Router (`app/`). Server Components por defecto; Client Components solo donde haga falta (`'use client'`). Datos del servidor con `fetch`/async en server components o en hooks que llamen a API routes/backend.
+- **Formularios**: React Hook Form para estado y validación; componentes presentacionales para inputs. Mantener la lógica de submit y side-effects en contenedores o hooks.
+- **Estado global**: Zustand para estado que cruce muchas pantallas; estado local cuando solo afecte a un árbol pequeño.
+- **Tablas/listas complejas**: React Table (o TanStack Table) para tablas con ordenación, filtros, paginación; encapsular en un contenedor que use un hook con la lógica de datos.
+
+---
+
+## 7. Resumen rápido
+
+| Aspecto | Regla |
+|--------|--------|
+| Diseño | Mobile-first, interfaces responsivas |
+| Componentes | Presentacionales sin lógica de negocio; contenedores orquestan con hooks |
+| Lógica | Custom hooks (por feature o compartidos) |
+| Archivos | Por funcionalidad: Container, Presentation, Styles, Hooks; componentes compartidos en `components/` |
+| Datos | Interfaces y constantes; utilidades en `lib/` |
+| Mutación | No usar métodos mutables; spread, `map`, `filter`, `concat`, copias para `sort`/`reverse` |
+| Código | Limpio, reutilizable, tipado, SOLID y patrones de diseño |

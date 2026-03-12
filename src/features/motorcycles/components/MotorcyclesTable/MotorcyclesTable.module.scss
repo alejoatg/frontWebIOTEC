@@ -1,0 +1,192 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    background: $color-background-subtle;
+    white-space: nowrap;
+  }
+}
+
+.row {
+  transition: background $transition-fast;
+
+  &:hover {
+    background: $color-neutral-50;
+  }
+
+  &:last-child td {
+    border-bottom: none;
+  }
+}
+
+.placaBadge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-2;
+  background: $color-neutral-100;
+  border-radius: $radius-sm;
+  font-family: monospace;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.5px;
+  font-size: $font-size-sm;
+}
+
+.cellMarca {
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+  }
+}
+
+.statusActive {
+  background: #d1fae5;
+  color: #065f46;
+
+  &::before {
+    background: #10b981;
+  }
+}
+
+.statusInactive {
+  background: $color-neutral-100;
+  color: $color-neutral-600;
+
+  &::before {
+    background: $color-neutral-400;
+  }
+}
+
+.thActions {
+  text-align: center;
+  width: 120px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-neutral-100;
+    color: $color-text;
+    border-color: $color-neutral-200;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &.actionDanger:hover:not(:disabled) {
+    background: #fee2e2;
+    color: $color-error;
+    border-color: #fecaca;
+  }
+}
+
+.empty {
+  padding: $spacing-12 $spacing-4;
+  text-align: center;
+  color: $color-text-muted;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  p {
+    margin: 0;
+  }
+}
+
+.cellModelo,
+.cellTipo,
+.cellPropietario,
+.cellCedula {
+  white-space: nowrap;
+}
+
+.userBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-2;
+  background: $color-primary-50;
+  color: $color-primary-700;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.thModelo,
+.cellModelo {
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
+}
+
+.thTipo,
+.cellTipo,
+.thCedula,
+.cellCedula {
+  @media (max-width: $breakpoint-md) {
+    display: none;
+  }
+}
+
+.thPropietario,
+.cellPropietario {
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
+}

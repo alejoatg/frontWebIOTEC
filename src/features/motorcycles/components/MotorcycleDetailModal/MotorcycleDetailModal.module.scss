@@ -1,0 +1,214 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  border: none;
+  border-radius: $radius-xl;
+  padding: 0;
+  max-width: 520px;
+  width: 92vw;
+  box-shadow: $shadow-lg;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.content {
+  padding: $spacing-6;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-5;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: $color-neutral-100;
+    color: $color-text;
+  }
+}
+
+.placaHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin-bottom: $spacing-5;
+}
+
+.placaBadge {
+  display: inline-block;
+  padding: $spacing-2 $spacing-3;
+  background: $color-neutral-100;
+  border-radius: $radius-md;
+  font-family: monospace;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  letter-spacing: 1px;
+  color: $color-text;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+  }
+
+  &.active {
+    background: #d1fae5;
+    color: #065f46;
+
+    &::before {
+      background: #10b981;
+    }
+  }
+
+  &.inactive {
+    background: $color-neutral-100;
+    color: $color-neutral-600;
+
+    &::before {
+      background: $color-neutral-400;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-4;
+  margin: 0 0 $spacing-6;
+  padding: 0;
+}
+
+.field {
+  dt {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: $spacing-1;
+  }
+
+  dd {
+    margin: 0;
+    font-size: $font-size-base;
+    color: $color-text;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+
+  dt {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: $spacing-2;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $color-primary-50;
+  border-radius: $radius-md;
+}
+
+.userAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.userEmail {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: $spacing-4;
+  border-top: 1px solid $color-border;
+}
+
+.closeAction {
+  padding: $spacing-2 $spacing-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: $color-neutral-50;
+    border-color: $color-neutral-300;
+  }
+}

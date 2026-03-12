@@ -1,6 +1,6 @@
 /// Mixins del sistema de diseño: responsividad, focus, utilidades.
 
-@use 'variables' as *;
+@use './variables' as *;
 
 // ----- Media queries (mobile-first) -----
 @mixin sm {

@@ -10,6 +10,8 @@ import {
   PanelLeft,
   LogOut,
   Users,
+  FileText,
+  Bike,
 } from "lucide-react";
 import { getLogoutUrl } from "@/lib/auth";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -22,6 +24,8 @@ const ICON_MAP = {
   PanelLeft,
   LogOut,
   Users,
+  FileText,
+  Bike,
 } as const;
 
 export interface DashboardLayoutProps {

@@ -1,0 +1,128 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  border: none;
+  border-radius: $radius-xl;
+  padding: 0;
+  max-width: 560px;
+  width: 92vw;
+  box-shadow: $shadow-lg;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.content {
+  padding: $spacing-6;
+}
+
+.userSection {
+  margin-bottom: $spacing-5;
+  padding-bottom: $spacing-5;
+  border-bottom: 1px solid $color-border;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-5;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: $radius-md;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: $color-neutral-100;
+    color: $color-text;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @include sm {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding-top: $spacing-4;
+  border-top: 1px solid $color-border;
+}
+
+.cancelBtn {
+  padding: $spacing-3 $spacing-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-neutral-50;
+    border-color: $color-neutral-300;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.submitBtn {
+  padding: $spacing-3 $spacing-5;
+  border: 1px solid $color-primary-500;
+  border-radius: $radius-md;
+  background: $color-primary-500;
+  color: #fff;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-600;
+    border-color: $color-primary-600;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

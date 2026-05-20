@@ -94,7 +94,7 @@ export default function MotorcycleFormModal({
     if (user) {
       setForm((prev) => ({
         ...prev,
-        userId,
+        userId: userId ?? undefined,
         propietario: user.name,
         cedula: "",
         telefono: "",

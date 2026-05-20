@@ -2,3 +2,6 @@ export { default as FormulariosDashboard } from "./FormulariosDashboard";
 export { default as PreoperacionalesMotosContainer } from "./PreoperacionalesMotosContainer";
 export { default as PreoperacionalesMotosFilter } from "./PreoperacionalesMotosFilter";
 export { default as PreoperacionalesMotosTable } from "./PreoperacionalesMotosTable";
+export { default as AtuFormatoUnicoContainer } from "./AtuFormatoUnicoContainer";
+export { default as AtuFormatoUnicoFilter } from "./AtuFormatoUnicoFilter";
+export { default as AtuFormatoUnicoTable } from "./AtuFormatoUnicoTable";

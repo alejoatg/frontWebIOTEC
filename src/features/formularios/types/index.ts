@@ -87,3 +87,33 @@ export interface FormularioCard {
   path: string;
   color: string;
 }
+
+// ─── Informe Formato Único ATU ─────────────────────────────────────────────
+
+export interface AtuFormatoUnicoFilter {
+  fechaDesde?: string;
+  fechaHasta?: string;
+  municipio?: string;
+  brigada?: string;
+  tipoInspeccion?: string;
+  ordenTrabajo?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AtuFormatoUnicoRecord {
+  id: string;
+  localId: string;
+  syncedAt: string;
+  fecha: string;
+  ordenTrabajo: string;
+  brigada: string;
+  municipio: string;
+  linea: string;
+  nivelTension: string;
+  numeroEstructura: number;
+  numeroApoyo: string;
+  tipoInspeccion: string;
+  estadoEstructura: string | null;
+  submittedBy: { id: string; name: string; email: string };
+}

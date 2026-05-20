@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Bike, FileText } from "lucide-react";
+import { Bike, FileText, Zap } from "lucide-react";
 import { FORMULARIOS_CARDS } from "../../constants";
 import styles from "./FormulariosDashboard.module.scss";
 
 const ICON_MAP = {
   Bike,
   FileText,
+  Zap,
 } as const;
 
 export default function FormulariosDashboard() {

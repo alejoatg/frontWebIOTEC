@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 
 export interface ProtectedRouteProps {
@@ -10,14 +10,31 @@ export interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, loading, refetch } = useAuth();
+
+  const pendingLoginSuccess = searchParams.get("login") === "success";
 
   useEffect(() => {
-    if (loading) return;
+    if (!pendingLoginSuccess) return;
+    let cancelled = false;
+    (async () => {
+      await refetch();
+      if (!cancelled) {
+        router.replace("/dashboard");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingLoginSuccess, refetch, router]);
+
+  useEffect(() => {
+    if (loading || pendingLoginSuccess) return;
     if (!user) {
       router.replace("/login");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pendingLoginSuccess]);
 
   if (loading) {
     return (

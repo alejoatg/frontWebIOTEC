@@ -1,0 +1,111 @@
+.wrapper {
+  max-width: 56rem;
+}
+
+.toolbar {
+  margin-bottom: 1rem;
+}
+
+.report {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.reportHeader {
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.reportTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem;
+}
+
+.reportSubtitle {
+  font-size: 1rem;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f9fafb;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin: 0 0 0.5rem;
+}
+
+.fieldList {
+  margin: 0;
+}
+
+.fieldRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+
+  dt {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 500;
+    color: #111827;
+    text-align: right;
+    word-break: break-word;
+  }
+}
+
+.evidenceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.evidenceItem {
+  margin: 0;
+
+  figcaption {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+}
+
+.signatureImg {
+  max-height: 6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.photoImg {
+  max-height: 10rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}

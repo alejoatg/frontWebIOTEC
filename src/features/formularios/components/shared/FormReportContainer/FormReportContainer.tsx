@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, FileSpreadsheet } from "lucide-react";
-import type { FormReportConfig } from "../../../config/formReportTypes";
 import type { FormReportListResponse } from "../../../config/formReportTypes";
+import { getFormReportBySlug } from "../../../config/formReportsRegistry";
 import {
   fetchAllFormReportPages,
   fetchFormReportList,
@@ -16,10 +16,18 @@ import FormReportTable from "../FormReportTable";
 import styles from "./FormReportContainer.module.scss";
 
 export interface FormReportContainerProps {
-  config: FormReportConfig;
+  slug: string;
 }
 
-export default function FormReportContainer({ config }: FormReportContainerProps) {
+export default function FormReportContainer({ slug }: FormReportContainerProps) {
+  const config = getFormReportBySlug(slug);
+  if (!config) {
+    return (
+      <div className={styles.container}>
+        <p className={styles.error}>Formulario no configurado</p>
+      </div>
+    );
+  }
   const [data, setData] = useState<FormReportListResponse | null>(null);
   const [currentFilter, setCurrentFilter] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);

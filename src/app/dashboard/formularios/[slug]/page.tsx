@@ -10,5 +10,5 @@ export default async function FormReportListPage({ params }: PageProps) {
   const { slug } = await params;
   const config = getFormReportBySlug(slug);
   if (!config) notFound();
-  return <FormReportContainer config={config} />;
+  return <FormReportContainer slug={slug} />;
 }

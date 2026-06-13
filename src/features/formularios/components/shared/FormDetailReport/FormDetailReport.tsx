@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { FormReportConfig } from "../../../config/formReportTypes";
 import { collectEvidences } from "../../../lib/collectEvidences";
+import { resolveMediaUrl } from "@/lib/mediaUrl";
 import { exportElementToPdf } from "../../../lib/exportPdf";
 import {
   formatCellValue,
@@ -22,7 +23,10 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
   const [exportingPdf, setExportingPdf] = useState(false);
 
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
-  const evidences = collectEvidences(record, config.evidenceFields);
+  const evidences = collectEvidences(record, config.evidenceFields).map((item) => ({
+    ...item,
+    url: resolveMediaUrl(item.url),
+  }));
 
   const handleExportPdf = async () => {
     if (!reportRef.current) return;
@@ -105,14 +109,12 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
                       src={item.url}
                       alt={item.label}
                       className={styles.signatureImg}
-                      crossOrigin="anonymous"
                     />
                   ) : (
                     <img
                       src={item.url}
                       alt={item.label}
                       className={styles.photoImg}
-                      crossOrigin="anonymous"
                     />
                   )}
                 </figure>

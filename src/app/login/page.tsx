@@ -36,7 +36,7 @@ export default function LoginPage() {
           as="p"
           style={{ marginTop: "1.5rem" }}
         >
-          <Link href="/">Volver al inicio</Link>
+          <Link href="/login">Volver al inicio</Link>
         </Text>
       </div>
     </Container>

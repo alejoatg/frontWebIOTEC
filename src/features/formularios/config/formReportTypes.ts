@@ -27,6 +27,8 @@ export interface FormReportEvidenceField {
   label: string;
   key: string;
   multiple?: boolean;
+  /** Array de objetos { url, tipo, tipoOtro? } */
+  tagged?: boolean;
 }
 
 export interface FormReportConfig {

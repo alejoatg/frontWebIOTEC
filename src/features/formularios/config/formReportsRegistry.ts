@@ -97,12 +97,12 @@ export const FORM_REPORTS: FormReportConfig[] = [
           "consignaGeorreferenciaX", "consignaGeorreferenciaY",
         ],
       },
-      { title: "Cierre", keys: ["observacionGeneral", "tipoFoto", "tipoFotoOtro"] },
+      { title: "Cierre", keys: ["observacionGeneral"] },
     ],
     evidenceFields: [
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
       { label: "Foto GPS consigna", key: "consignaFotoGpsUrl" },
-      { label: "Fotos actividad", key: "fotosActividadUrls", multiple: true },
+      { label: "Fotos actividad", key: "fotosActividadTagged", tagged: true },
       { label: "Fotos actualización consigna", key: "consignaFotosActualizacionUrls", multiple: true },
     ],
     buildQueryParams: (filter) => {
@@ -186,8 +186,8 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { title: "Cierre", keys: ["hallazgosEvidenciados"] },
     ],
     evidenceFields: [
-      { label: "Registro fotográfico (antes)", key: "registroFotograficoAntesUrl" },
-      { label: "Registro fotográfico (durante)", key: "registroFotograficoDuranteUrl" },
+      { label: "Registro fotográfico (antes)", key: "registroFotograficoAntesUrls", multiple: true },
+      { label: "Registro fotográfico (durante)", key: "registroFotograficoDuranteUrls", multiple: true },
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
       { label: "Firma responsable inspección", key: "firmaResponsableInspeccionUrl" },
     ],
@@ -275,10 +275,10 @@ export const FORM_REPORTS: FormReportConfig[] = [
       },
     ],
     evidenceFields: [
-      { label: "Foto novedad", key: "fotoNovedadUrl" },
+      { label: "Fotos de novedad", key: "fotoNovedadUrls", multiple: true },
       { label: "Lateral derecha delantera", key: "fotoLateralDerechaDelanteraUrl" },
       { label: "Lateral izquierda trasera", key: "fotoLateralIzquierdaTraseraUrl" },
-      { label: "Nombre conductor", key: "fotoNombreConductorUrl" },
+      { label: "Firma del conductor", key: "firmaConductorUrl" },
     ],
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();

@@ -5,15 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  Home,
   PanelLeftClose,
   PanelLeft,
   LogOut,
   Users,
   FileText,
   Bike,
+  Home,
 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
+import { APP_TITLE } from "@/lib/branding";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { DASHBOARD_NAV_ITEMS } from "../../constants/nav";
 import styles from "./DashboardLayout.module.scss";
@@ -35,7 +37,7 @@ export interface DashboardLayoutProps {
 
 export default function DashboardLayout({
   children,
-  title = "Dashboard",
+  title = APP_TITLE,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -45,8 +47,8 @@ export default function DashboardLayout({
     <div className={styles.wrapper}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/dashboard" className={styles.homeLink} aria-label="Inicio">
-            <Home size={24} aria-hidden />
+          <Link href="/dashboard" className={styles.brandLink} aria-label="Inicio">
+            <BrandLogo width={88} className={styles.brandLogo} />
           </Link>
           <h1 className={styles.title}>{title}</h1>
         </div>

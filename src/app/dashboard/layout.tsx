@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
+import { APP_TITLE } from "@/lib/branding";
 
 export default function DashboardRootLayout({
   children,
@@ -25,7 +26,7 @@ export default function DashboardRootLayout({
       }
     >
       <ProtectedRoute>
-        <DashboardLayout title="Dashboard">{children}</DashboardLayout>
+        <DashboardLayout title={APP_TITLE}>{children}</DashboardLayout>
       </ProtectedRoute>
     </Suspense>
   );

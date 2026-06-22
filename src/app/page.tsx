@@ -1,32 +1,28 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { API_URL } from "@/lib/api";
+"use client";
 
-export default async function HomePage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
-  try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers: {
-        Accept: "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      cache: "no-store",
-    });
+export default function HomePage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
 
-    if (res.ok) {
-      const data = (await res.json()) as { user?: unknown };
-      if (data.user) {
-        redirect("/dashboard");
-      }
-    }
-  } catch {
-    // Sin API → ir a login
-  }
+  useEffect(() => {
+    if (loading) return;
+    router.replace(user ? "/dashboard" : "/login");
+  }, [user, loading, router]);
 
-  redirect("/login");
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <p>Cargando...</p>
+    </div>
+  );
 }

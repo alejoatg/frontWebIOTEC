@@ -1,21 +1,14 @@
-import Link from "next/link";
 import { Container, Card, Text } from "@/components";
+import { BrandLogo } from "@/components/BrandLogo";
 import LoginForm from "@/features/auth/components/LoginForm";
+import { LOGIN_SUBTITLE } from "@/lib/branding";
+import styles from "./page.module.scss";
 
 export default function LoginPage() {
   return (
     <Container size="sm">
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          paddingTop: "2rem",
-          paddingBottom: "2rem",
-        }}
-      >
+      <div className={styles.wrapper}>
+        <BrandLogo width={200} className={styles.logo} priority />
         <Card
           title="Iniciar sesión"
           style={{ width: "100%", maxWidth: "24rem" }}
@@ -26,18 +19,10 @@ export default function LoginPage() {
             as="p"
             style={{ marginBottom: "1.5rem" }}
           >
-            Usa tu cuenta de Google Workspace para acceder.
+            {LOGIN_SUBTITLE}
           </Text>
           <LoginForm />
         </Card>
-        <Text
-          variant="bodySmall"
-          color="muted"
-          as="p"
-          style={{ marginTop: "1.5rem" }}
-        >
-          <Link href="/login">Volver al inicio</Link>
-        </Text>
       </div>
     </Container>
   );

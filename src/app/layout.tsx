@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "App",
-  description: "",
+  title: "Sistema Informacion Form | Utencolombia",
+  description: "Formularios operativos UTEN Colombia",
 };
 
 export default function RootLayout({

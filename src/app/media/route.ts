@@ -2,6 +2,11 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { API_URL } from "@/lib/api";
 
+/**
+ * Proxy same-origin de archivos S3. Solo funciona si la sesión de la API
+ * comparte dominio con la web (p. ej. localhost). En producción con web y API
+ * en hosts distintos, usar el componente MediaImage (fetch con credentials).
+ */
 export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
 

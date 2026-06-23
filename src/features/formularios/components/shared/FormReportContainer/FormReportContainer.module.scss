@@ -33,6 +33,10 @@
 }
 
 .exportBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 
   button {
@@ -40,6 +44,12 @@
     align-items: center;
     gap: 0.5rem;
   }
+}
+
+.exportHint {
+  flex: 1 1 100%;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #6b7280);
 }
 
 .error {

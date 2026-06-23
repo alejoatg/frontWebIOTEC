@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
 import type { FormReportListResponse } from "../../../config/formReportTypes";
 import { getFormReportBySlug } from "../../../config/formReportsRegistry";
 import {
   fetchAllFormReportPages,
   fetchFormReportList,
 } from "../../../api/formReportsApi";
-import { exportRowsToExcel } from "../../../lib/exportExcel";
+import { exportFormReportRows } from "../../../lib/exportFormReport";
 import { Button } from "@/components/Button";
 import FormReportFilter from "../FormReportFilter";
 import FormReportTable from "../FormReportTable";
@@ -54,32 +54,15 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
     await handleSearch({ ...currentFilter, page });
   };
 
-  const handleExportExcel = async () => {
+  const handleExport = async (format: "xlsx" | "csv") => {
     if (!currentFilter) return;
     setIsExporting(true);
     setError(null);
     try {
       const rows = await fetchAllFormReportPages(config, currentFilter);
-      const excelColumns = config.listColumns.map((col) => ({
-        key: col.key,
-        label: col.label,
-        accessor: col.accessor,
-      }));
-      if (!excelColumns.some((c) => c.key === "submittedByEmail")) {
-        excelColumns.push({
-          key: "submittedByEmail",
-          label: "Email técnico",
-          accessor: (r) => (r.submittedBy as { email?: string })?.email,
-        });
-      }
-      const stamp = new Date().toISOString().slice(0, 10);
-      exportRowsToExcel(
-        rows,
-        excelColumns,
-        `${config.excelFileName}_${stamp}.xlsx`,
-      );
+      exportFormReportRows(config, rows, format);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al exportar Excel");
+      setError(err instanceof Error ? err.message : "Error al exportar");
     } finally {
       setIsExporting(false);
     }
@@ -101,13 +84,24 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
       {data && data.data.length > 0 ? (
         <div className={styles.exportBar}>
           <Button
-            onClick={handleExportExcel}
+            onClick={() => handleExport("xlsx")}
             disabled={isExporting || isLoading}
             variant="secondary"
           >
             <FileSpreadsheet size={18} />
-            {isExporting ? "Exportando..." : "Exportar Excel (consulta completa)"}
+            {isExporting ? "Exportando..." : "Excel (.xlsx)"}
           </Button>
+          <Button
+            onClick={() => handleExport("csv")}
+            disabled={isExporting || isLoading}
+            variant="secondary"
+          >
+            <FileText size={18} />
+            {isExporting ? "Exportando..." : "CSV"}
+          </Button>
+          <span className={styles.exportHint}>
+            Incluye todos los registros de la consulta. Las fotos y firmas se exportan como enlaces.
+          </span>
         </div>
       ) : null}
 

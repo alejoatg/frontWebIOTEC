@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import type { ExportCell, ExportColumn } from "./flattenRecordForExport";
 
 export interface ExcelColumn {
   key: string;
@@ -11,6 +12,7 @@ function getCellValue(row: Record<string, unknown>, col: ExcelColumn): unknown {
   return row[col.key];
 }
 
+/** @deprecated Usar exportFormRecordsToExcel para exportación completa con enlaces. */
 export function exportRowsToExcel(
   rows: Record<string, unknown>[],
   columns: ExcelColumn[],
@@ -30,4 +32,74 @@ export function exportRowsToExcel(
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "Registros");
   XLSX.writeFile(workbook, fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`);
+}
+
+function applyHyperlink(cell: XLSX.CellObject, url: string, display: string) {
+  cell.v = display;
+  cell.t = "s";
+  cell.l = { Target: url, Tooltip: "Abrir enlace" };
+}
+
+export function exportFormRecordsToExcel(
+  columns: ExportColumn[],
+  matrix: ExportCell[][],
+  fileName: string,
+): void {
+  const header = columns.map((c) => c.label);
+  const sheet = XLSX.utils.aoa_to_sheet([header]);
+
+  matrix.forEach((rowCells, rowIndex) => {
+    rowCells.forEach((cell, colIndex) => {
+      const ref = XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex });
+      const target = sheet[ref] ?? (sheet[ref] = {});
+
+      if (cell.link) {
+        const label = cell.text.includes(": ")
+          ? cell.text.split(": ")[0]
+          : "Abrir enlace";
+        applyHyperlink(target, cell.link, label);
+        if (cell.text.includes("\n")) {
+          target.v = cell.text;
+          delete target.l;
+        }
+      } else {
+        target.v = cell.text;
+        target.t = "s";
+      }
+    });
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, "Registros");
+  XLSX.writeFile(workbook, fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`);
+}
+
+function escapeCsvValue(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+export function exportFormRecordsToCsv(
+  columns: ExportColumn[],
+  matrix: ExportCell[][],
+  fileName: string,
+): void {
+  const lines = [
+    columns.map((c) => escapeCsvValue(c.label)).join(","),
+    ...matrix.map((row) =>
+      row.map((cell) => escapeCsvValue(cell.text)).join(","),
+    ),
+  ];
+
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName.endsWith(".csv") ? fileName : `${fileName}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

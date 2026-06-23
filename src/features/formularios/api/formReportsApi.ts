@@ -38,18 +38,17 @@ export async function fetchFormReportById(
   return config.mapDetailRecord ? config.mapDetailRecord(record) : record;
 }
 
-/** Descarga todas las páginas del listado actual (máx. 20 páginas × pageSize). */
+/** Descarga todas las páginas del listado actual según los filtros aplicados. */
 export async function fetchAllFormReportPages(
   config: FormReportConfig,
   filter: Record<string, unknown>,
-  maxPages = 20,
 ): Promise<Record<string, unknown>[]> {
   const pageSize = Number(filter.pageSize ?? 50);
   const all: Record<string, unknown>[] = [];
   let page = 1;
   let totalPages = 1;
 
-  while (page <= totalPages && page <= maxPages) {
+  while (page <= totalPages) {
     const result = await fetchFormReportList(config, { ...filter, page, pageSize });
     all.push(...result.data);
     totalPages = result.pagination.totalPages;

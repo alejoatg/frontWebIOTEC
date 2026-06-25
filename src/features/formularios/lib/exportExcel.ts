@@ -46,26 +46,19 @@ export function exportFormRecordsToExcel(
   fileName: string,
 ): void {
   const header = columns.map((c) => c.label);
-  const sheet = XLSX.utils.aoa_to_sheet([header]);
+  const body = matrix.map((rowCells) => rowCells.map((cell) => cell.text));
+  const sheet = XLSX.utils.aoa_to_sheet([header, ...body]);
 
   matrix.forEach((rowCells, rowIndex) => {
     rowCells.forEach((cell, colIndex) => {
+      if (!cell.link || cell.text.includes("\n")) return;
       const ref = XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex });
-      const target = sheet[ref] ?? (sheet[ref] = {});
-
-      if (cell.link) {
-        const label = cell.text.includes(": ")
-          ? cell.text.split(": ")[0]
-          : "Abrir enlace";
-        applyHyperlink(target, cell.link, label);
-        if (cell.text.includes("\n")) {
-          target.v = cell.text;
-          delete target.l;
-        }
-      } else {
-        target.v = cell.text;
-        target.t = "s";
-      }
+      const target = sheet[ref];
+      if (!target) return;
+      const label = cell.text.includes(": ")
+        ? cell.text.slice(0, cell.text.indexOf(": "))
+        : "Abrir enlace";
+      applyHyperlink(target, cell.link, label);
     });
   });
 

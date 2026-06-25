@@ -13,7 +13,24 @@ export interface ExportCell {
   link?: string;
 }
 
-const SKIP_KEYS = new Set(["submittedBy", "submission", "metadata"]);
+const SKIP_KEYS = new Set([
+  "submittedBy",
+  "submission",
+  "metadata",
+  "createdAt",
+  "updatedAt",
+]);
+
+const META_EXPORT_KEYS = [
+  "syncedAt",
+  "startedAt",
+  "completedAt",
+  "localId",
+  "displayName",
+  "deviceId",
+  "submittedByName",
+  "submittedByEmail",
+] as const;
 
 function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("http");
@@ -67,7 +84,12 @@ function formatValue(key: string, value: unknown): ExportCell {
       nombre?: string;
     }>;
 
-    if (tagged.some((item) => isHttpUrl(item?.url) || isHttpUrl(item?.uri) || isHttpUrl(item?.firma))) {
+    if (
+      tagged.some(
+        (item) =>
+          isHttpUrl(item?.url) || isHttpUrl(item?.uri) || isHttpUrl(item?.firma),
+      )
+    ) {
       const parts: ExportCell[] = [];
       tagged.forEach((item, i) => {
         const url = item.url ?? item.uri ?? item.firma;
@@ -85,6 +107,12 @@ function formatValue(key: string, value: unknown): ExportCell {
         };
       }
     }
+
+    const names = tagged
+      .map((item) => item.nombre?.trim())
+      .filter(Boolean)
+      .join(", ");
+    if (names) return { text: names };
 
     return { text: JSON.stringify(value) };
   }
@@ -106,6 +134,53 @@ function detailPageUrl(slug: string, id: string): string {
     return `${window.location.origin}${path}`;
   }
   return path;
+}
+
+/** Claves exportables definidas en la config (detalle + evidencias + metadatos). */
+export function getConfigExportFieldKeys(config: FormReportConfig): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+
+  const push = (key: string) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    ordered.push(key);
+  };
+
+  push("enlaceDetalleWeb");
+  push("id");
+
+  for (const section of config.detailSections) {
+    for (const key of section.keys) {
+      push(key);
+    }
+  }
+
+  for (const field of config.evidenceFields) {
+    push(field.key);
+  }
+
+  META_EXPORT_KEYS.forEach(push);
+
+  return ordered;
+}
+
+function collectOrderedKeys(
+  config: FormReportConfig,
+  rows: Record<string, unknown>[],
+): string[] {
+  const ordered = [...getConfigExportFieldKeys(config)];
+  const seen = new Set(ordered);
+
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      if (SKIP_KEYS.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      ordered.push(key);
+    }
+  }
+
+  return ordered;
 }
 
 /** Aplana un registro del API a celdas listas para Excel/CSV. */
@@ -137,57 +212,6 @@ export function flattenRecordForExport(
   return cells;
 }
 
-function collectOrderedKeys(
-  config: FormReportConfig,
-  rows: Record<string, unknown>[],
-): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-
-  const push = (key: string) => {
-    if (seen.has(key)) return;
-    seen.add(key);
-    ordered.push(key);
-  };
-
-  push("enlaceDetalleWeb");
-  push("id");
-
-  for (const section of config.detailSections) {
-    for (const key of section.keys) {
-      push(key);
-    }
-  }
-
-  for (const field of config.evidenceFields) {
-    push(field.key);
-  }
-
-  for (const col of config.listColumns) {
-    push(col.key);
-  }
-
-  [
-    "syncedAt",
-    "startedAt",
-    "completedAt",
-    "localId",
-    "displayName",
-    "deviceId",
-    "submittedByName",
-    "submittedByEmail",
-  ].forEach(push);
-
-  for (const row of rows) {
-    const flat = flattenRecordForExport(row, config);
-    for (const key of Object.keys(flat)) {
-      push(key);
-    }
-  }
-
-  return ordered;
-}
-
 export function buildExportColumns(
   config: FormReportConfig,
   rows: Record<string, unknown>[],
@@ -201,10 +225,6 @@ export function buildExportColumns(
 
   for (const field of config.evidenceFields) {
     labelOverrides[field.key] = field.label;
-  }
-
-  for (const col of config.listColumns) {
-    labelOverrides[col.key] = col.label;
   }
 
   return keys.map((key) => ({

@@ -29,7 +29,7 @@ export default function BrandLogo({
       height={imgHeight}
       className={className}
       priority={priority}
-      style={{ height: imgHeight, width: "auto", maxWidth: "100%" }}
+      style={{ width: imgWidth, height: "auto", maxWidth: "100%" }}
     />
   );
 }

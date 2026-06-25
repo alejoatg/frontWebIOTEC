@@ -48,7 +48,7 @@ export default function DashboardLayout({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <Link href="/dashboard" className={styles.brandLink} aria-label="Inicio">
-            <BrandLogo height={24} className={styles.brandLogo} />
+            <BrandLogo width={32} className={styles.brandLogo} />
           </Link>
           <h1 className={styles.title}>{title}</h1>
         </div>

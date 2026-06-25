@@ -64,7 +64,8 @@ export const FORM_REPORTS: FormReportConfig[] = [
         title: "Identificación",
         keys: [
           "municipio", "vereda", "linea", "lineaOtra", "nivelTension", "numeroEstructura",
-          "numeroApoyo", "tipoEstructura", "seccionamiento", "estadoSeccionamiento",
+          "numeroApoyo", "ubicacionLat", "ubicacionLng", "tipoEstructura", "seccionamiento",
+          "estadoSeccionamiento",
         ],
       },
       { title: "Tipo de inspección", keys: ["tipoInspeccion"] },
@@ -140,7 +141,10 @@ export const FORM_REPORTS: FormReportConfig[] = [
     detailSections: [
       {
         title: "Datos generales",
-        keys: ["zona", "fecha", "proceso", "descripcionTrabajo", "nombreRealizaLabor"],
+        keys: [
+          "zona", "fecha", "proceso", "descripcionTrabajo", "nombreRealizaLabor",
+          "ubicacionInspeccionLat", "ubicacionInspeccionLng",
+        ],
       },
       {
         title: "Seguridad y salud en el trabajo",
@@ -188,6 +192,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
     evidenceFields: [
       { label: "Registro fotográfico (antes)", key: "registroFotograficoAntesUrls", multiple: true },
       { label: "Registro fotográfico (durante)", key: "registroFotograficoDuranteUrls", multiple: true },
+      { label: "Trabajadores y firmas", key: "trabajadoresFirmas" },
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
       { label: "Firma responsable inspección", key: "firmaResponsableInspeccionUrl" },
     ],
@@ -290,6 +295,87 @@ export const FORM_REPORTS: FormReportConfig[] = [
       }
       if (filter.page) params.append("page", String(filter.page));
       params.append("pageSize", String(filter.pageSize ?? 50));
+      return params;
+    },
+  },
+  {
+    id: "podas-diario",
+    slug: "podas-diario",
+    title: "Actividades Diarias — Podas",
+    subtitle: "UTEN_PODAS_DIARIO_v3 — Registro diario del proceso de Podas (IOTEC Forms)",
+    icon: "FileText",
+    color: "#16a34a",
+    apiBasePath: "/api/podas-diario",
+    excelFileName: "podas-diario",
+    detailTitle: (r) => `Orden ${String(r.ordenTrabajo ?? "—")}`,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "zona", label: "Zona", placeholder: "Centro / Norte / Sur" },
+      { type: "text", key: "municipio", label: "Municipio", placeholder: "Ej: Popayán" },
+      { type: "text", key: "brigada", label: "Brigada", placeholder: "Ej: POZC1" },
+      { type: "text", key: "ordenTrabajo", label: "Orden de trabajo", placeholder: "Número de orden" },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "ordenTrabajo", label: "Orden trabajo" },
+      { key: "brigada", label: "Brigada" },
+      { key: "municipio", label: "Municipio" },
+      { key: "linea", label: "Línea" },
+      { key: "intervencion", label: "Intervención" },
+      { key: "codigoArbol", label: "Código árbol" },
+      { key: "submittedBy", label: "Técnico", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Ubicación y orden",
+        keys: [
+          "zona", "fecha", "municipio", "municipioOtro", "vereda", "subestacion", "subestacionOtro",
+          "linea", "lineaOtro", "nivelTension", "brigada", "numeroActaActividad", "numeroTransformador",
+          "tipoOrden", "ordenTrabajo", "numTrabajo", "direccionPuntual", "ubicacion", "area",
+        ],
+      },
+      {
+        title: "Árbol e intervención",
+        keys: [
+          "estructuraInicial", "estructuraFinal", "distanciaMetros", "codigoArbol", "especieArborea",
+          "especieArboreaOtro", "intervencion", "distanciaSeguridad", "diametroTalloM",
+          "alturaComercialM", "alturaTotal",
+        ],
+      },
+      {
+        title: "Predio y residuos",
+        keys: [
+          "tipoPredio", "permisoUsuario", "nombreUsuario", "manejoResiduos", "volumenResiduosM3",
+        ],
+      },
+      {
+        title: "Georreferencia y cierre",
+        keys: [
+          "georreferenciacionX", "georreferenciacionY", "proximaIntervencionDias", "observaciones",
+        ],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto antes 1", key: "fotoInicial1Url" },
+      { label: "Foto antes 2", key: "fotoInicial2Url" },
+      { label: "Foto durante", key: "fotoDuranteUrl" },
+      { label: "Foto permiso", key: "fotoPermisoUrl" },
+      { label: "Foto permiso 2", key: "fotoPermiso2Url" },
+      { label: "Foto residuos", key: "fotoResiduosUrl" },
+      { label: "Foto cicatrización", key: "fotoCicatrizacionUrl" },
+      { label: "Foto cicatrización 2", key: "fotoCicatrizacion2Url" },
+      { label: "Foto final", key: "fotoFinalUrl" },
+      { label: "Foto final 2", key: "fotoFinal2Url" },
+      { label: "Marcación especie", key: "marcacionEspecieUrl" },
+      { label: "Foto ubicación GARMIN", key: "fotoUbicacionGpsUrl" },
+      { label: "Firma técnico", key: "firmaTecnicoUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, ["zona", "municipio", "brigada", "ordenTrabajo"]);
       return params;
     },
   },

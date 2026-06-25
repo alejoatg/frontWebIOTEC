@@ -56,3 +56,32 @@ export async function fetchAllFormReportPages(
   }
   return all;
 }
+
+const EXPORT_DETAIL_CONCURRENCY = 6;
+
+/** Obtiene el detalle completo de cada registro (mismos datos que la pantalla de detalle). */
+export async function fetchAllFormReportDetailsForExport(
+  config: FormReportConfig,
+  filter: Record<string, unknown>,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<Record<string, unknown>[]> {
+  const listRows = await fetchAllFormReportPages(config, filter);
+  const ids = listRows
+    .map((row) => (row.id != null ? String(row.id) : ""))
+    .filter(Boolean);
+
+  if (ids.length === 0) return [];
+
+  const records: Record<string, unknown>[] = [];
+
+  for (let i = 0; i < ids.length; i += EXPORT_DETAIL_CONCURRENCY) {
+    const batch = ids.slice(i, i + EXPORT_DETAIL_CONCURRENCY);
+    const batchRecords = await Promise.all(
+      batch.map((id) => fetchFormReportById(config, id)),
+    );
+    records.push(...batchRecords);
+    onProgress?.(Math.min(i + batch.length, ids.length), ids.length);
+  }
+
+  return records;
+}

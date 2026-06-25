@@ -6,7 +6,7 @@ import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
 import type { FormReportListResponse } from "../../../config/formReportTypes";
 import { getFormReportBySlug } from "../../../config/formReportsRegistry";
 import {
-  fetchAllFormReportPages,
+  fetchAllFormReportDetailsForExport,
   fetchFormReportList,
 } from "../../../api/formReportsApi";
 import { exportFormReportRows } from "../../../lib/exportFormReport";
@@ -32,6 +32,7 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
   const [currentFilter, setCurrentFilter] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (filter: Record<string, unknown>) => {
@@ -57,14 +58,22 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
   const handleExport = async (format: "xlsx" | "csv") => {
     if (!currentFilter) return;
     setIsExporting(true);
+    setExportProgress(null);
     setError(null);
     try {
-      const rows = await fetchAllFormReportPages(config, currentFilter);
+      const rows = await fetchAllFormReportDetailsForExport(
+        config,
+        currentFilter,
+        (loaded, total) => {
+          setExportProgress(`Cargando detalle ${loaded}/${total}...`);
+        },
+      );
       exportFormReportRows(config, rows, format);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al exportar");
     } finally {
       setIsExporting(false);
+      setExportProgress(null);
     }
   };
 
@@ -100,7 +109,8 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
             {isExporting ? "Exportando..." : "CSV"}
           </Button>
           <span className={styles.exportHint}>
-            Incluye todos los registros de la consulta. Las fotos y firmas se exportan como enlaces.
+            {exportProgress ??
+              "Exporta todos los registros de la consulta con los mismos campos del detalle. Fotos y firmas como enlaces."}
           </span>
         </div>
       ) : null}

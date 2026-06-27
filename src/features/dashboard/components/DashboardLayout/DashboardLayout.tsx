@@ -12,6 +12,7 @@ import {
   FileText,
   Bike,
   Home,
+  BookOpen,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
@@ -28,6 +29,7 @@ const ICON_MAP = {
   Users,
   FileText,
   Bike,
+  BookOpen,
 } as const;
 
 export interface DashboardLayoutProps {

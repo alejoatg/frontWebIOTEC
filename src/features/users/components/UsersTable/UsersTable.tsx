@@ -10,6 +10,10 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
   CORDINADOR: "Coordinador",
   SUPERVISOR: "Supervisor",
+  TECNICO: "Técnico",
+  LIDER_BRIGADA: "Líder de brigada",
+  HSE: "HSE",
+  TALENTO_HUMANO: "Talento humano",
   COLABORADOR: "Colaborador",
 };
 

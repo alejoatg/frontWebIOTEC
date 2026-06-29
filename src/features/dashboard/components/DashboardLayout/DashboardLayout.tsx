@@ -18,6 +18,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
 import { APP_TITLE } from "@/lib/branding";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { EmployeeLinkBanner } from "@/features/auth/components/EmployeeLinkBanner";
 import { DASHBOARD_NAV_ITEMS } from "../../constants/nav";
 import styles from "./DashboardLayout.module.scss";
 
@@ -42,8 +43,9 @@ export default function DashboardLayout({
   title = APP_TITLE,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, refetch } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const needsEmployeeLink = user && !user.employeeLinked;
 
   return (
     <div className={styles.wrapper}>
@@ -119,7 +121,10 @@ export default function DashboardLayout({
           </nav>
         </aside>
 
-        <main className={styles.main}>{children}</main>
+        <main className={styles.main}>
+          {needsEmployeeLink ? <EmployeeLinkBanner onLinked={refetch} /> : null}
+          {children}
+        </main>
       </div>
 
       <nav

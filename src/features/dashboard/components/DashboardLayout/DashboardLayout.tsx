@@ -13,13 +13,14 @@ import {
   Bike,
   Home,
   BookOpen,
+  Clock,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
 import { APP_TITLE } from "@/lib/branding";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { EmployeeLinkBanner } from "@/features/auth/components/EmployeeLinkBanner";
-import { DASHBOARD_NAV_ITEMS } from "../../constants/nav";
+import { getNavItemsForRole } from "../../constants/nav";
 import styles from "./DashboardLayout.module.scss";
 
 const ICON_MAP = {
@@ -31,6 +32,7 @@ const ICON_MAP = {
   FileText,
   Bike,
   BookOpen,
+  Clock,
 } as const;
 
 export interface DashboardLayoutProps {
@@ -46,6 +48,7 @@ export default function DashboardLayout({
   const { user, refetch } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const needsEmployeeLink = user && !user.employeeLinked;
+  const navItems = getNavItemsForRole(user?.role);
 
   return (
     <div className={styles.wrapper}>
@@ -103,9 +106,10 @@ export default function DashboardLayout({
             )}
           </button>
           <nav className={styles.sidebarNav}>
-            {DASHBOARD_NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = ICON_MAP[item.icon as keyof typeof ICON_MAP] ?? Home;
-              const isActive = pathname === item.path;
+              const isActive =
+                pathname === item.path || pathname.startsWith(`${item.path}/`);
               return (
                 <Link
                   key={item.path + item.label}
@@ -132,9 +136,10 @@ export default function DashboardLayout({
         aria-label="Navegación móvil"
         role="navigation"
       >
-        {DASHBOARD_NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = ICON_MAP[item.icon as keyof typeof ICON_MAP] ?? Home;
-          const isActive = pathname === item.path;
+          const isActive =
+            pathname === item.path || pathname.startsWith(`${item.path}/`);
           return (
             <Link
               key={item.path + item.label}

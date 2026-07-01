@@ -15,6 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
   HSE: "HSE",
   TALENTO_HUMANO: "Talento humano",
   COLABORADOR: "Colaborador",
+  CONTABILIDAD: "Contabilidad",
 };
 
 function formatDate(dateString: string | null): string {

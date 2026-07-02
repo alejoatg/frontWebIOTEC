@@ -36,6 +36,17 @@
   font-size: 0.9rem;
 }
 
+.supersededNote {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  max-width: 36rem;
+}
+
 .actionsCard,
 .messagesCard,
 .card {

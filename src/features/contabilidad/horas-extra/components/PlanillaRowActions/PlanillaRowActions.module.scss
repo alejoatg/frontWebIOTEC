@@ -1,0 +1,62 @@
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.2rem;
+  min-width: 4.5rem;
+}
+
+.link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.7rem;
+  text-align: center;
+  padding: 0.15rem 0.25rem;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.btnOk,
+.btnWarn,
+.btnDanger {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.15rem 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.btnOk {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.btnWarn {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.btnDanger {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.btnOk:hover {
+  background: #bbf7d0;
+}
+
+.btnWarn:hover {
+  background: #dbeafe;
+}
+
+.btnDanger:hover {
+  background: #fecaca;
+}

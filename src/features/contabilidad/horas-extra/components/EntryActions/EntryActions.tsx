@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canReviewOvertime } from "@/features/dashboard/constants/nav";
@@ -11,7 +12,9 @@ import {
   downloadAuthenticatedFile,
   pdfMonthUrl,
   rejectEntry,
+  type OvertimeEntryRow,
 } from "../../api/overtimeApi";
+import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
 import styles from "../../styles/shared.module.scss";
 
 export interface EntryActionsProps {
@@ -26,13 +29,13 @@ export interface EntryActionsProps {
   onActionComplete?: () => void;
   showDetailLink?: boolean;
   layout?: "inline" | "stacked";
+  redirectOnCorrect?: boolean;
 }
 
 export default function EntryActions({
   entryId,
   employeeId,
   employeeDocumentNumber,
-  entryCode,
   workDate,
   status,
   periodYear,
@@ -40,11 +43,14 @@ export default function EntryActions({
   onActionComplete,
   showDetailLink = false,
   layout = "inline",
+  redirectOnCorrect = false,
 }: EntryActionsProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const canReview = canReviewOvertime(user?.role);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
+  const [correctOpen, setCorrectOpen] = useState(false);
 
   async function handleApprove() {
     try {
@@ -65,6 +71,14 @@ export default function EntryActions({
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al rechazar");
     }
+  }
+
+  function handleCorrectSuccess(newEntry: OvertimeEntryRow) {
+    if (redirectOnCorrect) {
+      router.push(`/dashboard/contabilidad/horas-extra/registros/${newEntry.id}`);
+      return;
+    }
+    onActionComplete?.();
   }
 
   const actionClass = layout === "stacked" ? styles.actionsStacked : styles.actions;
@@ -106,12 +120,22 @@ export default function EntryActions({
             <Button type="button" size="sm" onClick={handleApprove}>
               Aprobar
             </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setCorrectOpen(true)}>
+              Corregir
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => setRejectOpen(true)}>
               Rechazar
             </Button>
           </>
         )}
       </div>
+
+      <CorrectEntryModal
+        entryId={entryId}
+        open={correctOpen}
+        onClose={() => setCorrectOpen(false)}
+        onSuccess={handleCorrectSuccess}
+      />
 
       {rejectOpen && (
         <div className={styles.alert} style={{ marginTop: "1rem" }}>

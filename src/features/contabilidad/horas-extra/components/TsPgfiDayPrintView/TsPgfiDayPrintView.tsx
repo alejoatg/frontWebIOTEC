@@ -37,41 +37,69 @@ export default function TsPgfiDayPrintView({ data, onClose }: TsPgfiDayPrintView
       </div>
 
       <article className={styles.sheet}>
-        <header className={styles.metaBox}>
-          <table>
-            <tbody>
-              <tr>
-                <th>Código:</th>
-                <td>{data.formCode}</td>
-              </tr>
-              <tr>
-                <th>Versión:</th>
-                <td>{data.formVersion}</td>
-              </tr>
-              <tr>
-                <th>Fecha:</th>
-                <td>{printedDate}</td>
-              </tr>
-            </tbody>
-          </table>
+        <header className={styles.sheetHeader}>
+          <div className={styles.headerTop}>
+            <div className={styles.logoWrap}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/logo-uten-print.png"
+                alt="UTEN"
+                className={styles.logo}
+              />
+            </div>
+
+            <h1 className={styles.title}>{data.formTitle}</h1>
+
+            <div className={styles.metaBox}>
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Código:</th>
+                    <td>{data.formCode}</td>
+                  </tr>
+                  <tr>
+                    <th>Versión:</th>
+                    <td>{data.formVersion}</td>
+                  </tr>
+                  <tr>
+                    <th>Fecha:</th>
+                    <td>{printedDate}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className={styles.topFields}>
+            <div className={styles.fieldLine}>
+              <span className={styles.fieldLabel}>ZONA:</span>
+              <span className={styles.fieldValue}>{data.zoneName}</span>
+            </div>
+            <div className={styles.fieldLine}>
+              <span className={styles.fieldLabel}>MUNICIPIO:</span>
+              <span className={styles.fieldValue}>{data.municipality}</span>
+            </div>
+            <div className={styles.fieldLine}>
+              <span className={styles.fieldLabel}>MES:</span>
+              <span className={styles.fieldValue}>{data.monthLabel}</span>
+            </div>
+          </div>
+
+          <div className={styles.employeeHeader}>
+            <div className={styles.employeeRow}>
+              <span className={styles.fieldLabel}>NOMBRES Y APELLIDOS:</span>
+              <span className={styles.fieldValueWide}>{data.employeeFullName}</span>
+              <span className={styles.fieldLabel}>CÉDULA:</span>
+              <span className={styles.fieldValueMedium}>{data.employeeDocumentNumber}</span>
+            </div>
+            <div className={styles.employeeRow}>
+              <span className={styles.fieldLabel}>PROCESO:</span>
+              <span className={styles.fieldValueWide}>{data.processName}</span>
+              <span className={styles.fieldLabel}>CARGO:</span>
+              <span className={styles.fieldValueMedium}>{data.jobPositionName}</span>
+            </div>
+          </div>
         </header>
-
-        <h1 className={styles.title}>{data.formTitle}</h1>
-
-        <div className={styles.topFields}>
-          <div className={styles.fieldLine}>
-            <span className={styles.fieldLabel}>ZONA:</span>
-            <span className={styles.fieldValue}>{data.zoneName}</span>
-          </div>
-          <div className={styles.fieldLine}>
-            <span className={styles.fieldLabel}>MUNICIPIO:</span>
-            <span className={styles.fieldValue}>{data.municipality}</span>
-          </div>
-          <div className={styles.fieldLine}>
-            <span className={styles.fieldLabel}>MES:</span>
-            <span className={styles.fieldValue}>{data.monthLabel}</span>
-          </div>
-        </div>
 
         <table className={styles.grid}>
           <thead>
@@ -163,21 +191,6 @@ export default function TsPgfiDayPrintView({ data, onClose }: TsPgfiDayPrintView
             ))}
           </tbody>
         </table>
-
-        <div className={styles.employeeBlock}>
-          <div className={styles.employeeRow}>
-            <span className={styles.fieldLabel}>NOMBRES Y APELLIDOS:</span>
-            <span className={styles.fieldValueWide}>{data.employeeFullName}</span>
-            <span className={styles.fieldLabel}>CÉDULA:</span>
-            <span className={styles.fieldValueMedium}>{data.employeeDocumentNumber}</span>
-          </div>
-          <div className={styles.employeeRow}>
-            <span className={styles.fieldLabel}>PROCESO:</span>
-            <span className={styles.fieldValueWide}>{data.processName}</span>
-            <span className={styles.fieldLabel}>CARGO:</span>
-            <span className={styles.fieldValueMedium}>{data.jobPositionName}</span>
-          </div>
-        </div>
 
         <p className={styles.footnote}>
           * Disponibilidad aplica solo para Alta Tensión y Subestaciones

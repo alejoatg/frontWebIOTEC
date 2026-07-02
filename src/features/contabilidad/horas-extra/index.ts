@@ -5,6 +5,7 @@ export { default as RegistrosContainer } from "./components/RegistrosContainer/R
 export { default as RegistrosPlanillaContainer } from "./components/RegistrosPlanillaContainer/RegistrosPlanillaContainer";
 export { default as RegistroDetalleContainer } from "./components/RegistroDetalleContainer/RegistroDetalleContainer";
 export { default as TsPgfiDayPrintView } from "./components/TsPgfiDayPrintView/TsPgfiDayPrintView";
+export { default as CorrectEntryModal } from "./components/CorrectEntryModal/CorrectEntryModal";
 export { default as PlanillasContainer } from "./components/PlanillasContainer/PlanillasContainer";
 export { default as ParametrosContainer } from "./components/ParametrosContainer/ParametrosContainer";
 export { default as ConsolidadoContainer } from "./components/ConsolidadoContainer/ConsolidadoContainer";

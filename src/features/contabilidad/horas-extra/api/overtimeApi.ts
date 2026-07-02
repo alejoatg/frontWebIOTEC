@@ -62,8 +62,14 @@ export async function fetchEntries(params: {
   month: number;
   status?: string;
   batchId?: string;
+  documentNumber?: string;
+  workDateFrom?: string;
+  workDateTo?: string;
+  zoneName?: string;
+  fileName?: string;
   page?: number;
   pageSize?: number;
+  includeSuperseded?: boolean;
 }) {
   const q = new URLSearchParams({
     year: String(params.year),
@@ -73,6 +79,12 @@ export async function fetchEntries(params: {
   });
   if (params.status) q.set("status", params.status);
   if (params.batchId) q.set("batchId", params.batchId);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
+  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
+  if (params.zoneName) q.set("zoneName", params.zoneName);
+  if (params.fileName) q.set("fileName", params.fileName);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
   return request<EntriesPage>(`/entries?${q}`);
 }
 
@@ -145,8 +157,8 @@ export async function closePeriod(year: number, month: number) {
   });
 }
 
-export async function correctEntry(id: string, body: Record<string, unknown>) {
-  return request(`/entries/${id}/correct`, {
+export async function correctEntry(id: string, body: CorrectEntryPayload) {
+  return request<OvertimeEntryRow>(`/entries/${id}/correct`, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -382,6 +394,23 @@ export interface ClosePeriodResult {
   consolidationsCreated: number;
   approvedEntries: number;
   pendingEntriesExcluded: number;
+}
+
+export interface CorrectEntryPayload {
+  workDate?: string;
+  startTime?: string;
+  endTime?: string;
+  hoursRd?: number;
+  hoursRn?: number;
+  hoursTsd?: number;
+  hoursTsn?: number;
+  hoursHedd?: number;
+  hoursHend?: number;
+  hoursDisponibilidad?: number;
+  commissionMunicipality?: string;
+  consigna?: string;
+  operationalNote?: string;
+  accountingNote?: string;
 }
 
 export interface TsDayPrintRow {

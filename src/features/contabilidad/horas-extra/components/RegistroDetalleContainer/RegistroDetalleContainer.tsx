@@ -71,6 +71,12 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           <p className={styles.subtitle}>
             {entry.employeeFullName} · {entry.employeeDocumentNumber}
           </p>
+          {entry.status === "SUPERSEDED" && (
+            <p className={styles.supersededNote}>
+              Este registro fue reemplazado por una corrección. Consulte la cadena de corrección
+              abajo.
+            </p>
+          )}
         </div>
         <span className={`${shared.badge} ${statusClass(entry.status)}`}>{entry.status}</span>
       </div>
@@ -88,6 +94,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           periodMonth={periodMonth}
           onActionComplete={load}
           layout="stacked"
+          redirectOnCorrect
         />
       </div>
 

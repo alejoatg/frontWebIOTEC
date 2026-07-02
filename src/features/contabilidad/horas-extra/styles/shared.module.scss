@@ -135,6 +135,13 @@
   font-size: 0.875rem;
 }
 
+.actionsStacked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .inputInline {
   width: 7rem;
   padding: 0.25rem 0.4rem;

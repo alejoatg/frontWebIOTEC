@@ -1,0 +1,10 @@
+@media print {
+  @page {
+    size: letter landscape;
+    margin: 0.25in;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

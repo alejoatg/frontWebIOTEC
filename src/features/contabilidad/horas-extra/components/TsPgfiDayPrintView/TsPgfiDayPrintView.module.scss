@@ -1,0 +1,206 @@
+.root {
+  min-height: 100vh;
+  background: #e2e8f0;
+  padding: 1rem;
+}
+
+.toolbar {
+  max-width: 11in;
+  margin: 0 auto 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.toolbarInfo {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sheet {
+  position: relative;
+  max-width: 11in;
+  margin: 0 auto;
+  background: #fff;
+  padding: 0.35in 0.4in 0.3in;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  line-height: 1.2;
+}
+
+.metaBox {
+  position: absolute;
+  top: 0.35in;
+  right: 0.4in;
+  border: 1px solid #000;
+
+  table {
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 2px 8px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  td {
+    font-weight: 400;
+    min-width: 4.5rem;
+  }
+}
+
+.title {
+  margin: 0.15in 0 0.2in;
+  text-align: center;
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.topFields {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 0.15in;
+  margin-bottom: 0.15in;
+  padding-right: 2.2in;
+}
+
+.fieldLine {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.08in;
+  min-height: 0.22in;
+}
+
+.fieldLabel {
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 7.5pt;
+}
+
+.fieldValue,
+.fieldValueWide,
+.fieldValueMedium {
+  flex: 1;
+  border-bottom: 1px solid #000;
+  min-height: 0.18in;
+  font-size: 8pt;
+  padding: 0 2px 1px;
+}
+
+.fieldValueWide {
+  min-width: 3in;
+}
+
+.fieldValueMedium {
+  min-width: 1.2in;
+  max-width: 1.6in;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 6.5pt;
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 3px 2px;
+    text-align: center;
+    vertical-align: middle;
+    word-wrap: break-word;
+  }
+
+  thead th {
+    font-weight: 700;
+    background: #fff;
+    line-height: 1.15;
+  }
+}
+
+.textCell {
+  text-align: left;
+  font-size: 6.5pt;
+}
+
+.numCell {
+  font-variant-numeric: tabular-nums;
+}
+
+.employeeBlock {
+  margin-top: 0.12in;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1in;
+}
+
+.employeeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.08in;
+  flex-wrap: wrap;
+}
+
+.footnote {
+  margin: 0.1in 0 0.15in;
+  font-size: 6.5pt;
+  font-style: italic;
+}
+
+.signatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.15in;
+  margin-top: 0.1in;
+  font-size: 7pt;
+
+  div {
+    margin-bottom: 0.12in;
+  }
+}
+
+.signatureCol {
+  min-width: 0;
+}
+
+@media print {
+  :global(body) {
+    background: #fff !important;
+  }
+
+  .root {
+    background: #fff;
+    padding: 0;
+  }
+
+  .toolbar {
+    display: none !important;
+  }
+
+  .sheet {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0.25in 0.3in 0.2in;
+    box-shadow: none;
+  }
+}

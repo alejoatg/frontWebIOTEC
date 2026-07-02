@@ -63,16 +63,21 @@ export async function fetchEntries(params: {
   status?: string;
   batchId?: string;
   page?: number;
+  pageSize?: number;
 }) {
   const q = new URLSearchParams({
     year: String(params.year),
     month: String(params.month),
     page: String(params.page ?? 1),
-    pageSize: "50",
+    pageSize: String(params.pageSize ?? 50),
   });
   if (params.status) q.set("status", params.status);
   if (params.batchId) q.set("batchId", params.batchId);
   return request<EntriesPage>(`/entries?${q}`);
+}
+
+export async function fetchEntry(id: string) {
+  return request<OvertimeEntryRow>(`/entries/${id}`);
 }
 
 export async function approveEntry(id: string) {
@@ -149,6 +154,16 @@ export async function correctEntry(id: string, body: Record<string, unknown>) {
 
 export function pdfDayUrl(employeeId: string, date: string) {
   return `${BASE}/pdf/employee/${employeeId}/day/${date}`;
+}
+
+export function dayPrintPageUrl(employeeId: string, date: string) {
+  const d = date.slice(0, 10);
+  return `/imprimir/horas-extra/dia/${employeeId}/${d}`;
+}
+
+export async function fetchDayPrintData(employeeId: string, date: string) {
+  const d = date.slice(0, 10);
+  return request<TsDayPrintData>(`/pdf/employee/${employeeId}/day/${d}/print-data`);
 }
 
 export function pdfMonthUrl(employeeId: string, year: number, month: number) {
@@ -230,8 +245,62 @@ export interface OvertimeEntry {
   importBatch?: { batchCode: string };
 }
 
+/** Registro con todos los campos para vista planilla / detalle. */
+export interface OvertimeEntryRow extends OvertimeEntry {
+  entryNumber?: number;
+  excelRowNumber?: number | null;
+  batchRowNumber?: number | null;
+  genderSnapshot?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  hoursRd?: number;
+  hoursRn?: number;
+  hoursTsd?: number;
+  hoursTsn?: number;
+  hoursHedd?: number;
+  hoursHend?: number;
+  hoursDisponibilidad?: number;
+  hoursStartEndTotal?: number | null;
+  hoursCategoriesTotal?: number | null;
+  hoursValidatorDelta?: number | null;
+  salarySnapshot?: number;
+  hourlyDivisorSnapshot?: number;
+  payrollFactorSnapshot?: number;
+  amountRd?: number;
+  amountRn?: number;
+  amountTsd?: number;
+  amountTsn?: number;
+  amountHedd?: number;
+  amountHend?: number;
+  amountDisponibilidad?: number;
+  amountSubtotal?: number;
+  jobPositionName?: string | null;
+  processName?: string | null;
+  zoneName?: string | null;
+  baseMunicipality?: string | null;
+  commissionMunicipality?: string | null;
+  brigadeCode?: string | null;
+  systemName?: string | null;
+  itinerary?: string | null;
+  caseRef?: string | null;
+  workRef?: string | null;
+  ticketRef?: string | null;
+  consigna?: string | null;
+  attachmentRef?: string | null;
+  operationalNote?: string | null;
+  accountingNote?: string | null;
+  validationMessages?: unknown;
+  reviewedAt?: string | null;
+  importBatch?: { batchCode: string; originalFilename?: string; registeredAt?: string };
+  submittedBy?: { id: string; name: string; email: string };
+  reviewedBy?: { id: string; name: string; email: string } | null;
+  period?: { periodCode: string; year: number; month: number; status: string };
+  correctedFromEntry?: { id: string; entryCode: string; status: string } | null;
+  supersededByEntry?: { id: string; entryCode: string; status: string } | null;
+}
+
 export interface EntriesPage {
-  items: OvertimeEntry[];
+  items: OvertimeEntryRow[];
   total: number;
   page: number;
   totalPages: number;
@@ -313,4 +382,35 @@ export interface ClosePeriodResult {
   consolidationsCreated: number;
   approvedEntries: number;
   pendingEntriesExcluded: number;
+}
+
+export interface TsDayPrintRow {
+  workDate: string;
+  consigna: string;
+  commissionMunicipality: string;
+  startTime: string;
+  endTime: string;
+  hoursDisponibilidad: number;
+  hoursTsd: number;
+  hoursTsn: number;
+  hoursHedd: number;
+  hoursHend: number;
+  hoursRd: number;
+  hoursRn: number;
+}
+
+export interface TsDayPrintData {
+  formCode: string;
+  formVersion: number;
+  formTitle: string;
+  printedAt: string;
+  zoneName: string;
+  municipality: string;
+  monthLabel: string;
+  workDateLabel: string;
+  employeeFullName: string;
+  employeeDocumentNumber: string;
+  processName: string;
+  jobPositionName: string;
+  rows: TsDayPrintRow[];
 }

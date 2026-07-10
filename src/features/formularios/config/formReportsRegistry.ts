@@ -299,6 +299,98 @@ export const FORM_REPORTS: FormReportConfig[] = [
     },
   },
   {
+    id: "inspeccion-preoperacional-motocicletas",
+    slug: "inspeccion-preoperacional-motocicletas",
+    title: "Inspección Preoperacional Motocicletas",
+    subtitle: "UTEN_PREOPERACIONAL_MOTOCICLETAS_V3 — Revisión preoperacional de motocicletas (IOTEC Forms)",
+    icon: "Bike",
+    color: "#dc2626",
+    apiBasePath: "/api/inspeccion-preoperacional-motocicletas",
+    excelFileName: "inspeccion-preoperacional-motocicletas",
+    detailTitle: (r) => `Placa ${String(r.placa ?? "—")}`,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "placa", label: "Placa", placeholder: "ABC123" },
+      { type: "text", key: "cedulaConductor", label: "Cédula conductor", placeholder: "Número de cédula" },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "placa", label: "Placa" },
+      { key: "cedulaConductor", label: "Cédula" },
+      { key: "kilometrajeActual", label: "Kilometraje" },
+      { key: "presentaNovedad", label: "Novedad" },
+      { key: "submittedBy", label: "Técnico", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Encabezado",
+        keys: ["fecha", "placa", "cedulaConductor", "kilometrajeActual"],
+      },
+      {
+        title: "Sistema de alumbrado",
+        keys: [
+          "lucesFrenos", "lucesAltas", "lucesMedias", "lucesBajas",
+          "direccionalesDelanteros", "direccionalesTraseros", "observacionSistemaAlumbrado",
+        ],
+      },
+      {
+        title: "Frenos",
+        keys: [
+          "funcionamientoFrenoDelantero", "funcionamientoFrenoTrasero",
+          "estadoTensionCadena", "tensionGuayaEmbrague", "observacionFrenos",
+        ],
+      },
+      {
+        title: "Sistema de prevención y seguridad",
+        keys: [
+          "labradoRuedas", "estadoPresionRuedas", "kitHerramientas", "casco",
+          "chalecoReflectivo", "bocinaPito", "rodillerasCoderas", "gafasSeguridad",
+          "guantesSeguridad", "observacionSistemaSeguridad",
+        ],
+      },
+      {
+        title: "Estado técnico mecánico",
+        keys: [
+          "espejosRetrovisores", "kitArrastre", "indicadoresMedidores", "nivelAceite",
+          "controlFugasAceiteGasolina", "estadoAmortiguadores", "estadoGeneral",
+          "observacionEstadoTecnicoMecanico",
+        ],
+      },
+      {
+        title: "Documentos",
+        keys: [
+          "revisionTecnicoMecanica", "licenciaConduccion", "licenciaTransito", "soat",
+          "estadoPlaca", "portaCedula", "observacionDocumentos",
+        ],
+      },
+      {
+        title: "Cierre",
+        keys: [
+          "esPrimerDiaO15Mes", "presentaNovedad",
+          "startedAt", "completedAt", "syncedAt",
+        ],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto delantera derecha", key: "fotoDelanteraDerechaUrl" },
+      { label: "Foto trasera izquierda", key: "fotoTraseraIzquierdaUrl" },
+      { label: "Firma del conductor", key: "firmaConductorUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      if (filter.placa) params.append("placa", String(filter.placa).trim());
+      if (filter.cedulaConductor) {
+        params.append("cedulaConductor", String(filter.cedulaConductor).trim());
+      }
+      if (filter.page) params.append("page", String(filter.page));
+      params.append("pageSize", String(filter.pageSize ?? 50));
+      return params;
+    },
+  },
+  {
     id: "podas-diario",
     slug: "podas-diario",
     title: "Actividades Diarias — Podas",

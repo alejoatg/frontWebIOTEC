@@ -80,3 +80,15 @@
     font-size: 0.75rem;
   }
 }
+
+.fallbackNote {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #92400e;
+  flex: 1;
+  min-width: 0;
+
+  code {
+    font-size: 0.6875rem;
+  }
+}

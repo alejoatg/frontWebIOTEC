@@ -12,6 +12,7 @@ import {
 } from "../../../lib/formatters";
 import { Button } from "@/components/Button";
 import LocationMap from "@/components/LocationMap/LocationMap";
+import { parseCoordinate } from "../../../lib/parseCoordinate";
 import styles from "./FormDetailReport.module.scss";
 
 export interface FormDetailReportProps {
@@ -26,9 +27,14 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
 
-  const lat = config.locationField ? Number(record[config.locationField.latKey]) : NaN;
-  const lng = config.locationField ? Number(record[config.locationField.lngKey]) : NaN;
-  const hasLocation = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
+  const lat = config.locationField
+    ? parseCoordinate(record[config.locationField.latKey])
+    : null;
+  const lng = config.locationField
+    ? parseCoordinate(record[config.locationField.lngKey])
+    : null;
+  const hasLocation = lat != null && lng != null && !(lat === 0 && lng === 0);
+  const showLocationSection = Boolean(config.locationField);
 
   const handleExportPdf = async () => {
     if (!reportRef.current) return;
@@ -78,15 +84,26 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
           </div>
         </header>
 
-        {hasLocation ? (
+        {showLocationSection ? (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               {config.locationField?.label ?? "Ubicación GPS"}
             </h2>
-            <div data-pdf-ignore="true">
-              <LocationMap lat={lat} lng={lng} label={config.locationField?.label} />
-            </div>
-            <p className={styles.pdfNote}>Coordenadas: {lat}, {lng}</p>
+            {hasLocation && lat != null && lng != null ? (
+              <>
+                <div data-pdf-ignore="true">
+                  <LocationMap lat={lat} lng={lng} label={config.locationField?.label} />
+                </div>
+                <p className={styles.pdfNote}>
+                  Coordenadas: {lat}, {lng}
+                </p>
+              </>
+            ) : (
+              <p className={styles.noLocation}>
+                Este registro no tiene coordenadas GPS capturadas (lat/lng vacíos o
+                inválidos).
+              </p>
+            )}
           </section>
         ) : null}
 

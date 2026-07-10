@@ -86,6 +86,16 @@
   color: #9ca3af;
 }
 
+.noLocation {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #e5e7eb;
+}
+
 .evidenceGrid {
   display: flex;
   flex-wrap: wrap;

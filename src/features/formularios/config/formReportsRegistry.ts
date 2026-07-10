@@ -106,6 +106,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Fotos actividad", key: "fotosActividadTagged", tagged: true },
       { label: "Fotos actualización consigna", key: "consignaFotosActualizacionUrls", multiple: true },
     ],
+    locationField: { latKey: "ubicacionLat", lngKey: "ubicacionLng", label: "Ubicación de la estructura" },
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
@@ -196,6 +197,11 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
       { label: "Firma responsable inspección", key: "firmaResponsableInspeccionUrl" },
     ],
+    locationField: {
+      latKey: "ubicacionInspeccionLat",
+      lngKey: "ubicacionInspeccionLng",
+      label: "Ubicación de la inspección",
+    },
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
@@ -231,7 +237,10 @@ export const FORM_REPORTS: FormReportConfig[] = [
     detailSections: [
       {
         title: "Encabezado",
-        keys: ["organizacionVehiculo", "fecha", "placaVehiculo", "cedulaDiligencia", "kilometrajeActual"],
+        keys: [
+          "organizacionVehiculo", "fecha", "placaVehiculo", "cedulaDiligencia", "kilometrajeActual",
+          "ubicacionInspeccionLat", "ubicacionInspeccionLng",
+        ],
       },
       {
         title: "Documentos",
@@ -285,6 +294,11 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Lateral izquierda trasera", key: "fotoLateralIzquierdaTraseraUrl" },
       { label: "Firma del conductor", key: "firmaConductorUrl" },
     ],
+    locationField: {
+      latKey: "ubicacionInspeccionLat",
+      lngKey: "ubicacionInspeccionLng",
+      label: "Ubicación de la inspección",
+    },
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
@@ -325,7 +339,10 @@ export const FORM_REPORTS: FormReportConfig[] = [
     detailSections: [
       {
         title: "Encabezado",
-        keys: ["fecha", "placa", "cedulaConductor", "kilometrajeActual"],
+        keys: [
+          "fecha", "placa", "cedulaConductor", "kilometrajeActual",
+          "ubicacionInspeccionLat", "ubicacionInspeccionLng",
+        ],
       },
       {
         title: "Sistema de alumbrado",
@@ -377,6 +394,11 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Foto trasera izquierda", key: "fotoTraseraIzquierdaUrl" },
       { label: "Firma del conductor", key: "firmaConductorUrl" },
     ],
+    locationField: {
+      latKey: "ubicacionInspeccionLat",
+      lngKey: "ubicacionInspeccionLng",
+      label: "Ubicación de la inspección",
+    },
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));

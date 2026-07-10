@@ -11,6 +11,15 @@ const ICON_BY_TYPE: Record<string, FormularioCard["icon"]> = {
 
 export const FORMULARIOS_CARDS: FormularioCard[] = [
   {
+    id: "mapa-inspecciones",
+    title: "Mapa de inspecciones",
+    description:
+      "Ubicaciones GPS de formularios IOTEC en el mapa (filtros por fecha y tipo)",
+    icon: "Map",
+    path: "/dashboard/formularios/mapa",
+    color: "#0ea5e9",
+  },
+  {
     id: "preoperacionales-motos",
     title: "Preoperacionales Motos",
     description: "Inspección diaria de vehículos tipo motocicleta (ODK Central)",

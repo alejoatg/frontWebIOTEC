@@ -11,6 +11,7 @@ import {
   humanizeFieldKey,
 } from "../../../lib/formatters";
 import { Button } from "@/components/Button";
+import LocationMap from "@/components/LocationMap/LocationMap";
 import styles from "./FormDetailReport.module.scss";
 
 export interface FormDetailReportProps {
@@ -24,6 +25,10 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
 
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
+
+  const lat = config.locationField ? Number(record[config.locationField.latKey]) : NaN;
+  const lng = config.locationField ? Number(record[config.locationField.lngKey]) : NaN;
+  const hasLocation = Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
 
   const handleExportPdf = async () => {
     if (!reportRef.current) return;
@@ -72,6 +77,18 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
             </span>
           </div>
         </header>
+
+        {hasLocation ? (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              {config.locationField?.label ?? "Ubicación GPS"}
+            </h2>
+            <div data-pdf-ignore="true">
+              <LocationMap lat={lat} lng={lng} label={config.locationField?.label} />
+            </div>
+            <p className={styles.pdfNote}>Coordenadas: {lat}, {lng}</p>
+          </section>
+        ) : null}
 
         {config.detailSections.map((section) => {
           const visibleKeys = section.keys.filter((key) => {

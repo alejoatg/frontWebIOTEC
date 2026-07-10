@@ -11,6 +11,9 @@ export async function exportElementToPdf(
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
+    // Los iframes de Google Maps son cross-origin: html2canvas no puede
+    // capturarlos, así que se excluyen del PDF (quedaría un recuadro en blanco).
+    ignoreElements: (el) => el.getAttribute("data-pdf-ignore") === "true",
   });
   const imgData = canvas.toDataURL("image/png");
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });

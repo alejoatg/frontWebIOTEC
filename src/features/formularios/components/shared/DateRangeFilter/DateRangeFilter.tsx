@@ -17,6 +17,8 @@ export interface DateRangeFilterProps {
   errors?: Record<string, string>;
   disabled?: boolean;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  /** Días máximos del rango (default 60). */
+  maxDays?: number;
 }
 
 export function useDefaultMonthRange(): DateRangeValue {
@@ -29,6 +31,7 @@ export default function DateRangeFilter({
   errors = {},
   disabled = false,
   onKeyDown,
+  maxDays,
 }: DateRangeFilterProps) {
   const handleDesde = (fechaDesde: string) => {
     const next: DateRangeValue = { ...value, fechaDesde };
@@ -57,7 +60,11 @@ export default function DateRangeFilter({
         onChange={(e) => onChange({ ...value, fechaHasta: e.target.value })}
         onKeyDown={onKeyDown}
         min={value.fechaDesde}
-        max={value.fechaDesde ? getMaxEndDate(value.fechaDesde) : getTodayIsoDate()}
+        max={
+          value.fechaDesde
+            ? getMaxEndDate(value.fechaDesde, maxDays)
+            : getTodayIsoDate()
+        }
         error={errors.fechaFin ?? errors.fechaHasta}
         disabled={disabled || !value.fechaDesde}
       />

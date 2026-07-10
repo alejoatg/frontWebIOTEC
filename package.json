@@ -13,8 +13,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
+    "@vis.gl/react-google-maps": "^1.9.0",
     "axios": "^1.13.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",

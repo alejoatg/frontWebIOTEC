@@ -31,6 +31,13 @@ export interface FormReportEvidenceField {
   tagged?: boolean;
 }
 
+/** Campo de ubicación GPS (lat/lng decimales) capturado por el formulario. */
+export interface FormReportLocationField {
+  latKey: string;
+  lngKey: string;
+  label?: string;
+}
+
 export interface FormReportConfig {
   id: string;
   slug: string;
@@ -45,6 +52,8 @@ export interface FormReportConfig {
   listColumns: FormReportColumn[];
   detailSections: FormReportDetailSection[];
   evidenceFields: FormReportEvidenceField[];
+  /** Si el formulario captura GPS, permite mostrar mapa/Street View en el detalle. */
+  locationField?: FormReportLocationField;
   /** Transforma filas del API antes de mostrar/exportar */
   mapListRow?: (row: Record<string, unknown>) => Record<string, unknown>;
   /** Transforma detalle del API */

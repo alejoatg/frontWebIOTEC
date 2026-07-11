@@ -413,6 +413,119 @@ export const FORM_REPORTS: FormReportConfig[] = [
     },
   },
   {
+    id: "inspeccion-extintores",
+    slug: "inspeccion-extintores",
+    title: "Inspección de Extintores",
+    subtitle: "IGII-001-02 v02 — Inspección puntual de extintores sede/vehículo (IOTEC Forms)",
+    icon: "ClipboardCheck",
+    color: "#b91c1c",
+    apiBasePath: "/api/inspeccion-extintores",
+    excelFileName: "inspeccion-extintores",
+    detailTitle: (r) =>
+      String(r.referencia ?? r.placa ?? r.ubicacionSede ?? r.numeroIdentificacion ?? "Extintor"),
+    filterFields: [
+      { type: "dateRange" },
+      {
+        type: "select",
+        key: "zona",
+        label: "Zona",
+        options: [
+          { value: "Centro", label: "Centro" },
+          { value: "Sur", label: "Sur" },
+          { value: "Norte", label: "Norte" },
+        ],
+      },
+      {
+        type: "select",
+        key: "tipoUbicacion",
+        label: "Sede / Vehículo",
+        options: [
+          { value: "Extintor_de_sede", label: "Extintor de sede" },
+          { value: "Extintor_de_vehiculo", label: "Extintor de vehículo" },
+        ],
+      },
+      {
+        type: "select",
+        key: "tipoExtintor",
+        label: "Tipo extintor",
+        options: [
+          { value: "AGUA", label: "AGUA" },
+          { value: "ABC", label: "ABC" },
+          { value: "BC", label: "BC" },
+          { value: "CO2", label: "CO₂" },
+        ],
+      },
+      { type: "text", key: "sede", label: "Sede", placeholder: "Nombre de sede" },
+      { type: "text", key: "placa", label: "Placa", placeholder: "ABC123" },
+      {
+        type: "select",
+        key: "tieneNc",
+        label: "Con hallazgos NC",
+        options: [
+          { value: "true", label: "Sí (tiene NC)" },
+          { value: "false", label: "No (sin NC)" },
+        ],
+      },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "zona", label: "Zona" },
+      { key: "tipoUbicacion", label: "Tipo" },
+      { key: "sede", label: "Sede" },
+      { key: "placa", label: "Placa" },
+      { key: "tipoExtintor", label: "Extintor" },
+      { key: "fechaVencimiento", label: "Vencimiento", format: "shortDate" },
+      {
+        key: "tieneNc",
+        label: "NC",
+        accessor: (r) => (r.tieneNc === true ? "Sí" : "No"),
+      },
+      { key: "inspeccionadoPor", label: "Inspector" },
+      { key: "submittedBy", label: "Usuario", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Encabezado",
+        keys: [
+          "fecha", "proceso", "zona", "tipoUbicacion", "sede", "numeroIdentificacion",
+          "ubicacionSede", "placa", "tipoExtintor", "fechaVencimiento", "capacidad", "referencia",
+        ],
+      },
+      {
+        title: "Inspecciones puntuales",
+        keys: [
+          "extintorEnSuLugar", "completamenteCargado", "accesoLibre", "selloPinSeguridad",
+          "pasadorSeguridad", "cilindroEstado", "mangueraEstado", "empalmesManguera", "cornetaCo2",
+          "valvulaEstado", "lecturaPresion", "calcomaniasPlacas", "senalizado", "areaDemarcada",
+          "gabineteAltura", "tieneNc",
+        ],
+      },
+      {
+        title: "Cierre",
+        keys: ["observaciones", "inspeccionadoPor", "startedAt", "completedAt", "syncedAt"],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto del extintor", key: "fotoExtintorUrl" },
+      { label: "Firma del inspector", key: "firmaInspectorUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, [
+        "zona",
+        "tipoUbicacion",
+        "tipoExtintor",
+        "sede",
+        "placa",
+        "tieneNc",
+      ]);
+      return params;
+    },
+  },
+  {
     id: "podas-diario",
     slug: "podas-diario",
     title: "Actividades Diarias — Podas",

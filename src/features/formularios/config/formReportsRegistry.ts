@@ -526,6 +526,102 @@ export const FORM_REPORTS: FormReportConfig[] = [
     },
   },
   {
+    id: "pghs-002-02-inspeccion-escaleras",
+    slug: "inspeccion-escaleras",
+    title: "Inspección de Escaleras",
+    subtitle: "PGHS-002-02 v2 — Inspección de escaleras (IOTEC Forms)",
+    icon: "ClipboardCheck",
+    color: "#c2410c",
+    apiBasePath: "/api/inspeccion-escaleras",
+    excelFileName: "inspeccion-escaleras",
+    detailTitle: (r) => `Serie ${String(r.serie ?? "—")}`,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "serie", label: "Serie", placeholder: "Número de serie" },
+      { type: "text", key: "marca", label: "Marca", placeholder: "Marca de la escalera" },
+      {
+        type: "select",
+        key: "tieneNc",
+        label: "Con hallazgos NC",
+        options: [
+          { value: "true", label: "Sí (tiene NC)" },
+          { value: "false", label: "No (sin NC)" },
+        ],
+      },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "serie", label: "Serie" },
+      { key: "marca", label: "Marca" },
+      { key: "tipo", label: "Tipo" },
+      { key: "nombreTecnicoResponsable", label: "Técnico" },
+      {
+        key: "tieneNc",
+        label: "NC",
+        accessor: (r) => (r.tieneNc === true ? "Sí" : "No"),
+      },
+      { key: "submittedBy", label: "Usuario", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Encabezado",
+        keys: [
+          "fecha",
+          "nombreTecnicoResponsable",
+          "fechaPruebaRigidezDielectrica",
+          "fechaSeguimiento",
+          "marca",
+          "tipo",
+          "serie",
+        ],
+      },
+      {
+        title: "Revisión",
+        keys: [
+          "estadoLargueros",
+          "punterasLargueros",
+          "punterasPortaZapatos",
+          "zapatasDeslizantes",
+          "ganchosTrabaZapatos",
+          "conjuntoApoyaPoste",
+          "conjuntoRemachesAjuste",
+          "guiasSuperiores",
+          "peldanos",
+          "sogaIzajeRoldanas",
+          "limpiezaGeneral",
+          "pruebaFuncional",
+          "reparacionDefectuosa",
+          "nivelador",
+          "tieneNc",
+        ],
+      },
+      {
+        title: "Cierre",
+        keys: [
+          "observacionesGenerales",
+          "ccInspecciona",
+          "ccResponsableEquipo",
+          "startedAt",
+          "completedAt",
+          "syncedAt",
+        ],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto de la escalera", key: "fotoEscaleraUrl" },
+      { label: "Firma quien inspecciona", key: "firmaInspeccionaUrl" },
+      { label: "Firma responsable del equipo", key: "firmaResponsableEquipoUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, ["serie", "marca", "tieneNc"]);
+      return params;
+    },
+  },
+  {
     id: "podas-diario",
     slug: "podas-diario",
     title: "Actividades Diarias — Podas",

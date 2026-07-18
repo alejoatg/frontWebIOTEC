@@ -186,6 +186,68 @@ export function batchFileUrl(batchId: string) {
   return `${BASE}/batches/${batchId}/file`;
 }
 
+export async function fetchPdfPlantillaEmployees(
+  year: number,
+  month: number,
+  search?: string,
+) {
+  const q = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+  });
+  if (search?.trim()) q.set("search", search.trim());
+  return request<PdfPlantillaEmployee[]>(`/pdf-plantillas/employees?${q}`);
+}
+
+export async function fetchPdfPlantillaEligible(params: {
+  year: number;
+  month: number;
+  employeeId: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+    employeeId: params.employeeId,
+  });
+  if (params.dateFrom) q.set("dateFrom", params.dateFrom);
+  if (params.dateTo) q.set("dateTo", params.dateTo);
+  return request<PdfPlantillaEligible>(`/pdf-plantillas/eligible?${q}`);
+}
+
+export async function fetchPdfPlantillas(params: {
+  year: number;
+  month: number;
+  employeeId?: string;
+  documentNumber?: string;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.employeeId) q.set("employeeId", params.employeeId);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  return request<PdfPlantilla[]>(`/pdf-plantillas?${q}`);
+}
+
+export async function createPdfPlantilla(body: {
+  year: number;
+  month: number;
+  employeeId: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  return request<PdfPlantilla>(`/pdf-plantillas`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function pdfPlantillaFileUrl(id: string) {
+  return `${BASE}/pdf-plantillas/${id}/pdf`;
+}
+
 export async function downloadAuthenticatedFile(url: string, filename: string) {
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) throw new Error("No se pudo descargar el archivo");
@@ -442,4 +504,36 @@ export interface TsDayPrintData {
   processName: string;
   jobPositionName: string;
   rows: TsDayPrintRow[];
+}
+
+export interface PdfPlantillaEmployee {
+  employeeId: string;
+  documentNumber: string;
+  fullName: string;
+  entryCount: number;
+}
+
+export interface PdfPlantilla {
+  id: string;
+  periodId: string;
+  employeeId: string;
+  employeeDocumentNumber: string;
+  employeeFullName: string;
+  plantillaNumber: number;
+  plantillaCode: string;
+  dateFrom: string | null;
+  dateTo: string | null;
+  entryCount: number;
+  generatedAt: string;
+  generatedBy: { id: string; name: string; email: string };
+  period: { periodCode: string; year: number; month: number; status: string };
+}
+
+export interface PdfPlantillaEligible {
+  period: { id: string; periodCode: string; year: number; month: number };
+  employee: { id: string; documentNumber: string; fullName: string };
+  dateFrom: string | null;
+  dateTo: string | null;
+  items: OvertimeEntryRow[];
+  total: number;
 }

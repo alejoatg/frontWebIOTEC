@@ -600,7 +600,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
         title: "Cierre",
         keys: [
           "observacionesGenerales",
-          "ccInspecciona",
+          "inspeccionadoPor",
           "ccResponsableEquipo",
           "startedAt",
           "completedAt",
@@ -618,6 +618,155 @@ export const FORM_REPORTS: FormReportConfig[] = [
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
       if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
       appendOptional(params, filter, ["serie", "marca", "tieneNc"]);
+      return params;
+    },
+  },
+  {
+    id: "pghs-003-03-inspeccion-camioneta-moto",
+    slug: "inspeccion-camioneta-moto",
+    title: "Inspección Camioneta y Motocicleta",
+    subtitle: "PGHS-003-03 v01 — Formato único de inspección (IOTEC Forms)",
+    icon: "Truck",
+    color: "#9a3412",
+    apiBasePath: "/api/inspeccion-camioneta-moto",
+    excelFileName: "inspeccion-camioneta-moto",
+    detailTitle: (r) => `Placa ${String(r.placa ?? "—")}`,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "placa", label: "Placa", placeholder: "ABC123" },
+      {
+        type: "select",
+        key: "tipoVehiculo",
+        label: "Tipo vehículo",
+        options: [
+          { value: "Camioneta", label: "Camioneta" },
+          { value: "Motocicleta", label: "Motocicleta" },
+        ],
+      },
+      {
+        type: "select",
+        key: "tieneNc",
+        label: "Con hallazgos NC",
+        options: [
+          { value: "true", label: "Sí (M / NP / No)" },
+          { value: "false", label: "No" },
+        ],
+      },
+      {
+        type: "select",
+        key: "tieneCritico",
+        label: "Ítems críticos",
+        options: [
+          { value: "true", label: "Sí (ítems *)" },
+          { value: "false", label: "No" },
+        ],
+      },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "placa", label: "Placa" },
+      { key: "tipoVehiculo", label: "Tipo" },
+      { key: "modelo", label: "Modelo" },
+      { key: "nombreConductor", label: "Conductor" },
+      {
+        key: "tieneNc",
+        label: "NC",
+        accessor: (r) => (r.tieneNc === true ? "Sí" : "No"),
+      },
+      {
+        key: "tieneCritico",
+        label: "Crítico",
+        accessor: (r) => (r.tieneCritico === true ? "Sí" : "No"),
+      },
+      { key: "inspeccionadoPor", label: "Inspector" },
+      { key: "submittedBy", label: "Usuario", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Encabezado",
+        keys: [
+          "fecha", "tipoVehiculo", "placa", "modelo", "tipoServicio", "proceso",
+          "fechaSeguimiento", "nombreConductor", "cedulaConductor", "kilometraje",
+        ],
+      },
+      {
+        title: "Sistema de alumbrado",
+        keys: [
+          "lucesFrenos", "direccionalesTraseras", "lucesAlarmaReversa", "farolasAltas",
+          "farolasMedias", "lucesEstacionamiento", "direccionalesDelanteras", "observacionesAlumbrado",
+        ],
+      },
+      {
+        title: "Sistema de frenos",
+        keys: [
+          "funcionamientoFrenoEmergencia", "frenoDelantero", "pedalFreno",
+          "funcionamientoFreno", "observacionesFrenos",
+        ],
+      },
+      {
+        title: "Prevención y seguridad",
+        keys: [
+          "paletaPareSiga", "gato", "guantesSeguridad", "kitArrastre", "kitHerramientas",
+          "llantasEstado", "defensas", "botiquin", "embrague", "extintor10lb", "conos", "cruceta",
+          "cinturonesSeguridad", "bocina", "cunasTacos", "rodillerasCoderas", "cascoNtc4533",
+          "observacionesPrevencion",
+        ],
+      },
+      {
+        title: "Documentos",
+        keys: [
+          "extractoContrato", "formatoBotiquin", "certificadoTecnicomecanica",
+          "tecnicomecanicaVencimiento", "diligenciamientoPreoperacional", "licenciaConduccion",
+          "licenciaCual", "licenciaVencimiento", "polizaSeguroContractual", "polizaVencimiento",
+          "planillaSeguridadSocial", "soat", "soatVencimiento", "senalizacion767",
+          "tarjetaPropiedad", "tarjetaOperacion", "tarjetaOperacionVencimiento",
+          "restriccionesLicencia", "observacionesDocumentos",
+        ],
+      },
+      {
+        title: "Indicadores y medidores",
+        keys: [
+          "indicadoresMotor", "velocimetro", "gpsEquipo", "espejosRetrovisores",
+          "observacionesIndicadores",
+        ],
+      },
+      {
+        title: "Kit control de derrames",
+        keys: [
+          "panosOleofilicos", "maletinKitDerrames", "protocoloAtencion", "guantesNitrilo",
+          "amarrasPlasticas", "etiquetaResiduos", "escobaRecogedor", "cintaSenalizacion",
+          "materialAbsorbente", "bolsaRoja", "tapabocasIndustrial", "desengrasante",
+          "gafasSeguridad", "fichasSeguridad", "observacionesKitDerrames",
+        ],
+      },
+      {
+        title: "Revisión general y mantenimiento",
+        keys: [
+          "portaEscaleras", "portaPertiga", "sistemaDesempanante", "vidrios", "estadoPuertas",
+          "fugas", "estadoGeneral", "chalecoReflectivo", "carpa", "cajonPortaHerramientas",
+          "limpiaParabrisas", "observacionesRevisionGeneral", "cambioAceite", "cambioAceiteFechaKm",
+          "observacionesMantenimiento", "tieneNc", "tieneCritico",
+        ],
+      },
+      {
+        title: "Cierre",
+        keys: [
+          "observacionesGenerales", "inspeccionadoPor", "startedAt", "completedAt", "syncedAt",
+        ],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto inspección", key: "fotoInspeccionUrl" },
+      { label: "Foto adicional", key: "fotoAdicionalUrl" },
+      { label: "Firma inspector", key: "firmaInspectorUrl" },
+      { label: "Firma conductor", key: "firmaConductorUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, ["placa", "tipoVehiculo", "tieneNc", "tieneCritico"]);
       return params;
     },
   },

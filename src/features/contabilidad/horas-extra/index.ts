@@ -7,5 +7,6 @@ export { default as RegistroDetalleContainer } from "./components/RegistroDetall
 export { default as TsPgfiDayPrintView } from "./components/TsPgfiDayPrintView/TsPgfiDayPrintView";
 export { default as CorrectEntryModal } from "./components/CorrectEntryModal/CorrectEntryModal";
 export { default as PlanillasContainer } from "./components/PlanillasContainer/PlanillasContainer";
+export { default as PdfPlantillasContainer } from "./components/PdfPlantillasContainer/PdfPlantillasContainer";
 export { default as ParametrosContainer } from "./components/ParametrosContainer/ParametrosContainer";
 export { default as ConsolidadoContainer } from "./components/ConsolidadoContainer/ConsolidadoContainer";

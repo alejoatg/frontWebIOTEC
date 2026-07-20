@@ -8,5 +8,6 @@ export { default as TsPgfiDayPrintView } from "./components/TsPgfiDayPrintView/T
 export { default as CorrectEntryModal } from "./components/CorrectEntryModal/CorrectEntryModal";
 export { default as PlanillasContainer } from "./components/PlanillasContainer/PlanillasContainer";
 export { default as PdfPlantillasContainer } from "./components/PdfPlantillasContainer/PdfPlantillasContainer";
+export { default as TsPgfiPlantillaPrint } from "./components/TsPgfiPlantillaPrint/TsPgfiPlantillaPrint";
 export { default as ParametrosContainer } from "./components/ParametrosContainer/ParametrosContainer";
 export { default as ConsolidadoContainer } from "./components/ConsolidadoContainer/ConsolidadoContainer";

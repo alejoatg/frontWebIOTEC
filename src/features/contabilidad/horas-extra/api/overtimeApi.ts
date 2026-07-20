@@ -248,6 +248,15 @@ export function pdfPlantillaFileUrl(id: string) {
   return `${BASE}/pdf-plantillas/${id}/pdf`;
 }
 
+export function pdfPlantillaPrintPageUrl(id: string, autoPrint = false) {
+  const q = autoPrint ? "?print=1" : "";
+  return `/imprimir/horas-extra/plantilla/${id}${q}`;
+}
+
+export async function fetchPdfPlantillaPrintData(id: string) {
+  return request<TsPlantillaPrintData>(`/pdf-plantillas/${id}/print-data`);
+}
+
 export async function downloadAuthenticatedFile(url: string, filename: string) {
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) throw new Error("No se pudo descargar el archivo");
@@ -536,4 +545,43 @@ export interface PdfPlantillaEligible {
   dateTo: string | null;
   items: OvertimeEntryRow[];
   total: number;
+}
+
+export interface TsPlantillaPrintRow {
+  workDate: string;
+  consigna: string;
+  commissionMunicipality: string;
+  startTime: string;
+  endTime: string;
+  hoursDisponibilidad: number;
+  hoursTsd: number;
+  hoursTsn: number;
+  hoursHedd: number;
+  hoursHend: number;
+  hoursRd: number;
+  hoursRn: number;
+  amountTotal: number;
+}
+
+export interface TsPlantillaPrintData {
+  formCode: string;
+  formVersion: number;
+  formTitle: string;
+  printedAt: string;
+  plantillaId: string;
+  plantillaCode: string;
+  periodCode: string;
+  monthLabel: string;
+  dateFrom: string | null;
+  dateTo: string | null;
+  generatedAt: string;
+  zoneName: string;
+  municipality: string;
+  employeeFullName: string;
+  employeeDocumentNumber: string;
+  processName: string;
+  jobPositionName: string;
+  entryCount: number;
+  totalAmount: number;
+  rows: TsPlantillaPrintRow[];
 }

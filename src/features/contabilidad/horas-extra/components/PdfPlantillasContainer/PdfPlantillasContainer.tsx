@@ -4,11 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components";
 import {
   createPdfPlantilla,
-  downloadAuthenticatedFile,
   fetchPdfPlantillaEligible,
   fetchPdfPlantillaEmployees,
   fetchPdfPlantillas,
-  pdfPlantillaFileUrl,
+  pdfPlantillaPrintPageUrl,
   type OvertimeEntryRow,
   type PdfPlantilla,
   type PdfPlantillaEmployee,
@@ -141,14 +140,12 @@ export default function PdfPlantillasContainer() {
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
       });
-      const genDate = created.generatedAt.slice(0, 10);
-      const filename = `${created.employeeDocumentNumber}_${created.period.periodCode}_${genDate}.pdf`;
-      await downloadAuthenticatedFile(pdfPlantillaFileUrl(created.id), filename);
       setSuccess(`Planilla ${created.plantillaCode} generada (${created.entryCount} registros)`);
       setEligible([]);
       setEligibleMeta(null);
       await loadHistory();
       await loadEmployees();
+      window.open(pdfPlantillaPrintPageUrl(created.id, true), "_blank", "noopener,noreferrer");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar PDF");
     } finally {
@@ -156,15 +153,9 @@ export default function PdfPlantillasContainer() {
     }
   }
 
-  async function handleRedownload(p: PdfPlantilla) {
+  function handleRedownload(p: PdfPlantilla) {
     setError(null);
-    try {
-      const genDate = p.generatedAt.slice(0, 10);
-      const filename = `${p.employeeDocumentNumber}_${p.period.periodCode}_${genDate}.pdf`;
-      await downloadAuthenticatedFile(pdfPlantillaFileUrl(p.id), filename);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al descargar PDF");
-    }
+    window.open(pdfPlantillaPrintPageUrl(p.id, true), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -235,7 +226,7 @@ export default function PdfPlantillasContainer() {
             onClick={handleGenerate}
             disabled={generating || eligible.length === 0}
           >
-            {generating ? "Generando…" : "Generar PDF"}
+            {generating ? "Generando…" : "Generar e imprimir"}
           </Button>
         </div>
       </div>
@@ -334,7 +325,7 @@ export default function PdfPlantillasContainer() {
                           size="sm"
                           onClick={() => handleRedownload(p)}
                         >
-                          Descargar
+                          Imprimir / PDF
                         </Button>
                       </td>
                     </tr>

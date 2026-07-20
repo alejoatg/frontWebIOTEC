@@ -1,10 +1,25 @@
 @media print {
   @page {
     size: letter landscape;
-    margin: 0.25in;
+    /* top | right | bottom | left — izq. extra para grapado (patrón vale) */
+    margin: 0.35in 0.35in 0.35in 0.55in;
   }
 
   body {
     background: #fff !important;
+  }
+
+  /* Solo el portal de planilla (mismo patrón que #vale-print-portal) */
+  body:has(#ts-plantilla-print-portal) > *:not(#ts-plantilla-print-portal) {
+    display: none !important;
+  }
+
+  #ts-plantilla-print-portal {
+    display: block !important;
+  }
+
+  .ts-print-toolbar,
+  .no-print {
+    display: none !important;
   }
 }

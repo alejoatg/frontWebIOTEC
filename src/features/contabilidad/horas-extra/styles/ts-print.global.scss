@@ -1,8 +1,8 @@
 @media print {
   @page {
-    /* Carta (Letter) horizontal */
-    size: letter landscape;
-    margin: 0.4in 0.4in 0.4in 0.55in;
+    /* A4 vertical (retrato) — planillas horas extra */
+    size: A4 portrait;
+    margin: 12mm 10mm 12mm 12mm;
   }
 
   body {
@@ -29,7 +29,8 @@
 @media screen {
   #ts-plantilla-print-portal,
   #ts-batch-print-portal {
-    width: 11in;
+    /* Vista previa ~ hoja A4 vertical */
+    width: 210mm;
     max-width: 100%;
   }
 }

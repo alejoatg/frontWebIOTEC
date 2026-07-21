@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
 import {
@@ -139,8 +139,51 @@ export default function DigitarContainer() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+  const topSpacerRef = useRef<HTMLDivElement>(null);
+  const syncingScroll = useRef(false);
 
   const bounds = useMemo(() => periodBounds(year, month), [year, month]);
+
+  const syncTopSpacerWidth = useCallback(() => {
+    const wrap = gridWrapRef.current;
+    const spacer = topSpacerRef.current;
+    if (!wrap || !spacer) return;
+    const table = wrap.querySelector("table");
+    spacer.style.width = `${table?.scrollWidth ?? wrap.scrollWidth}px`;
+  }, []);
+
+  useEffect(() => {
+    syncTopSpacerWidth();
+    const wrap = gridWrapRef.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver(() => syncTopSpacerWidth());
+    ro.observe(wrap);
+    const table = wrap.querySelector("table");
+    if (table) ro.observe(table);
+    return () => ro.disconnect();
+  }, [rows, syncTopSpacerWidth]);
+
+  function handleTopScroll() {
+    if (syncingScroll.current) return;
+    const top = topScrollRef.current;
+    const wrap = gridWrapRef.current;
+    if (!top || !wrap) return;
+    syncingScroll.current = true;
+    wrap.scrollLeft = top.scrollLeft;
+    syncingScroll.current = false;
+  }
+
+  function handleGridScroll() {
+    if (syncingScroll.current) return;
+    const top = topScrollRef.current;
+    const wrap = gridWrapRef.current;
+    if (!top || !wrap) return;
+    syncingScroll.current = true;
+    top.scrollLeft = wrap.scrollLeft;
+    syncingScroll.current = false;
+  }
 
   const updateRow = useCallback((localId: string, patch: Partial<DigitarRow>) => {
     setRows((prev) =>
@@ -364,7 +407,19 @@ export default function DigitarContainer() {
         </div>
       )}
 
-      <div className={styles.gridWrap}>
+      <div
+        className={styles.topScroll}
+        ref={topScrollRef}
+        onScroll={handleTopScroll}
+        aria-hidden
+      >
+        <div className={styles.topScrollSpacer} ref={topSpacerRef} />
+      </div>
+      <div
+        className={styles.gridWrap}
+        ref={gridWrapRef}
+        onScroll={handleGridScroll}
+      >
         <table className={styles.grid}>
           <thead>
             <tr>

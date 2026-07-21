@@ -21,12 +21,28 @@
 
 .gridWrap {
   overflow: auto;
-  height: 800px;
-  min-height: 800px;
-  max-height: 800px;
+  height: 400px;
+  min-height: 400px;
+  max-height: 400px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   background: #fff;
+}
+
+.topScroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 14px;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: #f8fafc;
+}
+
+.topScrollSpacer {
+  height: 1px;
+  pointer-events: none;
 }
 
 .grid {

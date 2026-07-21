@@ -148,7 +148,7 @@ const PRINT_CSS = `
 @media screen {
   #${PORTAL_ID} {
     display: block;
-    max-width: 11in;
+    max-width: 210mm;
     margin: 16px auto;
     border: 1px dashed #ccc;
     padding: 12px;

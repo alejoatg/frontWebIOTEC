@@ -1,25 +1,35 @@
 @media print {
   @page {
+    /* Carta (Letter) horizontal */
     size: letter landscape;
-    /* top | right | bottom | left — izq. extra para grapado (patrón vale) */
-    margin: 0.35in 0.35in 0.35in 0.55in;
+    margin: 0.4in 0.4in 0.4in 0.55in;
   }
 
   body {
     background: #fff !important;
   }
 
-  /* Solo el portal de planilla (mismo patrón que #vale-print-portal) */
-  body:has(#ts-plantilla-print-portal) > *:not(#ts-plantilla-print-portal) {
+  body:has(#ts-plantilla-print-portal) > *:not(#ts-plantilla-print-portal),
+  body:has(#ts-batch-print-portal) > *:not(#ts-batch-print-portal) {
     display: none !important;
   }
 
-  #ts-plantilla-print-portal {
+  #ts-plantilla-print-portal,
+  #ts-batch-print-portal {
     display: block !important;
+    width: 100%;
   }
 
   .ts-print-toolbar,
   .no-print {
     display: none !important;
+  }
+}
+
+@media screen {
+  #ts-plantilla-print-portal,
+  #ts-batch-print-portal {
+    width: 11in;
+    max-width: 100%;
   }
 }

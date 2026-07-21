@@ -48,6 +48,7 @@ export default function PlanillasContainer() {
             <thead>
               <tr>
                 <th>Código</th>
+                <th>Origen</th>
                 <th>Archivo</th>
                 <th>Filas</th>
                 <th>Subido por</th>
@@ -58,30 +59,35 @@ export default function PlanillasContainer() {
             <tbody>
               {batches.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>Sin planillas en este periodo</td>
+                  <td colSpan={7}>Sin planillas en este periodo</td>
                 </tr>
               ) : (
                 batches.map((b) => (
                   <tr key={b.id}>
                     <td>{b.batchCode}</td>
-                    <td>{b.originalFilename}</td>
+                    <td>{b.source === "MANUAL" ? "Digitado" : "Excel"}</td>
+                    <td>{b.originalFilename ?? "—"}</td>
                     <td>{b.rowCount}</td>
                     <td>{b.uploadedBy.name}</td>
                     <td>{new Date(b.registeredAt).toLocaleString("es-CO")}</td>
                     <td>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          downloadAuthenticatedFile(
-                            batchFileUrl(b.id),
-                            b.originalFilename,
-                          )
-                        }
-                      >
-                        Descargar
-                      </Button>
+                      {b.source === "MANUAL" ? (
+                        <span>—</span>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            downloadAuthenticatedFile(
+                              batchFileUrl(b.id),
+                              b.originalFilename ?? "planilla.xlsx",
+                            )
+                          }
+                        >
+                          Descargar
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))

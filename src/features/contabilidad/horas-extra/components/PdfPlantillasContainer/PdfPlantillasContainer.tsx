@@ -15,6 +15,7 @@ import {
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
+import { formatClockTime } from "../../lib/timeFormat";
 
 function fmtMoney(n: number | undefined) {
   return (n ?? 0).toLocaleString("es-CO", {
@@ -269,8 +270,8 @@ export default function PdfPlantillasContainer() {
                     <td>{row.entryCode}</td>
                     <td>{fmtDate(row.workDate)}</td>
                     <td>{row.consigna ?? "—"}</td>
-                    <td>{row.startTime ?? "—"}</td>
-                    <td>{row.endTime ?? "—"}</td>
+                    <td>{formatClockTime(row.startTime) || "—"}</td>
+                    <td>{formatClockTime(row.endTime) || "—"}</td>
                     <td>{fmtMoney(row.amountTotal)}</td>
                     <td>{row.status}</td>
                   </tr>

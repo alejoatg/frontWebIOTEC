@@ -163,12 +163,12 @@ export default function TsPgfiDayPrintView({ data, onClose }: TsPgfiDayPrintView
               <th>
                 INICIO
                 <br />
-                (Hora Militar)
+                (HH:mm)
               </th>
               <th>
                 FINAL
                 <br />
-                (Hora Militar)
+                (HH:mm)
               </th>
             </tr>
           </thead>

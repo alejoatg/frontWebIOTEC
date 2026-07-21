@@ -9,6 +9,7 @@ import {
   registerImport,
   type ImportPreview,
 } from "../../api/overtimeApi";
+import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 import PeriodSelector from "../../components/PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 
@@ -21,6 +22,7 @@ export default function CargaContainer() {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
+  const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
 
   async function handlePreview() {
     if (!file) {
@@ -62,6 +64,7 @@ export default function CargaContainer() {
       });
       setPreview(null);
       setFile(null);
+      setSuccessBatchId(result.batchId);
     } catch (e) {
       setMessage({ type: "error", text: e instanceof Error ? e.message : "Error al registrar" });
     } finally {
@@ -180,6 +183,13 @@ export default function CargaContainer() {
             </table>
           </div>
         </>
+      )}
+
+      {successBatchId && (
+        <BatchRegisterSuccessModal
+          batchId={successBatchId}
+          onClose={() => setSuccessBatchId(null)}
+        />
       )}
     </div>
   );

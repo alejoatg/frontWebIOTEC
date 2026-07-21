@@ -1,4 +1,5 @@
 import type { TsDayPrintData, TsDayPrintRow } from "../api/overtimeApi";
+import { formatClockTime } from "./timeFormat";
 
 function fmtHours(n: number): string {
   if (!n) return "";
@@ -23,7 +24,11 @@ function emptyRows(count: number): TsDayPrintRow[] {
 }
 
 export function buildPrintRows(data: TsDayPrintData, minRows = 8): TsDayPrintRow[] {
-  const rows = [...data.rows];
+  const rows = data.rows.map((row) => ({
+    ...row,
+    startTime: formatClockTime(row.startTime),
+    endTime: formatClockTime(row.endTime),
+  }));
   while (rows.length < minRows) rows.push(...emptyRows(1));
   return rows;
 }
@@ -32,4 +37,4 @@ export function formatPrintDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-CO");
 }
 
-export { fmtHours };
+export { fmtHours, formatClockTime };

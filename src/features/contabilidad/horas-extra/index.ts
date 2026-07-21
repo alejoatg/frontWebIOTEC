@@ -1,6 +1,8 @@
 export { default as HorasExtraNav } from "./components/HorasExtraNav/HorasExtraNav";
 export { default as ResumenContainer } from "./components/ResumenContainer/ResumenContainer";
 export { default as CargaContainer } from "./components/CargaContainer/CargaContainer";
+export { default as DigitarContainer } from "./components/DigitarContainer/DigitarContainer";
+export { default as BatchRegisterSuccessModal } from "./components/BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 export { default as RegistrosContainer } from "./components/RegistrosContainer/RegistrosContainer";
 export { default as RegistrosPlanillaContainer } from "./components/RegistrosPlanillaContainer/RegistrosPlanillaContainer";
 export { default as RegistroDetalleContainer } from "./components/RegistroDetalleContainer/RegistroDetalleContainer";

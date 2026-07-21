@@ -45,6 +45,22 @@ export async function registerImport(year: number, month: number, file: File) {
   return request<ImportRegisterResult>(`/imports/register`, { method: "POST", body: fd });
 }
 
+export async function lookupManualEmployee(documentNumber: string) {
+  const q = new URLSearchParams({ documentNumber });
+  return request<ManualEmployeeLookup>(`/manual/lookup?${q}`);
+}
+
+export async function registerManualEntries(body: {
+  year: number;
+  month: number;
+  rows: ManualEntryPayload[];
+}) {
+  return request<ImportRegisterResult>(`/manual/register`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchPeriods() {
   return request<OvertimePeriod[]>("/periods");
 }
@@ -186,6 +202,15 @@ export function batchFileUrl(batchId: string) {
   return `${BASE}/batches/${batchId}/file`;
 }
 
+export async function fetchBatchPrintData(batchId: string) {
+  return request<BatchRegisterPrintData>(`/batches/${batchId}/print-data`);
+}
+
+export function batchRegisterPrintPageUrl(batchId: string, autoPrint = false) {
+  const q = autoPrint ? "?print=1" : "";
+  return `/imprimir/horas-extra/carga/${batchId}${q}`;
+}
+
 export async function fetchPdfPlantillaEmployees(
   year: number,
   month: number,
@@ -306,13 +331,90 @@ export interface ImportRegisterResult {
   entryCount: number;
 }
 
+export interface BatchRegisterPrintRow {
+  entryCode: string;
+  employeeDocumentNumber: string;
+  employeeFullName: string;
+  workDate: string;
+  startTime: string;
+  endTime: string;
+  hoursRd: number;
+  hoursRn: number;
+  hoursTsd: number;
+  hoursTsn: number;
+  hoursHedd: number;
+  hoursHend: number;
+  hoursDisponibilidad: number;
+  amountTotal: number;
+  consigna: string;
+  commissionMunicipality: string;
+  zoneName: string;
+  processName: string;
+  status: string;
+}
+
+export interface BatchRegisterPrintData {
+  formTitle: string;
+  printedAt: string;
+  batchId: string;
+  batchCode: string;
+  source: "EXCEL" | "MANUAL";
+  sourceLabel: string;
+  originalFilename: string | null;
+  registeredAt: string;
+  periodCode: string;
+  registeredBy: string;
+  entryCount: number;
+  totalAmount: number;
+  rows: BatchRegisterPrintRow[];
+}
+
 export interface OvertimeBatch {
   id: string;
   batchCode: string;
-  originalFilename: string;
+  source?: "EXCEL" | "MANUAL";
+  originalFilename: string | null;
   registeredAt: string;
   rowCount: number;
   uploadedBy: { name: string; email: string };
+}
+
+export interface ManualEmployeeLookup {
+  found: boolean;
+  documentNumber: string;
+  employeeId?: string;
+  fullName?: string;
+  isActive?: boolean;
+  jobTitle?: string | null;
+  processName?: string | null;
+  zoneName?: string | null;
+  monthlySalary?: number | null;
+  payrollFactor?: number | null;
+}
+
+export interface ManualEntryPayload {
+  documentNumber: string;
+  workDate: string;
+  startTime: string;
+  endTime: string;
+  hoursRd: number;
+  hoursRn: number;
+  hoursTsd: number;
+  hoursTsn: number;
+  hoursHedd: number;
+  hoursHend: number;
+  hoursDisponibilidad: number;
+  baseMunicipality?: string;
+  commissionMunicipality?: string;
+  brigadeCode?: string;
+  systemName?: string;
+  itinerary?: string;
+  caseRef?: string;
+  workRef?: string;
+  ticketRef?: string;
+  consigna?: string;
+  attachmentRef?: string;
+  operationalNote?: string;
 }
 
 export interface OvertimeEntry {

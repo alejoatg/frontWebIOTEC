@@ -1,0 +1,149 @@
+.hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.count {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.gridWrap {
+  overflow: auto;
+  height: 800px;
+  min-height: 800px;
+  max-height: 800px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  min-width: 100%;
+}
+
+.grid th,
+.grid td {
+  padding: 0.3rem 0.35rem;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.grid th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stickyActions {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #f8fafc;
+  min-width: 6.5rem;
+  box-shadow: 2px 0 6px rgba(15, 23, 42, 0.06);
+}
+
+.grid thead .stickyActions {
+  z-index: 4;
+  background: #f1f5f9;
+}
+
+.grid tbody .stickyActions {
+  background: #fff;
+}
+
+.rowActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+}
+
+.rowActions button {
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.rowActions button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.cellInput {
+  width: 6.5rem;
+  max-width: 10rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  background: #fff;
+}
+
+.cellInput.num {
+  width: 4.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ro {
+  color: #475569;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bad {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.rowWarn td {
+  background: #fffbeb;
+}
+
+.cellHint {
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.cellError {
+  font-size: 0.65rem;
+  color: #b91c1c;
+  margin-top: 0.15rem;
+  max-width: 7rem;
+  white-space: normal;
+}

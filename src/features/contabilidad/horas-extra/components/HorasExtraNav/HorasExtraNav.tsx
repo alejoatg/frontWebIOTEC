@@ -7,6 +7,7 @@ import styles from "./HorasExtraNav.module.scss";
 const LINKS = [
   { href: "/dashboard/contabilidad/horas-extra", label: "Resumen", exact: true },
   { href: "/dashboard/contabilidad/horas-extra/cargar", label: "Cargar Excel" },
+  { href: "/dashboard/contabilidad/horas-extra/digitar", label: "Digitar" },
   { href: "/dashboard/contabilidad/horas-extra/registros", label: "Registros" },
   { href: "/dashboard/contabilidad/horas-extra/registros/planilla", label: "Vista planilla" },
   { href: "/dashboard/contabilidad/horas-extra/planillas", label: "Planillas" },

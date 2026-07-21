@@ -1,4 +1,5 @@
 import type { OvertimeEntryRow } from "../api/overtimeApi";
+import { formatClockTime } from "./timeFormat";
 
 export interface SpreadsheetColumn {
   id: string;
@@ -35,8 +36,8 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "jobPositionName", header: "CARGO", getValue: (e) => e.jobPositionName ?? "" },
   { id: "processName", header: "PROCESO", getValue: (e) => e.processName ?? "" },
   { id: "zoneName", header: "ZONA", getValue: (e) => e.zoneName ?? "" },
-  { id: "startTime", header: "HORA INICIO TS", getValue: (e) => e.startTime ?? "" },
-  { id: "endTime", header: "HORA FINAL TS", getValue: (e) => e.endTime ?? "" },
+  { id: "startTime", header: "HORA INICIO TS", getValue: (e) => formatClockTime(e.startTime) },
+  { id: "endTime", header: "HORA FINAL TS", getValue: (e) => formatClockTime(e.endTime) },
   { id: "hoursStartEndTotal", header: "Total Horas Inicio-Final TS", getValue: (e) => num(e.hoursStartEndTotal), align: "right" },
   { id: "hoursRd", header: "RD", getValue: (e) => num(e.hoursRd), align: "right" },
   { id: "hoursRn", header: "RN", getValue: (e) => num(e.hoursRn), align: "right" },
@@ -112,8 +113,8 @@ export const DETAIL_SECTIONS: DetailSection[] = [
     title: "Fecha y horario",
     fields: [
       { label: "Fecha trabajo", getValue: (e) => date(e.workDate) },
-      { label: "Hora inicio", getValue: (e) => e.startTime ?? "—" },
-      { label: "Hora fin", getValue: (e) => e.endTime ?? "—" },
+      { label: "Hora inicio", getValue: (e) => formatClockTime(e.startTime) || "—" },
+      { label: "Hora fin", getValue: (e) => formatClockTime(e.endTime) || "—" },
       { label: "Total inicio–fin", getValue: (e) => num(e.hoursStartEndTotal) || "—" },
     ],
   },

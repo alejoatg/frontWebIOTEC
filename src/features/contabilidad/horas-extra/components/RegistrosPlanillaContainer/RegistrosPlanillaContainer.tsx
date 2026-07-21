@@ -153,7 +153,13 @@ export default function RegistrosPlanillaContainer() {
     }
   }
 
-  const uniqueFiles = [...new Set(batches.map((b) => b.originalFilename))];
+  const uniqueFiles = [
+    ...new Set(
+      batches
+        .map((b) => b.originalFilename)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ];
 
   return (
     <div>

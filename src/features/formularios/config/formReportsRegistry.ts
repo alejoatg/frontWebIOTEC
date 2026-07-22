@@ -243,41 +243,63 @@ export const FORM_REPORTS: FormReportConfig[] = [
         ],
       },
       {
-        title: "Documentos",
+        title: "1. Documentos",
         keys: [
-          "revisionSoat", "revisionTecnicoMecanica", "revisionLicenciaConduccion",
-          "revisionTarjetaPropiedad", "revisionCedulaCiudadania", "observacionesRevisionDocumentos",
+          "revisionTarjetaOperacion", "revisionSoat", "revisionTecnicoMecanica",
+          "revisionPolizaContractual", "revisionPolizaExtracontractual", "revisionExtractoContrato",
+          "revisionLicenciaConduccion", "revisionTarjetaPropiedad", "revisionCedulaCiudadania",
+          "observacionesRevisionDocumentos",
         ],
       },
       {
-        title: "Niveles y batería",
+        title: "2. Niveles de líquidos",
         keys: [
           "revisionNivelAceiteMotor", "revisionNivelLiquidoFrenos", "revisionNivelRefrigeranteRadiador",
-          "revisionNivelAguaLimpiaBrisas", "revisionEstadoBornesCablesBateria", "observacionesNivelesLiquidos",
-          "observacionesBateria",
+          "revisionNivelAguaLimpiaBrisas", "revisionNivelAceiteHidraulico", "observacionesNivelesLiquidos",
         ],
       },
       {
-        title: "Carrocería y luces",
+        title: "3. Batería",
+        keys: ["revisionEstadoBornesCablesBateria", "observacionesBateria"],
+      },
+      {
+        title: "4. Estado general carrocería",
         keys: [
           "revisionEstadoLatoneriaPintura", "revisionPuertaBuenEstado", "revisionManijaPuertasVidrios",
           "revisionPlacaVehiculoInspeccion", "revisionEstadoVidrioParabrisas",
           "revisionEspejosLateralesRetrovisor", "revisionCinturonSeguridad", "revisionIndicadoresTableros",
-          "revisionEstadoTapiceria", "revisionAsientosApoyacabeza", "revisionPitoBocina",
-          "revisionLucesAlta", "revisionLucesMedias", "revisionLucesBaja", "revisionLucesEstacionarias",
-          "revisionLuzFrenoSenalTrasera", "revisionLucesInternas", "observacionesLuces",
-          "observacionesEstadoCarroceria", "observacionesComponentesInternos",
+          "revisionDistintivosEmblemas", "revisionEstadoTapiceria", "observacionesEstadoCarroceria",
         ],
       },
       {
-        title: "Llantas y equipo de carretera",
+        title: "5. Componentes internos",
         keys: [
-          "revisionLlantasDelanterasTraserasRepuesto", "revisionRinesPernos", "revisionExtintor10Lb",
-          "revisionBotiquinPrimerosAuxilios", "revisionGatoElevador", "revisionCruceta",
-          "revisionChalecoReflectivo", "revisionSenalesCarretera", "revisionTacosBloqueo",
-          "revisionLinterna", "revisionHerramientasBasicas", "revisionLlantaRepuesto",
-          "revisionAseoInternoExterno", "observacionesLlantas", "observacionesEquipoCarretera",
-          "otrosEquipoCarretera",
+          "revisionAsientosApoyacabeza", "revisionPitoBocina", "observacionesComponentesInternos",
+        ],
+      },
+      {
+        title: "6. Luces",
+        keys: [
+          "revisionLucesAlta", "revisionLucesMedias", "revisionLucesBaja", "revisionLucesEstacionarias",
+          "revisionLuzFrenoSenalTrasera", "revisionLucesInternas", "revisionAlarmaLuzRetroceso",
+          "observacionesLuces",
+        ],
+      },
+      {
+        title: "7. Llantas",
+        keys: [
+          "revisionLlantasDelanterasTraserasRepuesto", "revisionRinesPernos",
+          "revisionGatoElevador", "revisionCruceta", "observacionesLlantas",
+        ],
+      },
+      {
+        title: "8. Equipo de carreteras",
+        keys: [
+          "revisionExtintor10Lb", "revisionBotiquinPrimerosAuxilios", "revisionChalecoReflectivo",
+          "revisionSenalesCarretera", "revisionTacosBloqueo", "revisionLinterna",
+          "revisionHerramientasBasicas", "revisionLlantaRepuesto", "revisionAseoInternoExterno",
+          "revisionKitAntiderrames", "revisionCajonHerramientas", "revisionPortaPertigaMetalico",
+          "observacionesEquipoCarretera", "otrosEquipoCarretera",
         ],
       },
       {

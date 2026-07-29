@@ -915,8 +915,234 @@ export const FORM_REPORTS: FormReportConfig[] = [
       return params;
     },
   },
+  {
+    id: "igai-001-17-actividades-diarias-distribucion",
+    slug: "igai-actividades-diarias-distribucion",
+    title: "Actividades Diarias — Distribución",
+    subtitle: "IGAI-001-17 — Reporte de actividades diarias (Distribución)",
+    icon: "Zap",
+    color: "#ca8a04",
+    apiBasePath: "/api/igai-actividades-diarias-distribucion",
+    excelFileName: "igai-actividades-diarias-distribucion",
+    detailTitle: (r) => `Acta ${String(r.numeroActaActividad ?? "—")}`,
+    mapListRow: (row) => ({
+      ...row,
+      laboresResumen: formatIgaiLabores(row.labores),
+    }),
+    mapDetailRecord: (row) => ({
+      ...row,
+      laboresResumen: formatIgaiLabores(row.labores),
+    }),
+    filterFields: [
+      { type: "dateRange" },
+      {
+        type: "select",
+        key: "zona",
+        label: "Zona",
+        options: [
+          { value: "Centro", label: "Centro" },
+          { value: "Sur", label: "Sur" },
+          { value: "Norte", label: "Norte" },
+        ],
+      },
+      { type: "text", key: "municipio", label: "Municipio", placeholder: "Municipio" },
+      { type: "text", key: "numeroActaActividad", label: "N° acta", placeholder: "Acta de actividad" },
+      { type: "text", key: "circuito", label: "Circuito", placeholder: "Circuito" },
+      { type: "text", key: "placaVehiculo", label: "Placa", placeholder: "ABC123" },
+      {
+        type: "select",
+        key: "tipoActividad",
+        label: "Tipo actividad",
+        options: [
+          { value: "Distribucion", label: "Distribución" },
+          { value: "Comercial", label: "Comercial" },
+        ],
+      },
+    ],
+    listColumns: [
+      { key: "fechaReporteIncidencia", label: "Fecha", format: "shortDate" },
+      { key: "numeroActaActividad", label: "Acta" },
+      { key: "zona", label: "Zona" },
+      { key: "municipio", label: "Municipio" },
+      { key: "circuito", label: "Circuito" },
+      { key: "tipoActividad", label: "Tipo" },
+      { key: "laboresResumen", label: "Labores" },
+      { key: "tecnico1Nombre", label: "Técnico 1" },
+      { key: "submittedBy", label: "Usuario", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Ubicación y acta",
+        keys: [
+          "direccion", "numeroActaActividad", "zona", "municipio", "barrio", "vereda",
+          "cuentaProducto", "ruta", "nodosApoyos", "placaVehiculo",
+        ],
+      },
+      {
+        title: "Cuadrilla",
+        keys: ["tecnico1Nombre", "tecnico1Cc", "tecnico2Nombre", "tecnico2Cc"],
+      },
+      {
+        title: "Actividad y usuario",
+        keys: [
+          "tipoActividad", "horaReciboIncidencia", "usuarioNombre", "usuarioCedulaNit",
+          "usuarioTelefono", "trafo", "circuito", "area",
+        ],
+      },
+      {
+        title: "Tiempos y mantenimiento",
+        keys: [
+          "fechaReporteIncidencia", "fechaFin", "horaInicioJornada", "horaFinJornada",
+          "horaInicioDesplazamiento", "horaFinDesplazamiento", "horaInicioLabor", "horaFinLabor",
+          "tipoMantenimiento",
+        ],
+      },
+      {
+        title: "Labores",
+        keys: ["laboresResumen", "observaciones"],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto antes", key: "fotoAntesUrl" },
+      { label: "Foto durante", key: "fotoDuranteUrl" },
+      { label: "Foto después", key: "fotoDespuesUrl" },
+      { label: "Firma técnico", key: "firmaTecnicoUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, [
+        "zona",
+        "municipio",
+        "numeroActaActividad",
+        "circuito",
+        "placaVehiculo",
+        "tipoActividad",
+      ]);
+      return params;
+    },
+  },
+  {
+    id: "igai-002-12-acta-materiales-distribucion",
+    slug: "igai-acta-materiales-distribucion",
+    title: "Acta de Materiales — Distribución 13.2 kV",
+    subtitle: "IGAI-002-12 — Materiales instalados y/o retirados",
+    icon: "ClipboardCheck",
+    color: "#a16207",
+    apiBasePath: "/api/igai-acta-materiales-distribucion",
+    excelFileName: "igai-acta-materiales-distribucion",
+    detailTitle: (r) => `Acta ${String(r.numeroActaInstalacion ?? "—")}`,
+    mapListRow: (row) => ({
+      ...row,
+      materialesResumen: formatIgaiMateriales(row.materiales),
+    }),
+    mapDetailRecord: (row) => ({
+      ...row,
+      materialesResumen: formatIgaiMateriales(row.materiales),
+    }),
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "municipio", label: "Municipio", placeholder: "Municipio" },
+      {
+        type: "text",
+        key: "numeroActaInstalacion",
+        label: "N° acta instalación",
+        placeholder: "Acta instalación",
+      },
+      {
+        type: "text",
+        key: "numeroActaActividad",
+        label: "N° acta actividad",
+        placeholder: "Acta actividad",
+      },
+      { type: "text", key: "numeroTicket", label: "Ticket", placeholder: "N° ticket" },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "numeroActaInstalacion", label: "Acta instalación" },
+      { key: "municipio", label: "Municipio" },
+      { key: "numeroTicket", label: "Ticket" },
+      { key: "materialesResumen", label: "Materiales" },
+      { key: "tecnicoNombre", label: "Técnico" },
+      { key: "submittedBy", label: "Usuario", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Datos del acta",
+        keys: [
+          "numeroActaInstalacion", "fecha", "funcionarioJefeBrigada", "cod", "numeroActaActividad",
+          "numeroCaso", "numeroTicket", "numeroTrabajo", "numeroConsigna", "municipio",
+          "stUten", "saCeo", "nodosApoyos",
+        ],
+      },
+      {
+        title: "Materiales",
+        keys: ["materialesResumen"],
+      },
+      {
+        title: "Técnico",
+        keys: ["tecnicoNombre", "tecnicoCc"],
+      },
+    ],
+    evidenceFields: [
+      { label: "Firma técnico", key: "firmaTecnicoUrl" },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, [
+        "municipio",
+        "numeroActaInstalacion",
+        "numeroActaActividad",
+        "numeroTicket",
+      ]);
+      return params;
+    },
+  },
 ];
 
+function formatIgaiLabores(raw: unknown): string {
+  if (!Array.isArray(raw) || raw.length === 0) return "—";
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as { codigo?: string; cantidad?: number; label?: string };
+      if (!row.codigo) return null;
+      const name = row.label ? `${row.codigo} — ${row.label}` : row.codigo;
+      return `${name} × ${row.cantidad ?? "?"}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+function formatIgaiMateriales(raw: unknown): string {
+  if (!Array.isArray(raw) || raw.length === 0) return "—";
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as {
+        modo?: string;
+        codigoSap?: string;
+        descripcion?: string;
+        cantidadInstalada?: number;
+        cantidadRetirada?: number;
+      };
+      const name =
+        row.modo === "otro"
+          ? row.descripcion
+          : row.descripcion
+            ? `${row.codigoSap ?? ""} — ${row.descripcion}`
+            : row.codigoSap;
+      if (!name) return null;
+      return `${name} (Inst. ${row.cantidadInstalada ?? 0} / Ret. ${row.cantidadRetirada ?? 0})`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
 export function getFormReportBySlug(slug: string): FormReportConfig | undefined {
   return FORM_REPORTS.find((f) => f.slug === slug);
 }

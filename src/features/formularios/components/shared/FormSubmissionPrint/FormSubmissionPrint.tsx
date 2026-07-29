@@ -1,32 +1,29 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Button } from "@/components/Button";
+import { MediaImage } from "@/components/MediaImage";
 import type { FormReportConfig } from "../../../config/formReportTypes";
 import { collectEvidences } from "../../../lib/collectEvidences";
-import { MediaImage } from "@/components/MediaImage";
-import { exportElementToPdf } from "../../../lib/exportPdf";
 import {
   formatCellValue,
   formatDateTime,
   humanizeFieldKey,
 } from "../../../lib/formatters";
-import { Button } from "@/components/Button";
-import LocationMap from "@/components/LocationMap/LocationMap";
 import { parseCoordinate } from "../../../lib/parseCoordinate";
-import { formSubmissionPrintPageUrl } from "../../../lib/formSubmissionPrintUrl";
-import styles from "./FormDetailReport.module.scss";
+import styles from "./FormSubmissionPrint.module.scss";
 
-export interface FormDetailReportProps {
+export interface FormSubmissionPrintProps {
   config: FormReportConfig;
   record: Record<string, unknown>;
 }
 
-export default function FormDetailReport({ config, record }: FormDetailReportProps) {
-  const reportRef = useRef<HTMLDivElement>(null);
-  const [exportingPdf, setExportingPdf] = useState(false);
-
+export default function FormSubmissionPrint({
+  config,
+  record,
+}: FormSubmissionPrintProps) {
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
+  const subtitle = config.detailTitle(record);
 
   const lat = config.locationField
     ? parseCoordinate(record[config.locationField.latKey])
@@ -37,61 +34,68 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
   const hasLocation = lat != null && lng != null && !(lat === 0 && lng === 0);
   const showLocationSection = Boolean(config.locationField);
 
-  const handlePrint = () => {
-    const url = formSubmissionPrintPageUrl(
-      config.slug,
-      String(record.id),
-      true,
-    );
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const handleExportPdf = async () => {
-    if (!reportRef.current) return;
-    setExportingPdf(true);
-    try {
-      await exportElementToPdf(
-        reportRef.current,
-        `${config.excelFileName}-${String(record.id).slice(0, 8)}.pdf`,
-        config.title,
-      );
-    } finally {
-      setExportingPdf(false);
-    }
-  };
-
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.root}>
       <div className={styles.toolbar}>
-        <Button onClick={handlePrint}>Imprimir</Button>
-        <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
-          {exportingPdf ? "Generando PDF..." : "Exportar PDF"}
-        </Button>
+        <div className={styles.toolbarInfo}>
+          <strong>{config.title}</strong>
+          <span>{subtitle}</span>
+        </div>
+        <div className={styles.toolbarActions}>
+          <Button type="button" size="sm" onClick={() => window.print()}>
+            Imprimir / Guardar PDF
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => window.close()}
+          >
+            Cerrar
+          </Button>
+        </div>
       </div>
 
-      <div ref={reportRef} className={styles.report}>
-        <header className={styles.reportHeader}>
-          <h1 className={styles.reportTitle}>{config.title}</h1>
-          <p className={styles.reportSubtitle}>{config.detailTitle(record)}</p>
+      <article className={styles.sheet}>
+        <header className={styles.sheetHeader}>
+          <div className={styles.headerTop}>
+            <img
+              className={styles.logo}
+              src="/images/logo-uten-print.png"
+              alt="UTEN"
+            />
+            <div className={styles.orgBlock}>
+              <p className={styles.orgName}>
+                Unión de trabajadores de la industria energética nacional - UTEN{" "}
+                <span className={styles.nit}>· NIT: 900262482-5</span>
+              </p>
+            </div>
+          </div>
+
+          <h1 className={styles.formTitle}>{config.title}</h1>
+          <p className={styles.formSubtitle}>{subtitle}</p>
+
           <div className={styles.meta}>
-            <span>
-              <strong>Sincronizado:</strong> {formatDateTime(record.syncedAt as string)}
-            </span>
+            <div className={styles.metaItem}>
+              <strong>Sincronizado:</strong>
+              <span>{formatDateTime(record.syncedAt as string)}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <strong>Técnico:</strong>
+              <span>{tecnico}</span>
+            </div>
             {record.startedAt ? (
-              <span>
-                <strong>Inicio diligenciamiento:</strong>{" "}
-                {formatDateTime(record.startedAt as string)}
-              </span>
+              <div className={styles.metaItem}>
+                <strong>Inicio:</strong>
+                <span>{formatDateTime(record.startedAt as string)}</span>
+              </div>
             ) : null}
             {record.completedAt ? (
-              <span>
-                <strong>Fin diligenciamiento:</strong>{" "}
-                {formatDateTime(record.completedAt as string)}
-              </span>
+              <div className={styles.metaItem}>
+                <strong>Fin:</strong>
+                <span>{formatDateTime(record.completedAt as string)}</span>
+              </div>
             ) : null}
-            <span>
-              <strong>Técnico:</strong> {tecnico}
-            </span>
           </div>
         </header>
 
@@ -101,18 +105,13 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
               {config.locationField?.label ?? "Ubicación GPS"}
             </h2>
             {hasLocation && lat != null && lng != null ? (
-              <>
-                <div data-pdf-ignore="true">
-                  <LocationMap lat={lat} lng={lng} label={config.locationField?.label} />
-                </div>
-                <p className={styles.pdfNote}>
-                  Coordenadas: {lat}, {lng}
-                </p>
-              </>
+              <p className={styles.coords}>
+                Coordenadas: {lat}, {lng}
+              </p>
             ) : (
               <p className={styles.noLocation}>
-                Este registro no tiene coordenadas GPS capturadas (lat/lng vacíos o
-                inválidos).
+                Este registro no tiene coordenadas GPS capturadas (lat/lng vacíos
+                o inválidos).
               </p>
             )}
           </section>
@@ -141,10 +140,15 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
 
         {evidences.length > 0 ? (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Firmas y evidencias fotográficas</h2>
+            <h2 className={styles.sectionTitle}>
+              Firmas y evidencias fotográficas
+            </h2>
             <div className={styles.evidenceGrid}>
               {evidences.map((item) => (
-                <figure key={`${item.label}-${item.url}`} className={styles.evidenceItem}>
+                <figure
+                  key={`${item.label}-${item.url}`}
+                  className={styles.evidenceItem}
+                >
                   <figcaption>{item.label}</figcaption>
                   <MediaImage
                     src={item.url}
@@ -160,7 +164,7 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
             </div>
           </section>
         ) : null}
-      </div>
+      </article>
     </div>
   );
 }

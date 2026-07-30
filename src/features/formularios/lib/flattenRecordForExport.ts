@@ -1,6 +1,6 @@
 import type { FormReportConfig } from "../config/formReportTypes";
 import { humanizeFieldKey } from "./formatters";
-import { resolveMediaStreamUrl } from "@/lib/mediaUrl";
+import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
 
 export interface ExportColumn {
   key: string;
@@ -41,12 +41,13 @@ function linkLabel(fieldKey: string, index?: number): string {
   return index != null ? `${base} ${index + 1}` : base;
 }
 
-function toViewableUrl(url: string): string {
-  return resolveMediaStreamUrl(url);
+/** Vista amplia web (`/ver/foto`) — estable y usable desde Excel con sesión. */
+function toViewableUrl(url: string, label: string): string {
+  return mediaViewPageUrl(url, { label }) ?? url;
 }
 
 function formatUrlEntry(url: string, label: string): ExportCell {
-  const viewUrl = toViewableUrl(url);
+  const viewUrl = toViewableUrl(url, label);
   return { text: `${label}: ${viewUrl}`, link: viewUrl };
 }
 

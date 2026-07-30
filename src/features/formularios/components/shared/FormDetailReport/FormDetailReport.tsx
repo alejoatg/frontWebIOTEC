@@ -14,6 +14,8 @@ import { Button } from "@/components/Button";
 import LocationMap from "@/components/LocationMap/LocationMap";
 import { parseCoordinate } from "../../../lib/parseCoordinate";
 import { formSubmissionPrintPageUrl } from "../../../lib/formSubmissionPrintUrl";
+import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
+import { buildDetailSectionsForRecord } from "../../../lib/buildFormReportDisplay";
 import styles from "./FormDetailReport.module.scss";
 
 export interface FormDetailReportProps {
@@ -27,6 +29,7 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
 
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
+  const detailSections = buildDetailSectionsForRecord(config, record);
 
   const lat = config.locationField
     ? parseCoordinate(record[config.locationField.latKey])
@@ -118,45 +121,56 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
           </section>
         ) : null}
 
-        {config.detailSections.map((section) => {
-          const visibleKeys = section.keys.filter((key) => {
-            const value = record[key];
-            return value !== undefined && value !== null && value !== "";
-          });
-          if (visibleKeys.length === 0) return null;
-          return (
-            <section key={section.title} className={styles.section}>
-              <h2 className={styles.sectionTitle}>{section.title}</h2>
-              <dl className={styles.fieldList}>
-                {visibleKeys.map((key) => (
-                  <div key={key} className={styles.fieldRow}>
-                    <dt>{humanizeFieldKey(key)}</dt>
-                    <dd>{formatCellValue(record[key])}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          );
-        })}
+        {detailSections.map((section) => (
+          <section key={section.title} className={styles.section}>
+            <h2 className={styles.sectionTitle}>{section.title}</h2>
+            <dl className={styles.fieldList}>
+              {section.keys.map((key) => (
+                <div key={key} className={styles.fieldRow}>
+                  <dt>{humanizeFieldKey(key)}</dt>
+                  <dd>{formatCellValue(record[key])}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
 
         {evidences.length > 0 ? (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Firmas y evidencias fotográficas</h2>
             <div className={styles.evidenceGrid}>
-              {evidences.map((item) => (
-                <figure key={`${item.label}-${item.url}`} className={styles.evidenceItem}>
-                  <figcaption>{item.label}</figcaption>
-                  <MediaImage
-                    src={item.url}
-                    alt={item.label}
-                    className={
-                      item.label.toLowerCase().includes("firma")
-                        ? styles.signatureImg
-                        : styles.photoImg
-                    }
-                  />
-                </figure>
-              ))}
+              {evidences.map((item) => {
+                const viewUrl = mediaViewPageUrl(item.url, {
+                  label: item.label,
+                });
+                return (
+                  <figure
+                    key={`${item.label}-${item.url}`}
+                    className={styles.evidenceItem}
+                  >
+                    <figcaption>{item.label}</figcaption>
+                    <MediaImage
+                      src={item.url}
+                      alt={item.label}
+                      className={
+                        item.label.toLowerCase().includes("firma")
+                          ? styles.signatureImg
+                          : styles.photoImg
+                      }
+                    />
+                    {viewUrl ? (
+                      <a
+                        className={styles.evidenceLink}
+                        href={viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Ver original
+                      </a>
+                    ) : null}
+                  </figure>
+                );
+              })}
             </div>
           </section>
         ) : null}

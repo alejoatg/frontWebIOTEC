@@ -977,11 +977,12 @@ export const FORM_REPORTS: FormReportConfig[] = [
         keys: [
           "direccion", "numeroActaActividad", "zona", "municipio", "barrio", "vereda",
           "cuentaProducto", "ruta", "nodosApoyos", "placaVehiculo",
+          "ubicacionLat", "ubicacionLng",
         ],
       },
       {
         title: "Cuadrilla",
-        keys: ["tecnico1Nombre", "tecnico1Cc", "tecnico2Nombre", "tecnico2Cc"],
+        keys: ["tecnico1Nombre", "tecnico2Nombre"],
       },
       {
         title: "Actividad y usuario",
@@ -1009,6 +1010,11 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Foto después", key: "fotoDespuesUrl" },
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
     ],
+    locationField: {
+      latKey: "ubicacionLat",
+      lngKey: "ubicacionLng",
+      label: "Ubicación GPS de la actividad",
+    },
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
@@ -1084,7 +1090,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
       },
       {
         title: "Técnico",
-        keys: ["tecnicoNombre", "tecnicoCc"],
+        keys: ["tecnicoNombre"],
       },
     ],
     evidenceFields: [

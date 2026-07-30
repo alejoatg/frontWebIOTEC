@@ -10,6 +10,8 @@ import {
   humanizeFieldKey,
 } from "../../../lib/formatters";
 import { parseCoordinate } from "../../../lib/parseCoordinate";
+import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
+import { buildPrintDetailSections } from "../../../lib/buildFormReportDisplay";
 import styles from "./FormSubmissionPrint.module.scss";
 
 export interface FormSubmissionPrintProps {
@@ -24,6 +26,7 @@ export default function FormSubmissionPrint({
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
   const subtitle = config.detailTitle(record);
+  const detailSections = buildPrintDetailSections(config, record);
 
   const lat = config.locationField
     ? parseCoordinate(record[config.locationField.latKey])
@@ -117,50 +120,59 @@ export default function FormSubmissionPrint({
           </section>
         ) : null}
 
-        {config.detailSections.map((section) => {
-          const visibleKeys = section.keys.filter((key) => {
-            const value = record[key];
-            return value !== undefined && value !== null && value !== "";
-          });
-          if (visibleKeys.length === 0) return null;
-          return (
-            <section key={section.title} className={styles.section}>
-              <h2 className={styles.sectionTitle}>{section.title}</h2>
-              <dl className={styles.fieldList}>
-                {visibleKeys.map((key) => (
-                  <div key={key} className={styles.fieldRow}>
-                    <dt>{humanizeFieldKey(key)}</dt>
-                    <dd>{formatCellValue(record[key])}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          );
-        })}
+        {detailSections.map((section) => (
+          <section key={section.title} className={styles.section}>
+            <h2 className={styles.sectionTitle}>{section.title}</h2>
+            <dl className={styles.fieldList}>
+              {section.keys.map((key) => (
+                <div key={key} className={styles.fieldRow}>
+                  <dt>{humanizeFieldKey(key)}</dt>
+                  <dd>{formatCellValue(record[key])}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
 
         {evidences.length > 0 ? (
-          <section className={styles.section}>
+          <section className={styles.evidenceSection}>
             <h2 className={styles.sectionTitle}>
               Firmas y evidencias fotográficas
             </h2>
             <div className={styles.evidenceGrid}>
-              {evidences.map((item) => (
-                <figure
-                  key={`${item.label}-${item.url}`}
-                  className={styles.evidenceItem}
-                >
-                  <figcaption>{item.label}</figcaption>
-                  <MediaImage
-                    src={item.url}
-                    alt={item.label}
-                    className={
-                      item.label.toLowerCase().includes("firma")
-                        ? styles.signatureImg
-                        : styles.photoImg
-                    }
-                  />
-                </figure>
-              ))}
+              {evidences.map((item) => {
+                const viewUrl = mediaViewPageUrl(item.url, {
+                  label: item.label,
+                });
+                const isSignature = item.label.toLowerCase().includes("firma");
+                return (
+                  <figure
+                    key={`${item.label}-${item.url}`}
+                    className={`${styles.evidenceItem} ${
+                      isSignature ? styles.evidenceSignature : styles.evidencePhoto
+                    }`}
+                  >
+                    <figcaption>{item.label}</figcaption>
+                    <MediaImage
+                      src={item.url}
+                      alt={item.label}
+                      className={
+                        isSignature ? styles.signatureImg : styles.photoImg
+                      }
+                    />
+                    {viewUrl ? (
+                      <a
+                        className={styles.evidenceLink}
+                        href={viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Ver original
+                      </a>
+                    ) : null}
+                  </figure>
+                );
+              })}
             </div>
           </section>
         ) : null}

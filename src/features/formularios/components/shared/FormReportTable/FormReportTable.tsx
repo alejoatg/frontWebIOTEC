@@ -10,6 +10,7 @@ import {
   formatShortDate,
   formatTipoInspeccion,
 } from "../../../lib/formatters";
+import { buildListColumns } from "../../../lib/buildFormReportDisplay";
 import styles from "./FormReportTable.module.scss";
 
 export interface FormReportTableProps {
@@ -45,6 +46,8 @@ export default function FormReportTable({
   onPageChange,
   isLoading = false,
 }: FormReportTableProps) {
+  const columns = buildListColumns(config);
+
   if (!data) {
     return (
       <div className={styles.empty}>
@@ -69,13 +72,17 @@ export default function FormReportTable({
         Mostrando {(pagination.page - 1) * pagination.pageSize + 1} -{" "}
         {Math.min(pagination.page * pagination.pageSize, pagination.total)} de{" "}
         {pagination.total} registros
+        <span className={styles.columnHint}>
+          {" "}
+          · {columns.length} columnas de la plantilla
+        </span>
       </div>
 
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
-              {config.listColumns.map((col) => (
+              {columns.map((col) => (
                 <th key={col.key}>{col.label}</th>
               ))}
               <th></th>
@@ -84,7 +91,7 @@ export default function FormReportTable({
           <tbody>
             {data.data.map((row) => (
               <tr key={String(row.id)} className={styles.row}>
-                {config.listColumns.map((col) => (
+                {columns.map((col) => (
                   <td key={col.key}>{formatColumnValue(row, col)}</td>
                 ))}
                 <td>

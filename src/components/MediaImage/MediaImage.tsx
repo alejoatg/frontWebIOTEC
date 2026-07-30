@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { extractSubmissionKey, resolveMediaStreamUrl } from "@/lib/mediaUrl";
+import { API_URL } from "@/lib/api";
+import { extractSubmissionKey } from "@/lib/mediaUrl";
 import styles from "./MediaImage.module.scss";
 
 export interface MediaImageProps {
-  /** URL pública almacenada en BD (S3) o URL externa. */
+  /**
+   * URL http almacenada en BD (S3) o clave `submissions/...`
+   * (p. ej. vista `/ver/foto?key=...`).
+   */
   src: string;
   alt: string;
   className?: string;
@@ -28,13 +32,17 @@ export default function MediaImage({ src, alt, className }: MediaImageProps) {
       setFailed(false);
       setBlobUrl(null);
 
-      if (!src?.startsWith("http")) {
+      const isKey = src?.startsWith("submissions/") && !src.includes("..");
+      const isHttp = src?.startsWith("http");
+      if (!isKey && !isHttp) {
         setFailed(true);
         return;
       }
 
-      const key = extractSubmissionKey(src);
-      const fetchUrl = key ? resolveMediaStreamUrl(src) : src;
+      const key = isKey ? src : extractSubmissionKey(src);
+      const fetchUrl = key
+        ? `${API_URL}/api/files/stream?key=${encodeURIComponent(key)}`
+        : src;
 
       try {
         const res = await fetch(fetchUrl, {

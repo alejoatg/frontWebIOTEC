@@ -66,6 +66,7 @@ export default function AtuFormatoUnicoTable({
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.colDetalle}>Detalle</th>
               <th>Fecha</th>
               <th>Orden trabajo</th>
               <th>Brigada</th>
@@ -78,12 +79,19 @@ export default function AtuFormatoUnicoTable({
               <th>Estado est.</th>
               <th>Técnico</th>
               <th>Sincronizado</th>
-              <th></th>
             </tr>
           </thead>
           <tbody>
             {data.data.map((row) => (
               <tr key={row.id} className={styles.row}>
+                <td className={styles.colDetalle}>
+                  <Link
+                    href={`/dashboard/formularios/atu-formato-unico/${row.id}`}
+                    className={styles.linkDetalle}
+                  >
+                    Ver
+                  </Link>
+                </td>
                 <td className={styles.cellDate}>{formatShortDate(row.fecha)}</td>
                 <td>{row.ordenTrabajo || "—"}</td>
                 <td>{row.brigada?.replace("_", " ") ?? "—"}</td>
@@ -104,14 +112,6 @@ export default function AtuFormatoUnicoTable({
                 <td>{row.estadoEstructura ?? "—"}</td>
                 <td>{row.submittedBy?.name ?? "—"}</td>
                 <td className={styles.cellDate}>{formatDate(row.syncedAt)}</td>
-                <td>
-                  <Link
-                    href={`/dashboard/formularios/atu-formato-unico/${row.id}`}
-                    className={styles.linkDetalle}
-                  >
-                    Ver
-                  </Link>
-                </td>
               </tr>
             ))}
           </tbody>

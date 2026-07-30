@@ -51,6 +51,24 @@
   }
 }
 
+.colDetalle {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-bg-card, #ffffff);
+  box-shadow: 1px 0 0 var(--color-border, #e5e7eb);
+  white-space: nowrap;
+}
+
+thead .colDetalle {
+  z-index: 3;
+  background: var(--color-bg-subtle, #f9fafb);
+}
+
+.row:hover .colDetalle {
+  background: var(--color-bg-hover, #f9fafb);
+}
+
 .cellDate {
   font-variant-numeric: tabular-nums;
 }

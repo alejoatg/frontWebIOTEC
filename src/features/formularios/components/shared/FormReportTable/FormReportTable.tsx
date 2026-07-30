@@ -82,19 +82,16 @@ export default function FormReportTable({
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.colDetalle}>Detalle</th>
               {columns.map((col) => (
                 <th key={col.key}>{col.label}</th>
               ))}
-              <th></th>
             </tr>
           </thead>
           <tbody>
             {data.data.map((row) => (
               <tr key={String(row.id)} className={styles.row}>
-                {columns.map((col) => (
-                  <td key={col.key}>{formatColumnValue(row, col)}</td>
-                ))}
-                <td>
+                <td className={styles.colDetalle}>
                   <Link
                     href={`/dashboard/formularios/${config.slug}/${row.id}`}
                     className={styles.linkDetalle}
@@ -102,6 +99,9 @@ export default function FormReportTable({
                     Ver informe
                   </Link>
                 </td>
+                {columns.map((col) => (
+                  <td key={col.key}>{formatColumnValue(row, col)}</td>
+                ))}
               </tr>
             ))}
           </tbody>

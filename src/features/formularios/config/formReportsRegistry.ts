@@ -796,7 +796,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
     id: "podas-diario",
     slug: "podas-diario",
     title: "Actividades Diarias — Podas",
-    subtitle: "UTEN_PODAS_DIARIO_v3 — Registro diario del proceso de Podas (IOTEC Forms)",
+    subtitle: "UTEN_PODAS_DIARIO_v5 — Registro diario del proyecto de Podas (IOTEC Forms)",
     icon: "FileText",
     color: "#16a34a",
     apiBasePath: "/api/podas-diario",
@@ -847,6 +847,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
         title: "Georreferencia y cierre",
         keys: [
           "georreferenciacionX", "georreferenciacionY", "proximaIntervencionDias", "observaciones",
+          "novedades",
         ],
       },
     ],
@@ -864,6 +865,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { label: "Marcación especie", key: "marcacionEspecieUrl" },
       { label: "Foto ubicación GARMIN", key: "fotoUbicacionGpsUrl" },
       { label: "Firma técnico", key: "firmaTecnicoUrl" },
+      { label: "Fotos soporte novedades", key: "fotosSoporteNovedadesUrls", multiple: true },
     ],
     buildQueryParams: (filter) => {
       const params = new URLSearchParams();

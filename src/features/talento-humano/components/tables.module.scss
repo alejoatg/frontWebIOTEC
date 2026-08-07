@@ -1,0 +1,111 @@
+@use "@/styles/variables" as *;
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    background: $color-background-subtle;
+    white-space: nowrap;
+  }
+}
+
+.row:hover {
+  background: $color-neutral-50;
+}
+
+.name {
+  font-weight: $font-weight-medium;
+  color: $color-text;
+}
+
+.muted {
+  color: $color-text-muted;
+  font-size: $font-size-xs;
+}
+
+.doc {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+  }
+}
+
+.statusActive {
+  background: #d1fae5;
+  color: #065f46;
+
+  &::before {
+    background: #10b981;
+  }
+}
+
+.statusInactive {
+  background: $color-neutral-100;
+  color: $color-neutral-600;
+
+  &::before {
+    background: $color-neutral-400;
+  }
+}
+
+.empty {
+  padding: $spacing-12 $spacing-4;
+  text-align: center;
+  color: $color-text-muted;
+}
+
+.sectionTitle {
+  margin: 0 0 $spacing-3;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+.grid {
+  display: grid;
+  gap: $spacing-6;
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+}

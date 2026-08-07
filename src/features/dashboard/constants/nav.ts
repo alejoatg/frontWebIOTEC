@@ -9,6 +9,12 @@ export const DASHBOARD_NAV_ITEMS = [
     icon: "Clock",
     roles: ["CONTABILIDAD", "ADMIN", "SUPERVISOR", "CORDINADOR"],
   },
+  {
+    path: "/dashboard/talento-humano",
+    label: "Talento humano",
+    icon: "IdCard",
+    roles: ["TALENTO_HUMANO", "ADMIN", "CORDINADOR"],
+  },
   { path: "/dashboard/users", label: "Usuarios", icon: "Users" },
 ] as const;
 

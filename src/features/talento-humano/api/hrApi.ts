@@ -1,5 +1,11 @@
 import { API_URL } from "@/lib/api";
-import type { AreaItem, EmployeeListItem, JobPositionItem, ZoneItem } from "../types";
+import type {
+  AreaItem,
+  EmployeeListItem,
+  JobPositionItem,
+  WorkProcessItem,
+  ZoneItem,
+} from "../types";
 
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { credentials: "include" });
@@ -39,4 +45,9 @@ export function fetchAreas(includeInactive = false): Promise<AreaItem[]> {
 export function fetchZones(includeInactive = false): Promise<ZoneItem[]> {
   const qs = includeInactive ? "?includeInactive=true" : "";
   return fetchJson(`/api/hr/zones${qs}`);
+}
+
+export function fetchWorkProcesses(includeInactive = false): Promise<WorkProcessItem[]> {
+  const qs = includeInactive ? "?includeInactive=true" : "";
+  return fetchJson(`/api/hr/work-processes${qs}`);
 }

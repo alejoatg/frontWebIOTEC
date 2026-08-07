@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useHrOrg } from "../hooks/useHrOrg";
-import type { AreaItem, JobPositionItem, ZoneItem } from "../types";
+import type { AreaItem, JobPositionItem, WorkProcessItem, ZoneItem } from "../types";
 import listStyles from "./listShared.module.scss";
 import styles from "./tables.module.scss";
 
@@ -89,6 +89,44 @@ function AreasTable({ items }: { items: AreaItem[] }) {
   );
 }
 
+function ProcesosTable({ items }: { items: WorkProcessItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <p>No hay procesos registrados.</p>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.tableWrapper}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Proceso</th>
+            <th>Área</th>
+            <th>UEN</th>
+            <th>Asignaciones</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id} className={styles.row}>
+              <td className={styles.name}>{item.name}</td>
+              <td>{item.area?.name ?? "—"}</td>
+              <td>{item.area?.managementUnit?.name ?? "—"}</td>
+              <td>{item._count.employeeWorkLocations}</td>
+              <td>
+                <StatusBadge active={item.isActive} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function ZonesTable({ items }: { items: ZoneItem[] }) {
   if (items.length === 0) {
     return (
@@ -125,7 +163,8 @@ function ZonesTable({ items }: { items: ZoneItem[] }) {
 
 export default function CargosAreasContainer() {
   const [includeInactive, setIncludeInactive] = useState(false);
-  const { jobPositions, areas, zones, loading, error, refetch } = useHrOrg(includeInactive);
+  const { jobPositions, areas, zones, workProcesses, loading, error, refetch } =
+    useHrOrg(includeInactive);
 
   if (loading && jobPositions.length === 0 && areas.length === 0) {
     return (
@@ -147,13 +186,14 @@ export default function CargosAreasContainer() {
     );
   }
 
+  const total =
+    jobPositions.length + areas.length + workProcesses.length + zones.length;
+
   return (
     <div className={listStyles.container}>
       <div className={listStyles.header}>
         <div className={listStyles.summary}>
-          <span className={listStyles.count}>
-            {jobPositions.length + areas.length + zones.length}
-          </span>
+          <span className={listStyles.count}>{total}</span>
           <span className={listStyles.countLabel}>registros de organización</span>
         </div>
         <div className={listStyles.toolbar}>
@@ -188,10 +228,16 @@ export default function CargosAreasContainer() {
         </section>
       </div>
 
-      <section className={styles.panel}>
-        <h3 className={styles.sectionTitle}>Zonas ({zones.length})</h3>
-        <ZonesTable items={zones} />
-      </section>
+      <div className={styles.grid}>
+        <section className={styles.panel}>
+          <h3 className={styles.sectionTitle}>Procesos ({workProcesses.length})</h3>
+          <ProcesosTable items={workProcesses} />
+        </section>
+        <section className={styles.panel}>
+          <h3 className={styles.sectionTitle}>Zonas ({zones.length})</h3>
+          <ZonesTable items={zones} />
+        </section>
+      </div>
     </div>
   );
 }

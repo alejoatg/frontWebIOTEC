@@ -42,3 +42,17 @@ export type ZoneItem = {
   updatedAt: string;
   _count: { employeeWorkLocations: number };
 };
+
+export type WorkProcessItem = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  area: {
+    id: string;
+    name: string;
+    managementUnit: { id: string; name: string } | null;
+  } | null;
+  _count: { employeeWorkLocations: number };
+};

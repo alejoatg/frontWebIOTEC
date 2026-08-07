@@ -8,7 +8,7 @@ export default function CargosAreasPage() {
   return (
     <div className={styles.page}>
       <TalentoHumanoNav />
-      <Card title="Cargos, áreas y zonas">
+      <Card title="Cargos, áreas, procesos y zonas">
         <CargosAreasContainer />
       </Card>
     </div>

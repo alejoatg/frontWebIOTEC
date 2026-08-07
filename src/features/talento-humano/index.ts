@@ -8,4 +8,5 @@ export type {
   JobPositionItem,
   AreaItem,
   ZoneItem,
+  WorkProcessItem,
 } from "./types";

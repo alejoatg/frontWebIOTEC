@@ -1,8 +1,10 @@
 import { API_URL } from "@/lib/api";
 import type {
   AreaItem,
+  CreateEmployeePayload,
   EmployeeListItem,
   JobPositionItem,
+  ManagementUnitItem,
   WorkProcessItem,
   ZoneItem,
 } from "../types";
@@ -21,6 +23,18 @@ async function fetchJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function parseError(response: Response, fallback: string): Promise<never> {
+  const error = await response.json().catch(() => ({}));
+  const message = error.message;
+  throw new Error(
+    typeof message === "string"
+      ? message
+      : Array.isArray(message)
+        ? String(message[0])
+        : fallback,
+  );
+}
+
 export function fetchEmployees(options?: {
   search?: string;
   includeInactive?: boolean;
@@ -30,6 +44,21 @@ export function fetchEmployees(options?: {
   if (options?.includeInactive) params.set("includeInactive", "true");
   const qs = params.toString();
   return fetchJson(`/api/employees${qs ? `?${qs}` : ""}`);
+}
+
+export async function createEmployee(
+  data: CreateEmployeePayload,
+): Promise<EmployeeListItem & Record<string, unknown>> {
+  const response = await fetch(`${API_URL}/api/employees`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    await parseError(response, "Error al crear el trabajador");
+  }
+  return response.json();
 }
 
 export function fetchJobPositions(includeInactive = false): Promise<JobPositionItem[]> {
@@ -50,4 +79,11 @@ export function fetchZones(includeInactive = false): Promise<ZoneItem[]> {
 export function fetchWorkProcesses(includeInactive = false): Promise<WorkProcessItem[]> {
   const qs = includeInactive ? "?includeInactive=true" : "";
   return fetchJson(`/api/hr/work-processes${qs}`);
+}
+
+export function fetchManagementUnits(
+  includeInactive = false,
+): Promise<ManagementUnitItem[]> {
+  const qs = includeInactive ? "?includeInactive=true" : "";
+  return fetchJson(`/api/hr/management-units${qs}`);
 }

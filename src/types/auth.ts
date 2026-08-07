@@ -7,6 +7,7 @@ export interface LinkedEmployee {
   isActive: boolean;
   jobPosition: string | null;
   zone: string | null;
+  workProcess?: string | null;
 }
 
 /**

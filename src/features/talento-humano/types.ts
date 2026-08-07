@@ -56,3 +56,34 @@ export type WorkProcessItem = {
   } | null;
   _count: { employeeWorkLocations: number };
 };
+
+export type ManagementUnitItem = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: { areas: number };
+};
+
+export type CreateEmployeePayload = {
+  documentNumber: string;
+  firstName: string;
+  lastName: string;
+  birthDate?: string;
+  genderCatalogKey?: string;
+  bloodTypeCatalogKey?: string;
+  maritalStatusCatalogKey?: string;
+  mobilePhone?: string;
+  email?: string;
+  fieldWork?: boolean;
+  startDate?: string;
+  contractTypeCatalogKey?: string;
+  workLocation?: {
+    managementUnitId?: string;
+    areaId?: string;
+    workProcessId?: string;
+    jobPositionId?: string;
+    zoneId?: string;
+  };
+};

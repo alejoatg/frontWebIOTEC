@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RefreshCw, Search } from "lucide-react";
+import Link from "next/link";
+import { Plus, RefreshCw, Search } from "lucide-react";
 import { useEmployees } from "../hooks/useEmployees";
 import TrabajadoresTable from "./TrabajadoresTable";
 import styles from "./listShared.module.scss";
@@ -47,6 +48,10 @@ export default function TrabajadoresListContainer() {
           <span className={styles.countLabel}>{countLabel}</span>
         </div>
         <div className={styles.toolbar}>
+          <Link href="/dashboard/talento-humano/trabajadores/nuevo" className={styles.primaryBtn}>
+            <Plus size={18} />
+            Agregar trabajador
+          </Link>
           <input
             className={styles.searchInput}
             type="search"

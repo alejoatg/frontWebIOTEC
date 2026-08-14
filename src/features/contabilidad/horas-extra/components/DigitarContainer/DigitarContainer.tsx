@@ -3,25 +3,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   fetchManualDraft,
+  fetchManualEmployees,
   lookupManualEmployee,
   registerManualEntries,
   saveManualDraft,
+  type ManualEmployeeLookup,
+  type ManualEmployeeOption,
   type ManualEntryPayload,
 } from "../../api/overtimeApi";
 import {
   calcStartEndHours,
-  computeAmounts,
   HOURS_COHERENCE_TOLERANCE,
   sumCategoryHours,
 } from "../../lib/overtimeCalculator";
-import { formatClockTime } from "../../lib/timeFormat";
+import { formatClockTime, isHalfHourClock, toHalfHourClock } from "../../lib/timeFormat";
 import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import shared from "../../styles/shared.module.scss";
+import EmployeeSuggestField from "./EmployeeSuggestField";
+import HalfHourSelect from "./HalfHourSelect";
 import styles from "./DigitarContainer.module.scss";
 
 type DigitarRow = {
@@ -48,7 +50,6 @@ type DigitarRow = {
   consigna: string;
   attachmentRef: string;
   operationalNote: string;
-  // auto
   fullName: string;
   processName: string;
   zoneName: string;
@@ -100,17 +101,17 @@ function emptyRow(partial?: Partial<DigitarRow>): DigitarRow {
   };
 }
 
-/** Serializa una fila para guardarla como borrador (nunca persiste el spinner de búsqueda). */
 function rowToDraftPayload(row: DigitarRow): Record<string, unknown> {
   return { ...row, lookingUp: false };
 }
 
-/** Reconstruye una fila desde un borrador guardado, generando un nuevo localId. */
 function rowFromDraftPayload(raw: Record<string, unknown>): DigitarRow {
   return emptyRow({
     ...(raw as Partial<DigitarRow>),
     localId: newLocalId(),
     lookingUp: false,
+    startTime: toHalfHourClock(String(raw.startTime ?? "")),
+    endTime: toHalfHourClock(String(raw.endTime ?? "")),
   });
 }
 
@@ -140,21 +141,50 @@ function rowPreview(row: DigitarRow) {
   const startEnd = calcStartEndHours(row.startTime, row.endTime);
   const delta =
     startEnd == null ? null : Math.round((startEnd - categoriesTotal) * 10000) / 10000;
-  const mismatch =
-    delta != null && Math.abs(delta) > HOURS_COHERENCE_TOLERANCE;
-  const salary = row.monthlySalary ?? 0;
-  const factor = row.payrollFactor ?? 1.5829;
-  const { total } = computeAmounts(hours, salary, factor, 220);
-  return { categoriesTotal, startEnd, delta, mismatch, total, salary };
+  const mismatch = delta != null && Math.abs(delta) > HOURS_COHERENCE_TOLERANCE;
+  return { categoriesTotal, startEnd, delta, mismatch };
+}
+
+function normalizeName(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function patchFromEmployee(emp: {
+  documentNumber: string;
+  fullName?: string | null;
+  processName?: string | null;
+  zoneName?: string | null;
+  jobTitle?: string | null;
+  monthlySalary?: number | null;
+  payrollFactor?: number | null;
+  municipality?: string | null;
+  isActive?: boolean;
+}): Partial<DigitarRow> {
+  const inactive = emp.isActive === false;
+  return {
+    documentNumber: emp.documentNumber,
+    fullName: emp.fullName ?? "",
+    processName: emp.processName ?? "",
+    zoneName: emp.zoneName ?? "",
+    jobTitle: emp.jobTitle ?? "",
+    monthlySalary: emp.monthlySalary ?? null,
+    payrollFactor: emp.payrollFactor ?? null,
+    baseMunicipality: emp.municipality ?? "",
+    lookupError: inactive ? "Empleado inactivo" : null,
+    lookingUp: false,
+  };
 }
 
 export default function DigitarContainer() {
-  const { user } = useAuth();
-  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [rows, setRows] = useState<DigitarRow[]>([emptyRow()]);
+  const [employees, setEmployees] = useState<ManualEmployeeOption[]>([]);
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -167,13 +197,16 @@ export default function DigitarContainer() {
   const gridWrapRef = useRef<HTMLDivElement>(null);
   const topSpacerRef = useRef<HTMLDivElement>(null);
   const syncingScroll = useRef(false);
-  // Borrador: listo para autoguardar, timer del debounce, último snapshot
-  // guardado (para no repetir peticiones si nada cambió) y bandera para
-  // forzar guardado inmediato (agregar/duplicar/eliminar fila).
   const draftReadyRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedSnapshotRef = useRef<string>("");
   const forceImmediateSaveRef = useRef(false);
+  const yearRef = useRef(year);
+  const monthRef = useRef(month);
+  const rowsRef = useRef(rows);
+  yearRef.current = year;
+  monthRef.current = month;
+  rowsRef.current = rows;
 
   const bounds = useMemo(() => periodBounds(year, month), [year, month]);
 
@@ -198,31 +231,43 @@ export default function DigitarContainer() {
         saveTimerRef.current = null;
       }
       if (immediate) {
-        void flushDraftSave(year, month, payload);
+        void flushDraftSave(yearRef.current, monthRef.current, payload);
       } else {
         saveTimerRef.current = setTimeout(() => {
           saveTimerRef.current = null;
-          void flushDraftSave(year, month, payload);
+          void flushDraftSave(yearRef.current, monthRef.current, payload);
         }, 900);
       }
     },
-    [year, month, flushDraftSave],
+    [flushDraftSave],
   );
 
-  // Carga el borrador del periodo seleccionado (uno por usuario + mes).
+  useEffect(() => {
+    let cancelled = false;
+    void fetchManualEmployees()
+      .then((list) => {
+        if (!cancelled) setEmployees(list);
+      })
+      .catch(() => {
+        if (!cancelled) setEmployees([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Carga el único borrador del usuario (incluye el periodo en el que se quedó).
   useEffect(() => {
     let cancelled = false;
     draftReadyRef.current = false;
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = null;
-    }
-    setDraftStatus("idle");
-    setDraftSavedAt(null);
     (async () => {
       try {
-        const draft = await fetchManualDraft(year, month);
+        const draft = await fetchManualDraft();
         if (cancelled) return;
+        if (draft.year && draft.month) {
+          setYear(draft.year);
+          setMonth(draft.month);
+        }
         const loadedRows = draft.rows.length
           ? draft.rows.map(rowFromDraftPayload)
           : [emptyRow()];
@@ -241,11 +286,20 @@ export default function DigitarContainer() {
     return () => {
       cancelled = true;
     };
-  }, [year, month]);
+  }, []);
 
-  // Autoguarda cada vez que cambian las filas: inmediato si se acaba de
-  // agregar/duplicar/eliminar una fila, con un pequeño retraso si es edición
-  // de campos (para no golpear la API en cada tecla).
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      if (!draftReadyRef.current) return;
+      const payload = rowsRef.current.map(rowToDraftPayload);
+      void saveManualDraft(yearRef.current, monthRef.current, payload).catch(() => undefined);
+    };
+  }, []);
+
   useEffect(() => {
     if (!draftReadyRef.current) return;
     const payload = rows.map(rowToDraftPayload);
@@ -302,7 +356,17 @@ export default function DigitarContainer() {
     );
   }, []);
 
-  const handleLookup = useCallback(
+  const applyEmployee = useCallback(
+    (
+      localId: string,
+      emp: ManualEmployeeOption | ManualEmployeeLookup,
+    ) => {
+      updateRow(localId, patchFromEmployee(emp));
+    },
+    [updateRow],
+  );
+
+  const handleDocumentCommit = useCallback(
     async (localId: string, documentNumber: string) => {
       const digits = documentNumber.replace(/\D/g, "");
       if (!digits) {
@@ -316,6 +380,16 @@ export default function DigitarContainer() {
           lookupError: null,
           lookingUp: false,
         });
+        return;
+      }
+      const localMatches = employees.filter((e) => e.documentNumber.includes(digits));
+      const exact = localMatches.find((e) => e.documentNumber === digits);
+      if (exact) {
+        applyEmployee(localId, exact);
+        return;
+      }
+      if (localMatches.length === 1) {
+        applyEmployee(localId, localMatches[0]);
         return;
       }
       updateRow(localId, { lookingUp: true, lookupError: null });
@@ -334,30 +408,7 @@ export default function DigitarContainer() {
           });
           return;
         }
-        if (data.isActive === false) {
-          updateRow(localId, {
-            lookingUp: false,
-            fullName: data.fullName ?? "",
-            processName: data.processName ?? "",
-            zoneName: data.zoneName ?? "",
-            jobTitle: data.jobTitle ?? "",
-            monthlySalary: data.monthlySalary ?? null,
-            payrollFactor: data.payrollFactor ?? null,
-            lookupError: "Empleado inactivo",
-          });
-          return;
-        }
-        updateRow(localId, {
-          lookingUp: false,
-          documentNumber: data.documentNumber,
-          fullName: data.fullName ?? "",
-          processName: data.processName ?? "",
-          zoneName: data.zoneName ?? "",
-          jobTitle: data.jobTitle ?? "",
-          monthlySalary: data.monthlySalary ?? null,
-          payrollFactor: data.payrollFactor ?? null,
-          lookupError: data.monthlySalary == null ? "Sin salario/catálogo" : null,
-        });
+        applyEmployee(localId, data);
       } catch (e) {
         updateRow(localId, {
           lookingUp: false,
@@ -365,7 +416,30 @@ export default function DigitarContainer() {
         });
       }
     },
-    [updateRow],
+    [applyEmployee, employees, updateRow],
+  );
+
+  const handleNameCommit = useCallback(
+    (localId: string, fullName: string) => {
+      const q = normalizeName(fullName);
+      if (!q) return;
+      const matches = employees.filter((e) => normalizeName(e.fullName).includes(q));
+      const exact = employees.filter((e) => normalizeName(e.fullName) === q);
+      if (exact.length === 1) {
+        applyEmployee(localId, exact[0]);
+        return;
+      }
+      if (matches.length === 1) {
+        applyEmployee(localId, matches[0]);
+        return;
+      }
+      if (matches.length === 0) {
+        updateRow(localId, { lookupError: "Nombre no encontrado en parámetros" });
+        return;
+      }
+      updateRow(localId, { lookupError: "Hay varios nombres: elige uno de la lista" });
+    },
+    [applyEmployee, employees, updateRow],
   );
 
   function addRow() {
@@ -411,12 +485,14 @@ export default function DigitarContainer() {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
-      // Guarda de inmediato en el periodo anterior antes de cambiar, para
-      // no perder ediciones pendientes del debounce.
-      void saveManualDraft(year, month, rows.map(rowToDraftPayload)).catch(() => undefined);
     }
     setYear(newYear);
     setMonth(newMonth);
+    yearRef.current = newYear;
+    monthRef.current = newMonth;
+    const payload = rows.map(rowToDraftPayload);
+    lastSavedSnapshotRef.current = JSON.stringify(payload);
+    void flushDraftSave(newYear, newMonth, payload);
     setSuccess(null);
     setError(null);
   }
@@ -444,6 +520,10 @@ export default function DigitarContainer() {
       }
       if (!row.startTime || !row.endTime) {
         setError("Todas las filas deben tener hora inicio y fin");
+        return;
+      }
+      if (!isHalfHourClock(row.startTime) || !isHalfHourClock(row.endTime)) {
+        setError("Las horas de inicio y fin solo pueden ser en punto o media hora (ej. 18:00, 18:30)");
         return;
       }
       const preview = rowPreview(row);
@@ -490,8 +570,6 @@ export default function DigitarContainer() {
       setSuccess(
         `Planilla ${result.batchCode} registrada (${result.entryCount} registros). Quedan en pendiente de aprobación.`,
       );
-      // El backend ya borró el borrador al registrar; evitamos que el reset
-      // de filas dispare un autoguardado que vuelva a crear uno vacío.
       const resetRow = emptyRow();
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
@@ -519,11 +597,10 @@ export default function DigitarContainer() {
       />
 
       <p className={styles.hint}>
-        Digita los registros en borrador: se guardan automáticamente en el servidor a medida
-        que trabajas, así puedes ir acumulando los registros de la semana en varias sesiones y
-        registrar la planilla completa al final. Nombre, proceso, zona y sueldo se completan al
-        salir de la cédula. Usa <strong>Duplicar</strong> para el mismo trabajo con otro trabajador
-        (cambia la cédula).
+        Hay un solo borrador por usuario: al volver a esta pestaña se restaura para seguir
+        digitando. Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
+        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Usa{" "}
+        <strong>Duplicar</strong> para el mismo trabajo con otro trabajador.
       </p>
 
       <div className={styles.toolbar}>
@@ -595,7 +672,7 @@ export default function DigitarContainer() {
             <tr>
               <th className={styles.stickyActions}>Acciones</th>
               <th>Cédula *</th>
-              <th>Nombre</th>
+              <th>Nombre *</th>
               <th>Fecha *</th>
               <th>Inicio *</th>
               <th>Fin *</th>
@@ -607,10 +684,8 @@ export default function DigitarContainer() {
               <th>HEND</th>
               <th>Disp.</th>
               <th>Validador</th>
-              {canSeeMoney && <th>Total $</th>}
               <th>Proceso</th>
               <th>Zona</th>
-              {canSeeMoney && <th>Sueldo</th>}
               <th>Consigna</th>
               <th>Lugar comisión</th>
               <th>Municipio sede</th>
@@ -647,21 +722,32 @@ export default function DigitarContainer() {
                     </div>
                   </td>
                   <td>
-                    <input
-                      className={styles.cellInput}
+                    <EmployeeSuggestField
+                      mode="document"
                       value={row.documentNumber}
+                      employees={employees}
+                      placeholder="Cédula"
                       inputMode="numeric"
-                      onChange={(e) =>
-                        updateRow(row.localId, { documentNumber: e.target.value })
-                      }
-                      onBlur={(e) => handleLookup(row.localId, e.target.value)}
+                      onChange={(v) => updateRow(row.localId, { documentNumber: v })}
+                      onPick={(emp) => applyEmployee(row.localId, emp)}
+                      onCommit={(v) => void handleDocumentCommit(row.localId, v)}
                     />
                     {row.lookingUp && <div className={styles.cellHint}>Buscando…</div>}
                     {row.lookupError && (
                       <div className={styles.cellError}>{row.lookupError}</div>
                     )}
                   </td>
-                  <td className={styles.ro}>{row.fullName || "—"}</td>
+                  <td>
+                    <EmployeeSuggestField
+                      mode="name"
+                      value={row.fullName}
+                      employees={employees}
+                      placeholder="Nombre"
+                      onChange={(v) => updateRow(row.localId, { fullName: v })}
+                      onPick={(emp) => applyEmployee(row.localId, emp)}
+                      onCommit={(v) => handleNameCommit(row.localId, v)}
+                    />
+                  </td>
                   <td>
                     <input
                       className={styles.cellInput}
@@ -673,29 +759,15 @@ export default function DigitarContainer() {
                     />
                   </td>
                   <td>
-                    <input
-                      className={styles.cellInput}
-                      placeholder="17:00"
+                    <HalfHourSelect
                       value={row.startTime}
-                      onChange={(e) => updateRow(row.localId, { startTime: e.target.value })}
-                      onBlur={(e) =>
-                        updateRow(row.localId, {
-                          startTime: formatClockTime(e.target.value) || e.target.value,
-                        })
-                      }
+                      onChange={(v) => updateRow(row.localId, { startTime: v })}
                     />
                   </td>
                   <td>
-                    <input
-                      className={styles.cellInput}
-                      placeholder="19:00"
+                    <HalfHourSelect
                       value={row.endTime}
-                      onChange={(e) => updateRow(row.localId, { endTime: e.target.value })}
-                      onBlur={(e) =>
-                        updateRow(row.localId, {
-                          endTime: formatClockTime(e.target.value) || e.target.value,
-                        })
-                      }
+                      onChange={(v) => updateRow(row.localId, { endTime: v })}
                     />
                   </td>
                   {(
@@ -723,22 +795,8 @@ export default function DigitarContainer() {
                   >
                     {preview.delta == null ? "—" : preview.delta}
                   </td>
-                  {canSeeMoney && (
-                    <td className={`${styles.ro} ${styles.num}`}>
-                      {preview.salary
-                        ? preview.total.toLocaleString("es-CO")
-                        : "—"}
-                    </td>
-                  )}
                   <td className={styles.ro}>{row.processName || "—"}</td>
                   <td className={styles.ro}>{row.zoneName || "—"}</td>
-                  {canSeeMoney && (
-                    <td className={`${styles.ro} ${styles.num}`}>
-                      {row.monthlySalary != null
-                        ? row.monthlySalary.toLocaleString("es-CO")
-                        : "—"}
-                    </td>
-                  )}
                   {(
                     [
                       ["consigna", row.consigna],

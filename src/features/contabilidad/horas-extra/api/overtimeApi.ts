@@ -50,6 +50,10 @@ export async function lookupManualEmployee(documentNumber: string) {
   return request<ManualEmployeeLookup>(`/manual/lookup?${q}`);
 }
 
+export async function fetchManualEmployees() {
+  return request<ManualEmployeeOption[]>(`/manual/employees`);
+}
+
 export async function registerManualEntries(body: {
   year: number;
   month: number;
@@ -61,9 +65,8 @@ export async function registerManualEntries(body: {
   });
 }
 
-export async function fetchManualDraft(year: number, month: number) {
-  const q = new URLSearchParams({ year: String(year), month: String(month) });
-  return request<ManualDraftResult>(`/manual/draft?${q}`);
+export async function fetchManualDraft() {
+  return request<ManualDraftResult>(`/manual/draft`);
 }
 
 export async function saveManualDraft(
@@ -71,15 +74,14 @@ export async function saveManualDraft(
   month: number,
   rows: Record<string, unknown>[],
 ) {
-  return request<{ updatedAt: string }>(`/manual/draft`, {
+  return request<{ updatedAt: string; year: number; month: number }>(`/manual/draft`, {
     method: "PUT",
     body: JSON.stringify({ year, month, rows }),
   });
 }
 
-export async function deleteManualDraft(year: number, month: number) {
-  const q = new URLSearchParams({ year: String(year), month: String(month) });
-  return request<{ cleared: boolean }>(`/manual/draft?${q}`, { method: "DELETE" });
+export async function deleteManualDraft() {
+  return request<{ cleared: boolean }>(`/manual/draft`, { method: "DELETE" });
 }
 
 export async function fetchPeriods() {
@@ -411,12 +413,28 @@ export interface ManualEmployeeLookup {
   jobTitle?: string | null;
   processName?: string | null;
   zoneName?: string | null;
+  municipality?: string | null;
   /** Ausentes cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
   monthlySalary?: number | null;
   payrollFactor?: number | null;
 }
 
+export interface ManualEmployeeOption {
+  employeeId: string;
+  documentNumber: string;
+  fullName: string;
+  isActive: boolean;
+  jobTitle?: string | null;
+  processName?: string | null;
+  zoneName?: string | null;
+  municipality?: string | null;
+  monthlySalary?: number | null;
+  payrollFactor?: number | null;
+}
+
 export interface ManualDraftResult {
+  year: number | null;
+  month: number | null;
   rows: Record<string, unknown>[];
   updatedAt: string | null;
 }

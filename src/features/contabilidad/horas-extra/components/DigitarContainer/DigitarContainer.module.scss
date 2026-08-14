@@ -19,6 +19,20 @@
   margin-left: 0.25rem;
 }
 
+.draftStatus {
+  font-size: 0.78rem;
+  color: #16a34a;
+  margin-left: auto;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.draftStatusError {
+  color: #b91c1c;
+}
+
 .gridWrap {
   overflow: auto;
   height: 400px;

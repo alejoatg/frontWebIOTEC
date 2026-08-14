@@ -61,6 +61,27 @@ export async function registerManualEntries(body: {
   });
 }
 
+export async function fetchManualDraft(year: number, month: number) {
+  const q = new URLSearchParams({ year: String(year), month: String(month) });
+  return request<ManualDraftResult>(`/manual/draft?${q}`);
+}
+
+export async function saveManualDraft(
+  year: number,
+  month: number,
+  rows: Record<string, unknown>[],
+) {
+  return request<{ updatedAt: string }>(`/manual/draft`, {
+    method: "PUT",
+    body: JSON.stringify({ year, month, rows }),
+  });
+}
+
+export async function deleteManualDraft(year: number, month: number) {
+  const q = new URLSearchParams({ year: String(year), month: String(month) });
+  return request<{ cleared: boolean }>(`/manual/draft?${q}`, { method: "DELETE" });
+}
+
 export async function fetchPeriods() {
   return request<OvertimePeriod[]>("/periods");
 }
@@ -345,7 +366,8 @@ export interface BatchRegisterPrintRow {
   hoursHedd: number;
   hoursHend: number;
   hoursDisponibilidad: number;
-  amountTotal: number;
+  /** Ausente cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
+  amountTotal?: number;
   consigna: string;
   commissionMunicipality: string;
   zoneName: string;
@@ -365,7 +387,8 @@ export interface BatchRegisterPrintData {
   periodCode: string;
   registeredBy: string;
   entryCount: number;
-  totalAmount: number;
+  /** Ausente cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
+  totalAmount?: number;
   rows: BatchRegisterPrintRow[];
 }
 
@@ -388,8 +411,14 @@ export interface ManualEmployeeLookup {
   jobTitle?: string | null;
   processName?: string | null;
   zoneName?: string | null;
+  /** Ausentes cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
   monthlySalary?: number | null;
   payrollFactor?: number | null;
+}
+
+export interface ManualDraftResult {
+  rows: Record<string, unknown>[];
+  updatedAt: string | null;
 }
 
 export interface ManualEntryPayload {
@@ -425,7 +454,8 @@ export interface OvertimeEntry {
   employeeId: string;
   workDate: string;
   status: string;
-  amountTotal: number;
+  /** Ausente cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
+  amountTotal?: number;
   validationResult: string;
   importBatch?: { batchCode: string };
 }

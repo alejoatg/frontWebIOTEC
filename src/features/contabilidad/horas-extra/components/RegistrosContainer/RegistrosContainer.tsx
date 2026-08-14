@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchEntries, type OvertimeEntryRow } from "../../api/overtimeApi";
 import EntryActions from "../EntryActions/EntryActions";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
@@ -24,6 +26,8 @@ function statusClass(status: string) {
 }
 
 export default function RegistrosContainer() {
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -94,7 +98,7 @@ export default function RegistrosContainer() {
                   <th>Empleado</th>
                   <th>Fecha</th>
                   <th>Estado</th>
-                  <th>Total</th>
+                  {canSeeMoney && <th>Total</th>}
                   <th>Planilla</th>
                   <th>Acciones</th>
                 </tr>
@@ -102,7 +106,7 @@ export default function RegistrosContainer() {
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>Sin registros</td>
+                    <td colSpan={canSeeMoney ? 7 : 6}>Sin registros</td>
                   </tr>
                 ) : (
                   items.map((e) => (
@@ -126,7 +130,9 @@ export default function RegistrosContainer() {
                           {e.status}
                         </span>
                       </td>
-                      <td>{Number(e.amountTotal).toLocaleString("es-CO")}</td>
+                      {canSeeMoney && (
+                        <td>{Number(e.amountTotal ?? 0).toLocaleString("es-CO")}</td>
+                      )}
                       <td>{e.importBatch?.batchCode ?? "—"}</td>
                       <td>
                         <EntryActions

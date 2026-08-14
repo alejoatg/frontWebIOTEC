@@ -8,6 +8,26 @@ export interface SpreadsheetColumn {
   align?: "left" | "right";
 }
 
+/**
+ * IDs de columnas/campos que muestran valores monetarios (sueldo, factor de
+ * nómina y montos calculados). Quienes digitan (SUPERVISOR/CORDINADOR) no
+ * deben verlos; se filtran de SPREADSHEET_COLUMNS y DETAIL_SECTIONS.
+ */
+export const MONEY_FIELD_IDS = new Set([
+  "salarySnapshot",
+  "hourlyDivisorSnapshot",
+  "payrollFactorSnapshot",
+  "amountRd",
+  "amountRn",
+  "amountTsd",
+  "amountTsn",
+  "amountHedd",
+  "amountHend",
+  "amountDisponibilidad",
+  "amountSubtotal",
+  "amountTotal",
+]);
+
 function num(v: unknown): string {
   if (v === null || v === undefined || v === "") return "";
   const n = Number(v);
@@ -78,6 +98,8 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
 ];
 
 export interface DetailField {
+  /** Coincide con un id de MONEY_FIELD_IDS cuando el campo es monetario. */
+  id?: string;
   label: string;
   getValue: (entry: OvertimeEntryRow) => string | number | null | undefined;
 }
@@ -135,18 +157,18 @@ export const DETAIL_SECTIONS: DetailSection[] = [
   {
     title: "Contabilidad",
     fields: [
-      { label: "Compensación (salario)", getValue: (e) => money(e.salarySnapshot) },
-      { label: "Divisor horario", getValue: (e) => e.hourlyDivisorSnapshot ?? 220 },
-      { label: "Factor nómina", getValue: (e) => num(e.payrollFactorSnapshot) },
-      { label: "RD $", getValue: (e) => money(e.amountRd) },
-      { label: "RN $", getValue: (e) => money(e.amountRn) },
-      { label: "TSD $", getValue: (e) => money(e.amountTsd) },
-      { label: "TSN $", getValue: (e) => money(e.amountTsn) },
-      { label: "HEDD $", getValue: (e) => money(e.amountHedd) },
-      { label: "HEND $", getValue: (e) => money(e.amountHend) },
-      { label: "Disponibilidad $", getValue: (e) => money(e.amountDisponibilidad) },
-      { label: "Subtotal", getValue: (e) => money(e.amountSubtotal) },
-      { label: "Total", getValue: (e) => money(e.amountTotal) },
+      { id: "salarySnapshot", label: "Compensación (salario)", getValue: (e) => money(e.salarySnapshot) },
+      { id: "hourlyDivisorSnapshot", label: "Divisor horario", getValue: (e) => e.hourlyDivisorSnapshot ?? 220 },
+      { id: "payrollFactorSnapshot", label: "Factor nómina", getValue: (e) => num(e.payrollFactorSnapshot) },
+      { id: "amountRd", label: "RD $", getValue: (e) => money(e.amountRd) },
+      { id: "amountRn", label: "RN $", getValue: (e) => money(e.amountRn) },
+      { id: "amountTsd", label: "TSD $", getValue: (e) => money(e.amountTsd) },
+      { id: "amountTsn", label: "TSN $", getValue: (e) => money(e.amountTsn) },
+      { id: "amountHedd", label: "HEDD $", getValue: (e) => money(e.amountHedd) },
+      { id: "amountHend", label: "HEND $", getValue: (e) => money(e.amountHend) },
+      { id: "amountDisponibilidad", label: "Disponibilidad $", getValue: (e) => money(e.amountDisponibilidad) },
+      { id: "amountSubtotal", label: "Subtotal", getValue: (e) => money(e.amountSubtotal) },
+      { id: "amountTotal", label: "Total", getValue: (e) => money(e.amountTotal) },
     ],
   },
   {

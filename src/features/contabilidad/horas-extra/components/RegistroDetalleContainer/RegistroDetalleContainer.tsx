@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
-import { DETAIL_SECTIONS } from "../../lib/entrySpreadsheet";
+import { DETAIL_SECTIONS, MONEY_FIELD_IDS } from "../../lib/entrySpreadsheet";
 import EntryActions from "../EntryActions/EntryActions";
 import styles from "./RegistroDetalleContainer.module.scss";
 import shared from "../../styles/shared.module.scss";
@@ -29,9 +31,19 @@ interface RegistroDetalleContainerProps {
 
 export default function RegistroDetalleContainer({ entryId }: RegistroDetalleContainerProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const sections = useMemo(() => {
+    if (canSeeMoney) return DETAIL_SECTIONS;
+    return DETAIL_SECTIONS.map((section) => ({
+      ...section,
+      fields: section.fields.filter((f) => !f.id || !MONEY_FIELD_IDS.has(f.id)),
+    })).filter((section) => section.fields.length > 0);
+  }, [canSeeMoney]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,7 +124,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
       )}
 
       <div className={styles.grid}>
-        {DETAIL_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <section key={section.title} className={styles.card}>
             <h3 className={styles.sectionTitle}>{section.title}</h3>
             <dl className={styles.fieldList}>

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   createPdfPlantilla,
   fetchPdfPlantillaEligible,
@@ -30,6 +32,8 @@ function fmtDate(iso: string | null | undefined) {
 }
 
 export default function PdfPlantillasContainer() {
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -251,14 +255,14 @@ export default function PdfPlantillasContainer() {
                 <th>Consigna</th>
                 <th>Inicio</th>
                 <th>Fin</th>
-                <th>Total $</th>
+                {canSeeMoney && <th>Total $</th>}
                 <th>Estado</th>
               </tr>
             </thead>
             <tbody>
               {eligible.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={canSeeMoney ? 7 : 6}>
                     {employeeId
                       ? "Filtra para ver registros aprobados elegibles (aún sin planilla PDF)"
                       : "Selecciona un trabajador y filtra"}
@@ -272,7 +276,7 @@ export default function PdfPlantillasContainer() {
                     <td>{row.consigna ?? "—"}</td>
                     <td>{formatClockTime(row.startTime) || "—"}</td>
                     <td>{formatClockTime(row.endTime) || "—"}</td>
-                    <td>{fmtMoney(row.amountTotal)}</td>
+                    {canSeeMoney && <td>{fmtMoney(row.amountTotal)}</td>}
                     <td>{row.status}</td>
                   </tr>
                 ))

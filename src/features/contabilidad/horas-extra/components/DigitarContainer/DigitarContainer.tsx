@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
+  fetchManualDraft,
   lookupManualEmployee,
   registerManualEntries,
+  saveManualDraft,
   type ManualEntryPayload,
 } from "../../api/overtimeApi";
 import {
@@ -96,6 +100,20 @@ function emptyRow(partial?: Partial<DigitarRow>): DigitarRow {
   };
 }
 
+/** Serializa una fila para guardarla como borrador (nunca persiste el spinner de búsqueda). */
+function rowToDraftPayload(row: DigitarRow): Record<string, unknown> {
+  return { ...row, lookingUp: false };
+}
+
+/** Reconstruye una fila desde un borrador guardado, generando un nuevo localId. */
+function rowFromDraftPayload(raw: Record<string, unknown>): DigitarRow {
+  return emptyRow({
+    ...(raw as Partial<DigitarRow>),
+    localId: newLocalId(),
+    lookingUp: false,
+  });
+}
+
 function num(v: string): number {
   const n = Number(String(v).replace(",", "."));
   return Number.isFinite(n) ? n : 0;
@@ -131,6 +149,8 @@ function rowPreview(row: DigitarRow) {
 }
 
 export default function DigitarContainer() {
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -139,12 +159,103 @@ export default function DigitarContainer() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const gridWrapRef = useRef<HTMLDivElement>(null);
   const topSpacerRef = useRef<HTMLDivElement>(null);
   const syncingScroll = useRef(false);
+  // Borrador: listo para autoguardar, timer del debounce, último snapshot
+  // guardado (para no repetir peticiones si nada cambió) y bandera para
+  // forzar guardado inmediato (agregar/duplicar/eliminar fila).
+  const draftReadyRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedSnapshotRef = useRef<string>("");
+  const forceImmediateSaveRef = useRef(false);
 
   const bounds = useMemo(() => periodBounds(year, month), [year, month]);
+
+  const flushDraftSave = useCallback(
+    async (targetYear: number, targetMonth: number, payload: Record<string, unknown>[]) => {
+      setDraftStatus("saving");
+      try {
+        const result = await saveManualDraft(targetYear, targetMonth, payload);
+        setDraftStatus("saved");
+        setDraftSavedAt(new Date(result.updatedAt));
+      } catch {
+        setDraftStatus("error");
+      }
+    },
+    [],
+  );
+
+  const scheduleDraftSave = useCallback(
+    (payload: Record<string, unknown>[], immediate: boolean) => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      if (immediate) {
+        void flushDraftSave(year, month, payload);
+      } else {
+        saveTimerRef.current = setTimeout(() => {
+          saveTimerRef.current = null;
+          void flushDraftSave(year, month, payload);
+        }, 900);
+      }
+    },
+    [year, month, flushDraftSave],
+  );
+
+  // Carga el borrador del periodo seleccionado (uno por usuario + mes).
+  useEffect(() => {
+    let cancelled = false;
+    draftReadyRef.current = false;
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    setDraftStatus("idle");
+    setDraftSavedAt(null);
+    (async () => {
+      try {
+        const draft = await fetchManualDraft(year, month);
+        if (cancelled) return;
+        const loadedRows = draft.rows.length
+          ? draft.rows.map(rowFromDraftPayload)
+          : [emptyRow()];
+        setRows(loadedRows);
+        lastSavedSnapshotRef.current = JSON.stringify(loadedRows.map(rowToDraftPayload));
+        if (draft.updatedAt) {
+          setDraftStatus("saved");
+          setDraftSavedAt(new Date(draft.updatedAt));
+        }
+      } catch {
+        if (!cancelled) setRows([emptyRow()]);
+      } finally {
+        if (!cancelled) draftReadyRef.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [year, month]);
+
+  // Autoguarda cada vez que cambian las filas: inmediato si se acaba de
+  // agregar/duplicar/eliminar una fila, con un pequeño retraso si es edición
+  // de campos (para no golpear la API en cada tecla).
+  useEffect(() => {
+    if (!draftReadyRef.current) return;
+    const payload = rows.map(rowToDraftPayload);
+    const serialized = JSON.stringify(payload);
+    if (serialized === lastSavedSnapshotRef.current) return;
+    lastSavedSnapshotRef.current = serialized;
+    const immediate = forceImmediateSaveRef.current;
+    forceImmediateSaveRef.current = false;
+    scheduleDraftSave(payload, immediate);
+  }, [rows, scheduleDraftSave]);
 
   const syncTopSpacerWidth = useCallback(() => {
     const wrap = gridWrapRef.current;
@@ -258,11 +369,13 @@ export default function DigitarContainer() {
   );
 
   function addRow() {
+    forceImmediateSaveRef.current = true;
     setRows((prev) => [...prev, emptyRow()]);
     setSuccess(null);
   }
 
   function duplicateRow(localId: string) {
+    forceImmediateSaveRef.current = true;
     setRows((prev) => {
       const idx = prev.findIndex((r) => r.localId === localId);
       if (idx < 0) return prev;
@@ -280,7 +393,32 @@ export default function DigitarContainer() {
   }
 
   function removeRow(localId: string) {
+    forceImmediateSaveRef.current = true;
     setRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.localId !== localId)));
+  }
+
+  async function handleSaveDraftNow() {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    const payload = rows.map(rowToDraftPayload);
+    lastSavedSnapshotRef.current = JSON.stringify(payload);
+    await flushDraftSave(year, month, payload);
+  }
+
+  function handlePeriodChange(newYear: number, newMonth: number) {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+      // Guarda de inmediato en el periodo anterior antes de cambiar, para
+      // no perder ediciones pendientes del debounce.
+      void saveManualDraft(year, month, rows.map(rowToDraftPayload)).catch(() => undefined);
+    }
+    setYear(newYear);
+    setMonth(newMonth);
+    setSuccess(null);
+    setError(null);
   }
 
   async function handleRegister() {
@@ -352,7 +490,17 @@ export default function DigitarContainer() {
       setSuccess(
         `Planilla ${result.batchCode} registrada (${result.entryCount} registros). Quedan en pendiente de aprobación.`,
       );
-      setRows([emptyRow()]);
+      // El backend ya borró el borrador al registrar; evitamos que el reset
+      // de filas dispare un autoguardado que vuelva a crear uno vacío.
+      const resetRow = emptyRow();
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      lastSavedSnapshotRef.current = JSON.stringify([rowToDraftPayload(resetRow)]);
+      setRows([resetRow]);
+      setDraftStatus("idle");
+      setDraftSavedAt(null);
       setSuccessBatchId(result.batchId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al registrar";
@@ -367,23 +515,29 @@ export default function DigitarContainer() {
       <PeriodSelector
         year={year}
         month={month}
-        onChange={(y, m) => {
-          setYear(y);
-          setMonth(m);
-          setSuccess(null);
-          setError(null);
-        }}
+        onChange={handlePeriodChange}
       />
 
       <p className={styles.hint}>
-        Digita los registros en borrador. Nombre, proceso, zona y sueldo se completan al salir de la
-        cédula. Usa <strong>Duplicar</strong> para el mismo trabajo con otro trabajador (cambia la
-        cédula). Al final registra toda la planilla de una vez.
+        Digita los registros en borrador: se guardan automáticamente en el servidor a medida
+        que trabajas, así puedes ir acumulando los registros de la semana en varias sesiones y
+        registrar la planilla completa al final. Nombre, proceso, zona y sueldo se completan al
+        salir de la cédula. Usa <strong>Duplicar</strong> para el mismo trabajo con otro trabajador
+        (cambia la cédula).
       </p>
 
       <div className={styles.toolbar}>
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           Agregar fila
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleSaveDraftNow}
+          disabled={draftStatus === "saving"}
+        >
+          Guardar borrador
         </Button>
         <Button
           type="button"
@@ -395,6 +549,22 @@ export default function DigitarContainer() {
           {registering ? "Registrando…" : "Registrar planilla"}
         </Button>
         <span className={styles.count}>{rows.length} fila(s)</span>
+        <span
+          className={`${styles.draftStatus} ${
+            draftStatus === "error" ? styles.draftStatusError : ""
+          }`}
+        >
+          {draftStatus === "saving" && "Guardando borrador…"}
+          {draftStatus === "saved" &&
+            draftSavedAt &&
+            `Borrador guardado ${draftSavedAt.toLocaleTimeString("es-CO", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })}`}
+          {draftStatus === "error" &&
+            "No se pudo guardar el borrador. Usa \"Guardar borrador\" para reintentar."}
+        </span>
       </div>
 
       {error && <div className={`${shared.alert} ${shared.alertError}`}>{error}</div>}
@@ -437,10 +607,10 @@ export default function DigitarContainer() {
               <th>HEND</th>
               <th>Disp.</th>
               <th>Validador</th>
-              <th>Total $</th>
+              {canSeeMoney && <th>Total $</th>}
               <th>Proceso</th>
               <th>Zona</th>
-              <th>Sueldo</th>
+              {canSeeMoney && <th>Sueldo</th>}
               <th>Consigna</th>
               <th>Lugar comisión</th>
               <th>Municipio sede</th>
@@ -553,18 +723,22 @@ export default function DigitarContainer() {
                   >
                     {preview.delta == null ? "—" : preview.delta}
                   </td>
-                  <td className={`${styles.ro} ${styles.num}`}>
-                    {preview.salary
-                      ? preview.total.toLocaleString("es-CO")
-                      : "—"}
-                  </td>
+                  {canSeeMoney && (
+                    <td className={`${styles.ro} ${styles.num}`}>
+                      {preview.salary
+                        ? preview.total.toLocaleString("es-CO")
+                        : "—"}
+                    </td>
+                  )}
                   <td className={styles.ro}>{row.processName || "—"}</td>
                   <td className={styles.ro}>{row.zoneName || "—"}</td>
-                  <td className={`${styles.ro} ${styles.num}`}>
-                    {row.monthlySalary != null
-                      ? row.monthlySalary.toLocaleString("es-CO")
-                      : "—"}
-                  </td>
+                  {canSeeMoney && (
+                    <td className={`${styles.ro} ${styles.num}`}>
+                      {row.monthlySalary != null
+                        ? row.monthlySalary.toLocaleString("es-CO")
+                        : "—"}
+                    </td>
+                  )}
                   {(
                     [
                       ["consigna", row.consigna],

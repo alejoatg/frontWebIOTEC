@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   fetchBatches,
   fetchEntries,
@@ -10,7 +12,7 @@ import {
   type OvertimeBatch,
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
-import { SPREADSHEET_COLUMNS } from "../../lib/entrySpreadsheet";
+import { MONEY_FIELD_IDS, SPREADSHEET_COLUMNS } from "../../lib/entrySpreadsheet";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import PlanillaRowActions from "../PlanillaRowActions/PlanillaRowActions";
@@ -51,6 +53,15 @@ function statusClass(status: string) {
 }
 
 export default function RegistrosPlanillaContainer() {
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
+  const columns = useMemo(
+    () =>
+      canSeeMoney
+        ? SPREADSHEET_COLUMNS
+        : SPREADSHEET_COLUMNS.filter((col) => !MONEY_FIELD_IDS.has(col.id)),
+    [canSeeMoney],
+  );
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -285,7 +296,7 @@ export default function RegistrosPlanillaContainer() {
             <table className={styles.spreadsheet}>
               <thead>
                 <tr>
-                  {SPREADSHEET_COLUMNS.map((col) => (
+                  {columns.map((col) => (
                     <th key={col.id} title={col.header}>
                       {col.header}
                     </th>
@@ -296,12 +307,12 @@ export default function RegistrosPlanillaContainer() {
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={SPREADSHEET_COLUMNS.length + 1}>Sin registros</td>
+                    <td colSpan={columns.length + 1}>Sin registros</td>
                   </tr>
                 ) : (
                   items.map((entry) => (
                     <tr key={entry.id}>
-                      {SPREADSHEET_COLUMNS.map((col) => {
+                      {columns.map((col) => {
                         const raw = col.getValue(entry);
                         const display =
                           col.id === "status" ? (

@@ -34,3 +34,11 @@ export function canReviewOvertime(role: string | undefined) {
 export function canManageOvertimeParams(role: string | undefined) {
   return role === "CONTABILIDAD" || role === "ADMIN";
 }
+
+/**
+ * Quienes digitan (SUPERVISOR, CORDINADOR) no deben ver sueldos ni montos
+ * calculados en horas extra; solo CONTABILIDAD y ADMIN gestionan esa parte.
+ */
+export function canSeeOvertimeMoney(role: string | undefined) {
+  return role === "CONTABILIDAD" || role === "ADMIN";
+}

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   batchRegisterPrintPageUrl,
   fetchBatchPrintData,
@@ -15,11 +17,13 @@ interface Props {
   onClose: () => void;
 }
 
-function fmtMoney(n: number) {
-  return n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+function fmtMoney(n: number | undefined) {
+  return (n ?? 0).toLocaleString("es-CO", { maximumFractionDigits: 0 });
 }
 
 export default function BatchRegisterSuccessModal({ batchId, onClose }: Props) {
+  const { user } = useAuth();
+  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const [data, setData] = useState<BatchRegisterPrintData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +84,7 @@ export default function BatchRegisterSuccessModal({ batchId, onClose }: Props) {
               <div className={styles.meta}>
                 <span>Registró: {data.registeredBy}</span>
                 <span>{new Date(data.registeredAt).toLocaleString("es-CO")}</span>
-                <span>Total $: {fmtMoney(data.totalAmount)}</span>
+                {canSeeMoney && <span>Total $: {fmtMoney(data.totalAmount)}</span>}
               </div>
               <div className={styles.tableWrap}>
                 <table className={styles.table}>
@@ -93,7 +97,7 @@ export default function BatchRegisterSuccessModal({ batchId, onClose }: Props) {
                       <th>Inicio</th>
                       <th>Fin</th>
                       <th>Consigna</th>
-                      <th>Total $</th>
+                      {canSeeMoney && <th>Total $</th>}
                       <th>Estado</th>
                     </tr>
                   </thead>
@@ -107,7 +111,9 @@ export default function BatchRegisterSuccessModal({ batchId, onClose }: Props) {
                         <td>{formatClockTime(row.startTime) || row.startTime || "—"}</td>
                         <td>{formatClockTime(row.endTime) || row.endTime || "—"}</td>
                         <td className={styles.consigna}>{row.consigna || "—"}</td>
-                        <td className={styles.num}>{fmtMoney(row.amountTotal)}</td>
+                        {canSeeMoney && (
+                          <td className={styles.num}>{fmtMoney(row.amountTotal)}</td>
+                        )}
                         <td>{row.status}</td>
                       </tr>
                     ))}

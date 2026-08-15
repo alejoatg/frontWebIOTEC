@@ -145,14 +145,6 @@ function rowPreview(row: DigitarRow) {
   return { categoriesTotal, startEnd, delta, mismatch };
 }
 
-function normalizeName(s: string) {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 function patchFromEmployee(emp: {
   documentNumber: string;
   fullName?: string | null;
@@ -184,7 +176,6 @@ export default function DigitarContainer() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [rows, setRows] = useState<DigitarRow[]>([emptyRow()]);
-  const [employees, setEmployees] = useState<ManualEmployeeOption[]>([]);
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -241,20 +232,6 @@ export default function DigitarContainer() {
     },
     [flushDraftSave],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchManualEmployees()
-      .then((list) => {
-        if (!cancelled) setEmployees(list);
-      })
-      .catch(() => {
-        if (!cancelled) setEmployees([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Carga el único borrador del usuario (incluye el periodo en el que se quedó).
   useEffect(() => {
@@ -382,16 +359,6 @@ export default function DigitarContainer() {
         });
         return;
       }
-      const localMatches = employees.filter((e) => e.documentNumber.includes(digits));
-      const exact = localMatches.find((e) => e.documentNumber === digits);
-      if (exact) {
-        applyEmployee(localId, exact);
-        return;
-      }
-      if (localMatches.length === 1) {
-        applyEmployee(localId, localMatches[0]);
-        return;
-      }
       updateRow(localId, { lookingUp: true, lookupError: null });
       try {
         const data = await lookupManualEmployee(digits);
@@ -416,30 +383,38 @@ export default function DigitarContainer() {
         });
       }
     },
-    [applyEmployee, employees, updateRow],
+    [applyEmployee, updateRow],
   );
 
   const handleNameCommit = useCallback(
-    (localId: string, fullName: string) => {
-      const q = normalizeName(fullName);
+    async (localId: string, fullName: string) => {
+      const q = fullName.trim();
       if (!q) return;
-      const matches = employees.filter((e) => normalizeName(e.fullName).includes(q));
-      const exact = employees.filter((e) => normalizeName(e.fullName) === q);
-      if (exact.length === 1) {
-        applyEmployee(localId, exact[0]);
-        return;
+      try {
+        const matches = await fetchManualEmployees(q);
+        const exact = matches.filter(
+          (e) => e.fullName.trim().toLowerCase() === q.toLowerCase(),
+        );
+        if (exact.length === 1) {
+          applyEmployee(localId, exact[0]);
+          return;
+        }
+        if (matches.length === 1) {
+          applyEmployee(localId, matches[0]);
+          return;
+        }
+        if (matches.length === 0) {
+          updateRow(localId, { lookupError: "Nombre no encontrado" });
+          return;
+        }
+        updateRow(localId, { lookupError: "Hay varios nombres: elige uno de la lista" });
+      } catch (e) {
+        updateRow(localId, {
+          lookupError: e instanceof Error ? e.message : "Error al buscar",
+        });
       }
-      if (matches.length === 1) {
-        applyEmployee(localId, matches[0]);
-        return;
-      }
-      if (matches.length === 0) {
-        updateRow(localId, { lookupError: "Nombre no encontrado en parámetros" });
-        return;
-      }
-      updateRow(localId, { lookupError: "Hay varios nombres: elige uno de la lista" });
     },
-    [applyEmployee, employees, updateRow],
+    [applyEmployee, updateRow],
   );
 
   function addRow() {
@@ -725,7 +700,6 @@ export default function DigitarContainer() {
                     <EmployeeSuggestField
                       mode="document"
                       value={row.documentNumber}
-                      employees={employees}
                       placeholder="Cédula"
                       inputMode="numeric"
                       onChange={(v) => updateRow(row.localId, { documentNumber: v })}
@@ -741,11 +715,10 @@ export default function DigitarContainer() {
                     <EmployeeSuggestField
                       mode="name"
                       value={row.fullName}
-                      employees={employees}
                       placeholder="Nombre"
                       onChange={(v) => updateRow(row.localId, { fullName: v })}
                       onPick={(emp) => applyEmployee(row.localId, emp)}
-                      onCommit={(v) => handleNameCommit(row.localId, v)}
+                      onCommit={(v) => void handleNameCommit(row.localId, v)}
                     />
                   </td>
                   <td>

@@ -50,8 +50,9 @@ export async function lookupManualEmployee(documentNumber: string) {
   return request<ManualEmployeeLookup>(`/manual/lookup?${q}`);
 }
 
-export async function fetchManualEmployees() {
-  return request<ManualEmployeeOption[]>(`/manual/employees`);
+export async function fetchManualEmployees(q: string) {
+  const params = new URLSearchParams({ q });
+  return request<ManualEmployeeOption[]>(`/manual/employees?${params}`);
 }
 
 export async function registerManualEntries(body: {

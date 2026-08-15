@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import type { ManualEmployeeOption } from "../../api/overtimeApi";
+import {
+  fetchManualEmployees,
+  type ManualEmployeeOption,
+} from "../../api/overtimeApi";
 import styles from "./EmployeeSuggestField.module.scss";
 
 type Mode = "document" | "name";
@@ -10,7 +13,6 @@ type Mode = "document" | "name";
 interface Props {
   mode: Mode;
   value: string;
-  employees: ManualEmployeeOption[];
   placeholder?: string;
   inputMode?: "numeric" | "text";
   onChange: (value: string) => void;
@@ -18,18 +20,9 @@ interface Props {
   onCommit: (value: string) => void;
 }
 
-function normalize(s: string) {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 export default function EmployeeSuggestField({
   mode,
   value,
-  employees,
   placeholder,
   inputMode,
   onChange,
@@ -37,36 +30,68 @@ export default function EmployeeSuggestField({
   onCommit,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const pickedRef = useRef(false);
+  const requestIdRef = useRef(0);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [matches, setMatches] = useState<ManualEmployeeOption[]>([]);
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(
     null,
   );
-
-  const matches = useMemo(() => {
-    const q = normalize(value);
-    if (q.length < 2) return [];
-    const list = employees.filter((e) => {
-      if (mode === "document") {
-        return e.documentNumber.includes(q.replace(/\D/g, "") || q);
-      }
-      return normalize(e.fullName).includes(q);
-    });
-    return list.slice(0, 12);
-  }, [employees, mode, value]);
 
   function updateCoords() {
     const el = wrapRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    setCoords({ top: rect.bottom + 2, left: rect.left, width: Math.max(rect.width, 220) });
+    setCoords({
+      top: rect.bottom + 2,
+      left: rect.left,
+      width: Math.max(rect.width, 260),
+    });
   }
+
+  useEffect(() => {
+    const q = value.trim();
+    if (!open || q.length < 1) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
+
+    updateCoords();
+    const requestId = ++requestIdRef.current;
+    setLoading(true);
+    const timer = window.setTimeout(() => {
+      void fetchManualEmployees(q)
+        .then((list) => {
+          if (requestId !== requestIdRef.current) return;
+          setMatches(list);
+          setHighlight(0);
+        })
+        .catch(() => {
+          if (requestId !== requestIdRef.current) return;
+          setMatches([]);
+        })
+        .finally(() => {
+          if (requestId === requestIdRef.current) setLoading(false);
+        });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [value, open]);
 
   useEffect(() => {
     if (!open) return;
     updateCoords();
-    const onScroll = () => setOpen(false);
+    const onScroll = (event: Event) => {
+      const target = event.target as Node | null;
+      if (listRef.current && target && listRef.current.contains(target)) return;
+      setOpen(false);
+    };
     window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", onScroll);
     return () => {
@@ -100,7 +125,12 @@ export default function EmployeeSuggestField({
     }
   }
 
-  const showList = open && matches.length > 0 && coords && typeof document !== "undefined";
+  const showList =
+    open &&
+    value.trim().length >= 1 &&
+    coords &&
+    typeof document !== "undefined" &&
+    (loading || matches.length > 0 || !loading);
 
   return (
     <div className={styles.wrap} ref={wrapRef}>
@@ -112,7 +142,6 @@ export default function EmployeeSuggestField({
         autoComplete="off"
         onChange={(e) => {
           onChange(e.target.value);
-          setHighlight(0);
           setOpen(true);
         }}
         onFocus={() => {
@@ -127,17 +156,24 @@ export default function EmployeeSuggestField({
               return;
             }
             onCommit(value);
-          }, 120);
+          }, 160);
         }}
         onKeyDown={handleKeyDown}
       />
       {showList &&
         createPortal(
           <ul
+            ref={listRef}
             className={styles.list}
             style={{ top: coords.top, left: coords.left, width: coords.width }}
             role="listbox"
           >
+            {loading && matches.length === 0 && (
+              <li className={styles.status}>Buscando…</li>
+            )}
+            {!loading && matches.length === 0 && (
+              <li className={styles.status}>Sin coincidencias</li>
+            )}
             {matches.map((emp, i) => (
               <li key={emp.employeeId}>
                 <button

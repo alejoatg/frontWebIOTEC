@@ -19,7 +19,7 @@
 
 .list {
   position: fixed;
-  z-index: 80;
+  z-index: 200;
   margin: 0;
   padding: 0.2rem 0;
   list-style: none;
@@ -49,6 +49,12 @@
 .optionActive,
 .option:hover {
   background: #eff6ff;
+}
+
+.status {
+  padding: 0.4rem 0.55rem;
+  font-size: 0.72rem;
+  color: #64748b;
 }
 
 .doc {

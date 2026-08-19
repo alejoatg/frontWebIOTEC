@@ -5,6 +5,31 @@
   line-height: 1.45;
 }
 
+.inlineHelp {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineHelpIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -87,12 +112,42 @@
   letter-spacing: 0.02em;
 }
 
+.categoryTh {
+  white-space: nowrap;
+}
+
+.categoryTh span {
+  margin-right: 0.15rem;
+}
+
+.colHelpBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.colHelpBtn:hover {
+  background: #bfdbfe;
+}
+
 .stickyActions {
   position: sticky;
   left: 0;
   z-index: 3;
   background: #f8fafc;
-  min-width: 6.5rem;
+  min-width: 7.5rem;
   box-shadow: 2px 0 6px rgba(15, 23, 42, 0.06);
 }
 

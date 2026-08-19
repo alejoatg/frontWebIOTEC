@@ -19,7 +19,15 @@ import {
   sumCategoryHours,
 } from "../../lib/overtimeCalculator";
 import { formatClockTime, isHalfHourClock, toHalfHourClock } from "../../lib/timeFormat";
+import {
+  suggestSupplementalCategoryHours,
+  suggestedHoursToRowPatch,
+} from "../../lib/suggestCategoryHours";
 import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
+import CategoriasTsHelpModal, {
+  categoriaShortLabel,
+  type CategoriaTsCode,
+} from "../CategoriasTsHelpModal/CategoriasTsHelpModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import shared from "../../styles/shared.module.scss";
 import EmployeeSuggestField from "./EmployeeSuggestField";
@@ -58,7 +66,31 @@ type DigitarRow = {
   payrollFactor: number | null;
   lookupError: string | null;
   lookingUp: boolean;
+  /** Si true, no sobrescribir categorías al cambiar fecha/horario. */
+  categoriesManual: boolean;
 };
+
+const CATEGORY_KEYS = [
+  "hoursRd",
+  "hoursRn",
+  "hoursTsd",
+  "hoursTsn",
+  "hoursHedd",
+  "hoursHend",
+  "hoursDisponibilidad",
+] as const;
+
+type CategoryFieldKey = (typeof CATEGORY_KEYS)[number];
+
+const CATEGORY_HEADER_CODES: CategoriaTsCode[] = [
+  "RD",
+  "RN",
+  "TSD",
+  "TSN",
+  "HEDD",
+  "HEND",
+  "DISPONIBILIDAD",
+];
 
 function newLocalId() {
   return `r-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -97,8 +129,36 @@ function emptyRow(partial?: Partial<DigitarRow>): DigitarRow {
     payrollFactor: null,
     lookupError: null,
     lookingUp: false,
+    categoriesManual: false,
     ...partial,
   };
+}
+
+function autofillPatchForRow(row: Pick<DigitarRow, "workDate" | "startTime" | "endTime">) {
+  const suggested = suggestSupplementalCategoryHours(
+    row.workDate,
+    row.startTime,
+    row.endTime,
+  );
+  if (!suggested) return null;
+  return suggestedHoursToRowPatch(suggested);
+}
+
+function mergeSchedulePatch(
+  row: DigitarRow,
+  patch: Partial<Pick<DigitarRow, "workDate" | "startTime" | "endTime">>,
+): Partial<DigitarRow> {
+  const next = { ...row, ...patch };
+  if (next.categoriesManual) return patch;
+  const autofill = autofillPatchForRow(next);
+  if (!autofill) return patch;
+  return { ...patch, ...autofill };
+}
+
+function mergeAutofillForce(row: DigitarRow): Partial<DigitarRow> {
+  const autofill = autofillPatchForRow(row);
+  if (!autofill) return { categoriesManual: false };
+  return { ...autofill, categoriesManual: false };
 }
 
 function rowToDraftPayload(row: DigitarRow): Record<string, unknown> {
@@ -112,6 +172,7 @@ function rowFromDraftPayload(raw: Record<string, unknown>): DigitarRow {
     lookingUp: false,
     startTime: toHalfHourClock(String(raw.startTime ?? "")),
     endTime: toHalfHourClock(String(raw.endTime ?? "")),
+    categoriesManual: Boolean(raw.categoriesManual),
   });
 }
 
@@ -180,6 +241,8 @@ export default function DigitarContainer() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpFocus, setHelpFocus] = useState<CategoriaTsCode | null>(null);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -331,6 +394,39 @@ export default function DigitarContainer() {
     setRows((prev) =>
       prev.map((r) => (r.localId === localId ? { ...r, ...patch } : r)),
     );
+  }, []);
+
+  const updateSchedule = useCallback(
+    (localId: string, patch: Partial<Pick<DigitarRow, "workDate" | "startTime" | "endTime">>) => {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.localId === localId ? { ...r, ...mergeSchedulePatch(r, patch) } : r,
+        ),
+      );
+    },
+    [],
+  );
+
+  const updateCategory = useCallback(
+    (localId: string, key: CategoryFieldKey, value: string) => {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.localId === localId ? { ...r, [key]: value, categoriesManual: true } : r,
+        ),
+      );
+    },
+    [],
+  );
+
+  const autofillRow = useCallback((localId: string) => {
+    setRows((prev) =>
+      prev.map((r) => (r.localId === localId ? { ...r, ...mergeAutofillForce(r) } : r)),
+    );
+  }, []);
+
+  const openCategoryHelp = useCallback((code?: CategoriaTsCode) => {
+    setHelpFocus(code ?? null);
+    setHelpOpen(true);
   }, []);
 
   const applyEmployee = useCallback(
@@ -574,8 +670,14 @@ export default function DigitarContainer() {
       <p className={styles.hint}>
         Hay un solo borrador por usuario: al volver a esta pestaña se restaura para seguir
         digitando. Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
-        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Usa{" "}
-        <strong>Duplicar</strong> para el mismo trabajo con otro trabajador.
+        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
+        <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
+        (6:00–21:00) y festivo; RD, RN y Disponibilidad se digitán manualmente. Use{" "}
+        <button type="button" className={styles.inlineHelp} onClick={() => openCategoryHelp()}>
+          Guía de categorías
+        </button>{" "}
+        o el ícono <span className={styles.inlineHelpIcon}>?</span> en cada columna.{" "}
+        <strong>Duplicar</strong> copia el tramo para otro trabajador.
       </p>
 
       <div className={styles.toolbar}>
@@ -651,13 +753,20 @@ export default function DigitarContainer() {
               <th>Fecha *</th>
               <th>Inicio *</th>
               <th>Fin *</th>
-              <th>RD</th>
-              <th>RN</th>
-              <th>TSD</th>
-              <th>TSN</th>
-              <th>HEDD</th>
-              <th>HEND</th>
-              <th>Disp.</th>
+              {CATEGORY_HEADER_CODES.map((code) => (
+                <th key={code} className={styles.categoryTh}>
+                  <span>{categoriaShortLabel(code)}</span>
+                  <button
+                    type="button"
+                    className={styles.colHelpBtn}
+                    title={`Qué es ${code}`}
+                    aria-label={`Ayuda: ${code}`}
+                    onClick={() => openCategoryHelp(code)}
+                  >
+                    ?
+                  </button>
+                </th>
+              ))}
               <th>Validador</th>
               <th>Proceso</th>
               <th>Zona</th>
@@ -684,6 +793,9 @@ export default function DigitarContainer() {
                 >
                   <td className={styles.stickyActions}>
                     <div className={styles.rowActions}>
+                      <button type="button" onClick={() => autofillRow(row.localId)}>
+                        Autollenar
+                      </button>
                       <button type="button" onClick={() => duplicateRow(row.localId)}>
                         Duplicar
                       </button>
@@ -728,38 +840,28 @@ export default function DigitarContainer() {
                       min={bounds.from}
                       max={bounds.to}
                       value={row.workDate}
-                      onChange={(e) => updateRow(row.localId, { workDate: e.target.value })}
+                      onChange={(e) => updateSchedule(row.localId, { workDate: e.target.value })}
                     />
                   </td>
                   <td>
                     <HalfHourSelect
                       value={row.startTime}
-                      onChange={(v) => updateRow(row.localId, { startTime: v })}
+                      onChange={(v) => updateSchedule(row.localId, { startTime: v })}
                     />
                   </td>
                   <td>
                     <HalfHourSelect
                       value={row.endTime}
-                      onChange={(v) => updateRow(row.localId, { endTime: v })}
+                      onChange={(v) => updateSchedule(row.localId, { endTime: v })}
                     />
                   </td>
-                  {(
-                    [
-                      ["hoursRd", row.hoursRd],
-                      ["hoursRn", row.hoursRn],
-                      ["hoursTsd", row.hoursTsd],
-                      ["hoursTsn", row.hoursTsn],
-                      ["hoursHedd", row.hoursHedd],
-                      ["hoursHend", row.hoursHend],
-                      ["hoursDisponibilidad", row.hoursDisponibilidad],
-                    ] as const
-                  ).map(([key, val]) => (
+                  {CATEGORY_KEYS.map((key) => (
                     <td key={key}>
                       <input
                         className={`${styles.cellInput} ${styles.num}`}
-                        value={val}
+                        value={row[key]}
                         inputMode="decimal"
-                        onChange={(e) => updateRow(row.localId, { [key]: e.target.value })}
+                        onChange={(e) => updateCategory(row.localId, key, e.target.value)}
                       />
                     </td>
                   ))}
@@ -806,6 +908,15 @@ export default function DigitarContainer() {
           onClose={() => setSuccessBatchId(null)}
         />
       )}
+
+      <CategoriasTsHelpModal
+        open={helpOpen}
+        focusCode={helpFocus}
+        onClose={() => {
+          setHelpOpen(false);
+          setHelpFocus(null);
+        }}
+      />
     </div>
   );
 }

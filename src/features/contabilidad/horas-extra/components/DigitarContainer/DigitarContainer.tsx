@@ -24,6 +24,7 @@ import {
   suggestSupplementalCategoryHours,
   suggestedHoursToRowPatch,
 } from "../../lib/suggestCategoryHours";
+import { PROCESO_CAUSACION_SELECT_OPTIONS } from "../../lib/procesoCausacion";
 import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 import CategoriasTsHelpModal, {
   categoriaShortLabel,
@@ -31,8 +32,12 @@ import CategoriasTsHelpModal, {
 } from "../CategoriasTsHelpModal/CategoriasTsHelpModal";
 import RegisterValidationModal from "../RegisterValidationModal/RegisterValidationModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
+import { fetchCatalogItemsBatch } from "@/features/catalogs/api/catalogsApi";
+import type { CatalogItemOption } from "@/features/catalogs/types";
 import shared from "../../styles/shared.module.scss";
 import EmployeeSuggestField from "./EmployeeSuggestField";
+import CatalogSuggestField from "./CatalogSuggestField";
+import CatalogSelectField from "./CatalogSelectField";
 import HalfHourSelect from "./HalfHourSelect";
 import styles from "./DigitarContainer.module.scss";
 
@@ -84,6 +89,51 @@ const CATEGORY_KEYS = [
 
 type CategoryFieldKey = (typeof CATEGORY_KEYS)[number];
 
+const MUNICIPIO_CATALOG_CODE = "municipio_podas";
+const SISTEMA_CATALOG_CODE = "sistema_ts";
+
+type OptionalTextFieldKey =
+  | "baseMunicipality"
+  | "brigadeCode"
+  | "itinerary"
+  | "caseRef"
+  | "workRef"
+  | "ticketRef"
+  | "operationalNote"
+  | "consigna";
+
+type OptionalColumn =
+  | { kind: "text"; key: OptionalTextFieldKey }
+  | {
+      kind: "catalog-select";
+      key: "systemName";
+      catalog: string;
+      placeholder: string;
+    }
+  | { kind: "proceso-causacion"; key: "attachmentRef"; placeholder: string };
+
+const OPTIONAL_COLUMNS: OptionalColumn[] = [
+  { kind: "text", key: "baseMunicipality" },
+  { kind: "text", key: "brigadeCode" },
+  {
+    kind: "catalog-select",
+    key: "systemName",
+    catalog: SISTEMA_CATALOG_CODE,
+    placeholder: "Sistema",
+  },
+  { kind: "text", key: "itinerary" },
+  { kind: "text", key: "caseRef" },
+  { kind: "text", key: "workRef" },
+  { kind: "text", key: "ticketRef" },
+  {
+    kind: "proceso-causacion",
+    key: "attachmentRef",
+    placeholder: "Proceso",
+  },
+  { kind: "text", key: "operationalNote" },
+  { kind: "text", key: "consigna" },
+];
+
 const CATEGORY_HEADER_CODES: CategoriaTsCode[] = [
   "RD",
   "RN",
@@ -93,6 +143,22 @@ const CATEGORY_HEADER_CODES: CategoriaTsCode[] = [
   "HEND",
   "DISPONIBILIDAD",
 ];
+
+const OPTIONAL_FIELD_LABELS: Record<
+  OptionalTextFieldKey | "systemName" | "attachmentRef",
+  string
+> = {
+  baseMunicipality: "Municipio sede",
+  brigadeCode: "Brigada",
+  systemName: "Sistema",
+  itinerary: "Itinerario",
+  caseRef: "Caso",
+  workRef: "Trabajo",
+  ticketRef: "Ticket",
+  attachmentRef: "Proceso donde causa",
+  operationalNote: "Obs. operativa",
+  consigna: "Consigna",
+};
 
 function newLocalId() {
   return `r-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -319,6 +385,10 @@ export default function DigitarContainer() {
   const [helpFocus, setHelpFocus] = useState<CategoriaTsCode | null>(null);
   const [registerValidationOpen, setRegisterValidationOpen] = useState(false);
   const [registerValidationErrors, setRegisterValidationErrors] = useState<string[]>([]);
+  const [catalogOptions, setCatalogOptions] = useState<Record<string, CatalogItemOption[]>>(
+    {},
+  );
+  const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -397,6 +467,30 @@ export default function DigitarContainer() {
         if (!cancelled) setRows([emptyRow()]);
       } finally {
         if (!cancelled) draftReadyRef.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setCatalogsLoading(true);
+      try {
+        const batch = await fetchCatalogItemsBatch([
+          MUNICIPIO_CATALOG_CODE,
+          SISTEMA_CATALOG_CODE,
+        ]);
+        if (cancelled) return;
+        setCatalogOptions(batch);
+      } catch {
+        if (!cancelled) {
+          setCatalogOptions({});
+        }
+      } finally {
+        if (!cancelled) setCatalogsLoading(false);
       }
     })();
     return () => {
@@ -801,17 +895,10 @@ export default function DigitarContainer() {
               <th>Validador</th>
               <th>Proceso</th>
               <th>Zona</th>
-              <th>Consigna</th>
-              <th>Lugar comisión</th>
-              <th>Municipio sede</th>
-              <th>Brigada</th>
-              <th>Sistema</th>
-              <th>Itinerario</th>
-              <th>Caso</th>
-              <th>Trabajo</th>
-              <th>Ticket</th>
-              <th>Archivo</th>
-              <th>Obs. operativa</th>
+              <th className={styles.wideTh}>MUNICIPIO DONDE HIZO LA HORA EXTRA</th>
+              {OPTIONAL_COLUMNS.map((col) => (
+                <th key={col.key}>{OPTIONAL_FIELD_LABELS[col.key]}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -918,27 +1005,44 @@ export default function DigitarContainer() {
                   </td>
                   <td className={styles.ro}>{row.processName || "—"}</td>
                   <td className={styles.ro}>{row.zoneName || "—"}</td>
-                  {(
-                    [
-                      ["consigna", row.consigna],
-                      ["commissionMunicipality", row.commissionMunicipality],
-                      ["baseMunicipality", row.baseMunicipality],
-                      ["brigadeCode", row.brigadeCode],
-                      ["systemName", row.systemName],
-                      ["itinerary", row.itinerary],
-                      ["caseRef", row.caseRef],
-                      ["workRef", row.workRef],
-                      ["ticketRef", row.ticketRef],
-                      ["attachmentRef", row.attachmentRef],
-                      ["operationalNote", row.operationalNote],
-                    ] as const
-                  ).map(([key, val]) => (
-                    <td key={key}>
-                      <input
-                        className={styles.cellInput}
-                        value={val}
-                        onChange={(e) => updateRow(row.localId, { [key]: e.target.value })}
-                      />
+                  <td>
+                    <CatalogSuggestField
+                      value={row.commissionMunicipality}
+                      options={catalogOptions[MUNICIPIO_CATALOG_CODE] ?? []}
+                      loading={catalogsLoading}
+                      placeholder="Buscar municipio"
+                      onChange={(v) =>
+                        updateRow(row.localId, { commissionMunicipality: v })
+                      }
+                    />
+                  </td>
+                  {OPTIONAL_COLUMNS.map((col) => (
+                    <td key={col.key}>
+                      {col.kind === "catalog-select" ? (
+                        <CatalogSelectField
+                          value={row[col.key]}
+                          options={catalogOptions[col.catalog] ?? []}
+                          placeholder={col.placeholder}
+                          onChange={(v) => updateRow(row.localId, { [col.key]: v })}
+                        />
+                      ) : col.kind === "proceso-causacion" ? (
+                        <CatalogSelectField
+                          value={row.attachmentRef}
+                          options={PROCESO_CAUSACION_SELECT_OPTIONS}
+                          placeholder={col.placeholder}
+                          onChange={(v) =>
+                            updateRow(row.localId, { attachmentRef: v })
+                          }
+                        />
+                      ) : (
+                        <input
+                          className={styles.cellInput}
+                          value={row[col.key]}
+                          onChange={(e) =>
+                            updateRow(row.localId, { [col.key]: e.target.value })
+                          }
+                        />
+                      )}
                     </td>
                   ))}
                 </tr>

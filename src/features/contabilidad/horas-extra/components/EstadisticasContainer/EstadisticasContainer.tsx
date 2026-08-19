@@ -15,7 +15,6 @@ import {
 } from "chart.js";
 import { Pie, Line, Bar } from "react-chartjs-2";
 import { Button } from "@/components";
-import HorasExtraNav from "../HorasExtraNav/HorasExtraNav";
 import BolsaHorasChart from "./BolsaHorasChart";
 import BolsaHorasTable from "./BolsaHorasTable";
 import styles from "./EstadisticasContainer.module.scss";
@@ -154,8 +153,6 @@ export default function EstadisticasContainer() {
 
   return (
     <div>
-      <HorasExtraNav />
-
       <div className={styles.header}>
         <h2 className={styles.title}>
           Estadísticas de tiempo suplementario — {period.month}/{period.year}

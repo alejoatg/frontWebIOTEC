@@ -1,0 +1,72 @@
+.wrap {
+  position: relative;
+  display: block;
+}
+
+.input {
+  width: 100%;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.list {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+.status {
+  padding: 0.6rem 0.75rem;
+  color: #64748b;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.option,
+.optionActive {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  transition: background 0.12s;
+}
+
+.option:hover,
+.optionActive {
+  background: #f1f5f9;
+}
+
+.doc {
+  font-size: 0.8125rem;
+  color: #334155;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  font-size: 0.75rem;
+  color: #64748b;
+}

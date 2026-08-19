@@ -14,6 +14,7 @@ import {
 } from "../../api/overtimeApi";
 import { MONEY_FIELD_IDS, SPREADSHEET_COLUMNS } from "../../lib/entrySpreadsheet";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
+import EmployeeFilterField from "../EmployeeFilterField/EmployeeFilterField";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import PlanillaRowActions from "../PlanillaRowActions/PlanillaRowActions";
 import styles from "./RegistrosPlanillaContainer.module.scss";
@@ -204,16 +205,14 @@ export default function RegistrosPlanillaContainer() {
               onChange={(e) => setFilters((f) => ({ ...f, workDateTo: e.target.value }))}
             />
           </label>
-          <label className={styles.filterField}>
-            <span>Cédula</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="Solo dígitos"
+          <div className={styles.filterField}>
+            <label htmlFor="filter-document">Cédula</label>
+            <EmployeeFilterField
               value={filters.documentNumber}
-              onChange={(e) => setFilters((f) => ({ ...f, documentNumber: e.target.value }))}
+              onChange={(v) => setFilters((f) => ({ ...f, documentNumber: v }))}
+              placeholder="Buscar por cédula o nombre"
             />
-          </label>
+          </div>
           <label className={styles.filterField}>
             <span>Planilla</span>
             <select

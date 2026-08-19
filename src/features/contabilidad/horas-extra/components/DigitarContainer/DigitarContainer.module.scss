@@ -169,6 +169,14 @@
   background: #bfdbfe;
 }
 
+.wideTh {
+  min-width: 11rem;
+  white-space: normal;
+  line-height: 1.25;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .stickyActions {
   position: sticky;
   left: 0;

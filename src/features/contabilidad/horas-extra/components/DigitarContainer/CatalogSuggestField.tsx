@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import type { CatalogItemOption } from "@/features/catalogs/types";
 import styles from "./CatalogSuggestField.module.scss";
 
 interface Props {
   value: string;
-  options: CatalogItemOption[];
+  options: Array<{ key: string; value: string }>;
   loading?: boolean;
   placeholder?: string;
   onChange: (value: string) => void;
@@ -21,7 +20,10 @@ function normalizeSearch(value: string): string {
     .trim();
 }
 
-function filterOptions(options: CatalogItemOption[], query: string): CatalogItemOption[] {
+function filterOptions(
+  options: Array<{ key: string; value: string }>,
+  query: string,
+): Array<{ key: string; value: string }> {
   const q = normalizeSearch(query);
   if (!q) return options.slice(0, 25);
   return options
@@ -84,7 +86,7 @@ export default function CatalogSuggestField({
     };
   }, [open]);
 
-  function pick(item: CatalogItemOption) {
+  function pick(item: { key: string; value: string }) {
     pickedRef.current = true;
     onChange(item.value);
     setOpen(false);

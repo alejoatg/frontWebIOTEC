@@ -25,6 +25,8 @@ import {
   suggestedHoursToRowPatch,
 } from "../../lib/suggestCategoryHours";
 import { PROCESO_CAUSACION_SELECT_OPTIONS } from "../../lib/procesoCausacion";
+import { SISTEMA_TS_SELECT_OPTIONS } from "../../lib/sistemaTs";
+import { MUNICIPIO_PODAS_OPTIONS } from "../../lib/municipioPodas";
 import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 import CategoriasTsHelpModal, {
   categoriaShortLabel,
@@ -32,8 +34,6 @@ import CategoriasTsHelpModal, {
 } from "../CategoriasTsHelpModal/CategoriasTsHelpModal";
 import RegisterValidationModal from "../RegisterValidationModal/RegisterValidationModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
-import { fetchCatalogItemsBatch } from "@/features/catalogs/api/catalogsApi";
-import type { CatalogItemOption } from "@/features/catalogs/types";
 import shared from "../../styles/shared.module.scss";
 import EmployeeSuggestField from "./EmployeeSuggestField";
 import CatalogSuggestField from "./CatalogSuggestField";
@@ -89,8 +89,6 @@ const CATEGORY_KEYS = [
 
 type CategoryFieldKey = (typeof CATEGORY_KEYS)[number];
 
-const MUNICIPIO_CATALOG_CODE = "municipio_podas";
-const SISTEMA_CATALOG_CODE = "sistema_ts";
 
 type OptionalTextFieldKey =
   | "baseMunicipality"
@@ -104,25 +102,20 @@ type OptionalTextFieldKey =
 
 type OptionalColumn =
   | { kind: "text"; key: OptionalTextFieldKey }
-  | {
-      kind: "catalog-select";
-      key: "systemName";
-      catalog: string;
-      placeholder: string;
-    }
+  | { kind: "sistema-ts"; key: "systemName"; placeholder: string }
   | { kind: "proceso-causacion"; key: "attachmentRef"; placeholder: string };
 
 const OPTIONAL_COLUMNS: OptionalColumn[] = [
   { kind: "text", key: "baseMunicipality" },
   { kind: "text", key: "brigadeCode" },
   {
-    kind: "catalog-select",
+    kind: "sistema-ts",
     key: "systemName",
-    catalog: SISTEMA_CATALOG_CODE,
     placeholder: "Sistema",
   },
   { kind: "text", key: "itinerary" },
   { kind: "text", key: "caseRef" },
+  { kind: "text", key: "consigna" },
   { kind: "text", key: "workRef" },
   { kind: "text", key: "ticketRef" },
   {
@@ -131,7 +124,6 @@ const OPTIONAL_COLUMNS: OptionalColumn[] = [
     placeholder: "Proceso",
   },
   { kind: "text", key: "operationalNote" },
-  { kind: "text", key: "consigna" },
 ];
 
 const CATEGORY_HEADER_CODES: CategoriaTsCode[] = [
@@ -385,10 +377,6 @@ export default function DigitarContainer() {
   const [helpFocus, setHelpFocus] = useState<CategoriaTsCode | null>(null);
   const [registerValidationOpen, setRegisterValidationOpen] = useState(false);
   const [registerValidationErrors, setRegisterValidationErrors] = useState<string[]>([]);
-  const [catalogOptions, setCatalogOptions] = useState<Record<string, CatalogItemOption[]>>(
-    {},
-  );
-  const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -467,30 +455,6 @@ export default function DigitarContainer() {
         if (!cancelled) setRows([emptyRow()]);
       } finally {
         if (!cancelled) draftReadyRef.current = true;
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setCatalogsLoading(true);
-      try {
-        const batch = await fetchCatalogItemsBatch([
-          MUNICIPIO_CATALOG_CODE,
-          SISTEMA_CATALOG_CODE,
-        ]);
-        if (cancelled) return;
-        setCatalogOptions(batch);
-      } catch {
-        if (!cancelled) {
-          setCatalogOptions({});
-        }
-      } finally {
-        if (!cancelled) setCatalogsLoading(false);
       }
     })();
     return () => {
@@ -1008,8 +972,7 @@ export default function DigitarContainer() {
                   <td>
                     <CatalogSuggestField
                       value={row.commissionMunicipality}
-                      options={catalogOptions[MUNICIPIO_CATALOG_CODE] ?? []}
-                      loading={catalogsLoading}
+                      options={[...MUNICIPIO_PODAS_OPTIONS]}
                       placeholder="Buscar municipio"
                       onChange={(v) =>
                         updateRow(row.localId, { commissionMunicipality: v })
@@ -1018,12 +981,14 @@ export default function DigitarContainer() {
                   </td>
                   {OPTIONAL_COLUMNS.map((col) => (
                     <td key={col.key}>
-                      {col.kind === "catalog-select" ? (
+                      {col.kind === "sistema-ts" ? (
                         <CatalogSelectField
-                          value={row[col.key]}
-                          options={catalogOptions[col.catalog] ?? []}
+                          value={row.systemName}
+                          options={SISTEMA_TS_SELECT_OPTIONS}
                           placeholder={col.placeholder}
-                          onChange={(v) => updateRow(row.localId, { [col.key]: v })}
+                          onChange={(v) =>
+                            updateRow(row.localId, { systemName: v })
+                          }
                         />
                       ) : col.kind === "proceso-causacion" ? (
                         <CatalogSelectField

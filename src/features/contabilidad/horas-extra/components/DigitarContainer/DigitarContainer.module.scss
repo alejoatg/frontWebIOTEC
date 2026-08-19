@@ -1,8 +1,8 @@
-.hint {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: #475569;
-  line-height: 1.45;
+.footnote {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.5;
 }
 
 .inlineHelp {
@@ -47,15 +47,42 @@
 .draftStatus {
   font-size: 0.78rem;
   color: #16a34a;
-  margin-left: auto;
+}
 
-  &:empty {
-    display: none;
-  }
+.draftMeta {
+  margin-left: auto;
+  text-align: right;
 }
 
 .draftStatusError {
   color: #b91c1c;
+}
+
+.validatorCell {
+  min-width: 3.2rem;
+  text-align: center;
+}
+
+.validatorCellOk {
+  background: #f0fdf4;
+}
+
+.validatorCellBad {
+  background: #fef2f2;
+}
+
+.validatorOk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.validatorBad {
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .gridWrap {

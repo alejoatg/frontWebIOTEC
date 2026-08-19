@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { Button } from "@/components";
 import {
   fetchManualDraft,
@@ -28,6 +29,7 @@ import CategoriasTsHelpModal, {
   categoriaShortLabel,
   type CategoriaTsCode,
 } from "../CategoriasTsHelpModal/CategoriasTsHelpModal";
+import RegisterValidationModal from "../RegisterValidationModal/RegisterValidationModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import shared from "../../styles/shared.module.scss";
 import EmployeeSuggestField from "./EmployeeSuggestField";
@@ -203,7 +205,79 @@ function rowPreview(row: DigitarRow) {
   const delta =
     startEnd == null ? null : Math.round((startEnd - categoriesTotal) * 10000) / 10000;
   const mismatch = delta != null && Math.abs(delta) > HOURS_COHERENCE_TOLERANCE;
-  return { categoriesTotal, startEnd, delta, mismatch };
+  const ok = delta != null && !mismatch;
+  return { categoriesTotal, startEnd, delta, mismatch, ok };
+}
+
+function formatDraftSavedAt(date: Date): string {
+  return date.toLocaleString("es-CO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function rowLabel(row: DigitarRow, index: number): string {
+  const doc = row.documentNumber.replace(/\D/g, "");
+  if (doc) return `Cédula ${doc}`;
+  if (row.fullName.trim()) return row.fullName.trim();
+  return `Fila ${index + 1}`;
+}
+
+function collectRegisterErrors(
+  rows: DigitarRow[],
+  bounds: { from: string; to: string },
+  year: number,
+  month: number,
+): string[] {
+  const errors: string[] = [];
+  if (!rows.length) {
+    errors.push("Agrega al menos una fila.");
+    return errors;
+  }
+
+  rows.forEach((row, index) => {
+    const label = rowLabel(row, index);
+    if (!row.documentNumber.replace(/\D/g, "")) {
+      errors.push(`${label}: falta la cédula.`);
+      return;
+    }
+    if (!row.workDate) {
+      errors.push(`${label}: falta la fecha.`);
+      return;
+    }
+    if (row.workDate < bounds.from || row.workDate > bounds.to) {
+      errors.push(
+        `${label}: la fecha debe estar en el periodo ${year}-${String(month).padStart(2, "0")}.`,
+      );
+      return;
+    }
+    if (!row.startTime || !row.endTime) {
+      errors.push(`${label}: faltan hora de inicio y/o fin.`);
+      return;
+    }
+    if (!isHalfHourClock(row.startTime) || !isHalfHourClock(row.endTime)) {
+      errors.push(
+        `${label}: las horas solo pueden ser en punto o media hora (ej. 18:00, 18:30).`,
+      );
+      return;
+    }
+    const preview = rowPreview(row);
+    if (preview.mismatch && preview.delta != null) {
+      errors.push(
+        `${label}: validador ${preview.delta} (debe ser 0). Ajuste las horas por categoría o use Autollenar.`,
+      );
+      return;
+    }
+    if (row.lookupError === "Cédula no encontrada" || row.lookupError === "Empleado inactivo") {
+      errors.push(`${label}: ${row.lookupError.toLowerCase()}.`);
+    }
+  });
+
+  return errors;
 }
 
 function patchFromEmployee(emp: {
@@ -243,6 +317,8 @@ export default function DigitarContainer() {
   const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpFocus, setHelpFocus] = useState<CategoriaTsCode | null>(null);
+  const [registerValidationOpen, setRegisterValidationOpen] = useState(false);
+  const [registerValidationErrors, setRegisterValidationErrors] = useState<string[]>([]);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -571,43 +647,12 @@ export default function DigitarContainer() {
   async function handleRegister() {
     setError(null);
     setSuccess(null);
-    if (!rows.length) {
-      setError("Agrega al menos una fila");
-      return;
-    }
 
-    for (const row of rows) {
-      if (!row.documentNumber.replace(/\D/g, "")) {
-        setError("Todas las filas deben tener cédula");
-        return;
-      }
-      if (!row.workDate) {
-        setError("Todas las filas deben tener fecha");
-        return;
-      }
-      if (row.workDate < bounds.from || row.workDate > bounds.to) {
-        setError(`La fecha debe estar en el periodo ${year}-${String(month).padStart(2, "0")}`);
-        return;
-      }
-      if (!row.startTime || !row.endTime) {
-        setError("Todas las filas deben tener hora inicio y fin");
-        return;
-      }
-      if (!isHalfHourClock(row.startTime) || !isHalfHourClock(row.endTime)) {
-        setError("Las horas de inicio y fin solo pueden ser en punto o media hora (ej. 18:00, 18:30)");
-        return;
-      }
-      const preview = rowPreview(row);
-      if (preview.mismatch) {
-        setError(
-          `Fila ${row.documentNumber}: el horario no coincide con la suma de horas por categoría`,
-        );
-        return;
-      }
-      if (row.lookupError === "Cédula no encontrada" || row.lookupError === "Empleado inactivo") {
-        setError(`Corrige la cédula de la fila ${row.documentNumber}`);
-        return;
-      }
+    const validationErrors = collectRegisterErrors(rows, bounds, year, month);
+    if (validationErrors.length) {
+      setRegisterValidationErrors(validationErrors);
+      setRegisterValidationOpen(true);
+      return;
     }
 
     const payload: ManualEntryPayload[] = rows.map((row) => ({
@@ -667,19 +712,6 @@ export default function DigitarContainer() {
         onChange={handlePeriodChange}
       />
 
-      <p className={styles.hint}>
-        Hay un solo borrador por usuario: al volver a esta pestaña se restaura para seguir
-        digitando. Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
-        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
-        <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
-        (6:00–21:00) y festivo; RD, RN y Disponibilidad se digitán manualmente. Use{" "}
-        <button type="button" className={styles.inlineHelp} onClick={() => openCategoryHelp()}>
-          Guía de categorías
-        </button>{" "}
-        o el ícono <span className={styles.inlineHelpIcon}>?</span> en cada columna.{" "}
-        <strong>Duplicar</strong> copia el tramo para otro trabajador.
-      </p>
-
       <div className={styles.toolbar}>
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           Agregar fila
@@ -703,22 +735,21 @@ export default function DigitarContainer() {
           {registering ? "Registrando…" : "Registrar planilla"}
         </Button>
         <span className={styles.count}>{rows.length} fila(s)</span>
-        <span
-          className={`${styles.draftStatus} ${
-            draftStatus === "error" ? styles.draftStatusError : ""
-          }`}
-        >
-          {draftStatus === "saving" && "Guardando borrador…"}
-          {draftStatus === "saved" &&
-            draftSavedAt &&
-            `Borrador guardado ${draftSavedAt.toLocaleTimeString("es-CO", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })}`}
-          {draftStatus === "error" &&
-            "No se pudo guardar el borrador. Usa \"Guardar borrador\" para reintentar."}
-        </span>
+        <div className={styles.draftMeta}>
+          {draftStatus === "saving" && (
+            <span className={styles.draftStatus}>Guardando borrador…</span>
+          )}
+          {draftStatus === "saved" && draftSavedAt && (
+            <span className={styles.draftStatus}>
+              Último borrador: {formatDraftSavedAt(draftSavedAt)}
+            </span>
+          )}
+          {draftStatus === "error" && (
+            <span className={`${styles.draftStatus} ${styles.draftStatusError}`}>
+              No se pudo guardar el borrador. Usa &quot;Guardar borrador&quot; para reintentar.
+            </span>
+          )}
+        </div>
       </div>
 
       {error && <div className={`${shared.alert} ${shared.alertError}`}>{error}</div>}
@@ -866,9 +897,24 @@ export default function DigitarContainer() {
                     </td>
                   ))}
                   <td
-                    className={`${styles.ro} ${styles.num} ${preview.mismatch ? styles.bad : ""}`}
+                    className={`${styles.ro} ${styles.num} ${styles.validatorCell} ${
+                      preview.ok
+                        ? styles.validatorCellOk
+                        : preview.mismatch
+                          ? styles.validatorCellBad
+                          : ""
+                    }`}
                   >
-                    {preview.delta == null ? "—" : preview.delta}
+                    {preview.delta == null ? (
+                      "—"
+                    ) : preview.ok ? (
+                      <span className={styles.validatorOk}>
+                        <Check size={14} strokeWidth={2.5} aria-hidden />
+                        0
+                      </span>
+                    ) : (
+                      <span className={styles.validatorBad}>{preview.delta}</span>
+                    )}
                   </td>
                   <td className={styles.ro}>{row.processName || "—"}</td>
                   <td className={styles.ro}>{row.zoneName || "—"}</td>
@@ -902,6 +948,19 @@ export default function DigitarContainer() {
         </table>
       </div>
 
+      <p className={styles.footnote}>
+        Hay un solo borrador por usuario: al volver a esta pestaña se restaura para seguir
+        digitando. Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
+        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
+        <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
+        (6:00–21:00) y festivo; RD, RN y Disponibilidad se digitán manualmente. Use{" "}
+        <button type="button" className={styles.inlineHelp} onClick={() => openCategoryHelp()}>
+          Guía de categorías
+        </button>{" "}
+        o el ícono <span className={styles.inlineHelpIcon}>?</span> en cada columna.{" "}
+        <strong>Duplicar</strong> copia el tramo para otro trabajador.
+      </p>
+
       {successBatchId && (
         <BatchRegisterSuccessModal
           batchId={successBatchId}
@@ -916,6 +975,12 @@ export default function DigitarContainer() {
           setHelpOpen(false);
           setHelpFocus(null);
         }}
+      />
+
+      <RegisterValidationModal
+        open={registerValidationOpen}
+        errors={registerValidationErrors}
+        onClose={() => setRegisterValidationOpen(false)}
       />
     </div>
   );

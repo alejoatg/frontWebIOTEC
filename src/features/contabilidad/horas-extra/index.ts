@@ -13,3 +13,4 @@ export { default as PdfPlantillasContainer } from "./components/PdfPlantillasCon
 export { default as TsPgfiPlantillaPrint } from "./components/TsPgfiPlantillaPrint/TsPgfiPlantillaPrint";
 export { default as ParametrosContainer } from "./components/ParametrosContainer/ParametrosContainer";
 export { default as ConsolidadoContainer } from "./components/ConsolidadoContainer/ConsolidadoContainer";
+export { default as EstadisticasContainer } from "./components/EstadisticasContainer/EstadisticasContainer";

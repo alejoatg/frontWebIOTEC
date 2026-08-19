@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/dashboard/contabilidad/horas-extra/registros", label: "Registros" },
   { href: "/dashboard/contabilidad/horas-extra/registros/planilla", label: "Vista planilla" },
   { href: "/dashboard/contabilidad/horas-extra/planillas", label: "Planillas" },
+  { href: "/dashboard/contabilidad/horas-extra/estadisticas", label: "Estadísticas" },
   { href: "/dashboard/contabilidad/horas-extra/pdf", label: "PDF" },
   { href: "/dashboard/contabilidad/horas-extra/parametros", label: "Parámetros" },
   { href: "/dashboard/contabilidad/horas-extra/consolidado", label: "Consolidado" },

@@ -1,4 +1,5 @@
 import type { OvertimeEntryRow } from "../api/overtimeApi";
+import { formatDateOnly } from "./dateFormat";
 import { formatClockTime } from "./timeFormat";
 
 export interface SpreadsheetColumn {
@@ -42,8 +43,7 @@ function money(v: unknown): string {
 }
 
 function date(v: string | null | undefined): string {
-  if (!v) return "";
-  return new Date(v).toLocaleDateString("es-CO");
+  return formatDateOnly(v);
 }
 
 /** Columnas alineadas con la hoja `Carga TS` del Excel. */

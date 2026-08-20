@@ -14,6 +14,7 @@ import {
   HOURS_COHERENCE_TOLERANCE,
   sumCategoryHours,
 } from "../../lib/overtimeCalculator";
+import { toDateInputValue } from "../../lib/dateFormat";
 import styles from "./CorrectEntryModal.module.scss";
 
 interface CorrectEntryModalProps {
@@ -42,7 +43,7 @@ interface FormState {
 
 function toForm(entry: OvertimeEntryRow): FormState {
   return {
-    workDate: entry.workDate.slice(0, 10),
+    workDate: toDateInputValue(entry.workDate),
     startTime: entry.startTime ?? "",
     endTime: entry.endTime ?? "",
     hoursRd: String(entry.hoursRd ?? 0),

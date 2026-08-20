@@ -9,6 +9,7 @@ import {
   OVERTIME_STATUS_OPTIONS,
   overtimeStatusLabel,
 } from "../../lib/overtimeStatus";
+import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
@@ -71,10 +72,6 @@ export default function MisRegistrosContainer() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("es-CO");
-  }
 
   return (
     <div>
@@ -163,7 +160,7 @@ export default function MisRegistrosContainer() {
                       </td>
                       <td>{e.employeeDocumentNumber}</td>
                       <td>{e.employeeFullName}</td>
-                      <td>{formatDate(e.workDate)}</td>
+                      <td>{formatDateOnly(e.workDate)}</td>
                       <td>{formatClockTime(e.startTime) || "—"}</td>
                       <td>{formatClockTime(e.endTime) || "—"}</td>
                       <td>{fmtHours(total)}</td>

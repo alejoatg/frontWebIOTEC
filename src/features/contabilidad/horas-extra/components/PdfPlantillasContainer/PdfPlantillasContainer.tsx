@@ -17,6 +17,7 @@ import {
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
+import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
 
 function fmtMoney(n: number | undefined) {
@@ -28,7 +29,7 @@ function fmtMoney(n: number | undefined) {
 
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
-  return iso.slice(0, 10);
+  return formatDateOnly(iso) || "—";
 }
 
 export default function PdfPlantillasContainer() {

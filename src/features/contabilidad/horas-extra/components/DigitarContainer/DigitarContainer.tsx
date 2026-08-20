@@ -112,7 +112,7 @@ const OPTIONAL_COLUMNS: OptionalColumn[] = [
   {
     kind: "sistema-ts",
     key: "systemName",
-    placeholder: "Sistema",
+    placeholder: "Seleccionar",
   },
   { kind: "text", key: "itinerary" },
   { kind: "text", key: "caseRef" },
@@ -122,7 +122,7 @@ const OPTIONAL_COLUMNS: OptionalColumn[] = [
   {
     kind: "proceso-causacion",
     key: "attachmentRef",
-    placeholder: "Proceso",
+    placeholder: "Seleccionar",
   },
   { kind: "text", key: "operationalNote" },
 ];

@@ -10,6 +10,7 @@ import {
   OVERTIME_STATUS_OPTIONS,
   overtimeStatusLabel,
 } from "../../lib/overtimeStatus";
+import { formatDateOnly } from "../../lib/dateFormat";
 import EntryActions from "../EntryActions/EntryActions";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
@@ -59,10 +60,6 @@ export default function RegistrosContainer() {
   useEffect(() => {
     load();
   }, [load]);
-
-  function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("es-CO");
-  }
 
   return (
     <div>
@@ -128,7 +125,7 @@ export default function RegistrosContainer() {
                         <br />
                         <small>{e.employeeDocumentNumber}</small>
                       </td>
-                      <td>{formatDate(e.workDate)}</td>
+                      <td>{formatDateOnly(e.workDate)}</td>
                       <td>
                         <span className={`${styles.badge} ${statusClass(e.status)}`}>
                           {overtimeStatusLabel(e.status)}

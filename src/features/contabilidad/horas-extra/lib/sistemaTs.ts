@@ -7,7 +7,6 @@ export const SISTEMA_TS_OPTIONS = [
   { code: "correo", label: "Correo" },
   { code: "open", label: "Open" },
   { code: "sgd", label: "SGD" },
-  { code: "sistema", label: "Sistema" },
   { code: "toa", label: "TOA" },
 ] as const;
 

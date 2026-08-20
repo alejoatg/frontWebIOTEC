@@ -7,6 +7,7 @@ import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
+import { dateOnlyMonth, dateOnlyYear } from "../../lib/dateFormat";
 import { DETAIL_SECTIONS, MONEY_FIELD_IDS } from "../../lib/entrySpreadsheet";
 import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import EntryActions from "../EntryActions/EntryActions";
@@ -69,8 +70,8 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
   if (error) return <div className={shared.error}>{error}</div>;
   if (!entry) return null;
 
-  const periodYear = entry.period?.year ?? new Date(entry.workDate).getFullYear();
-  const periodMonth = entry.period?.month ?? new Date(entry.workDate).getMonth() + 1;
+  const periodYear = entry.period?.year ?? dateOnlyYear(entry.workDate);
+  const periodMonth = entry.period?.month ?? dateOnlyMonth(entry.workDate);
   const messages = Array.isArray(entry.validationMessages)
     ? (entry.validationMessages as Array<{ code?: string; message?: string; severity?: string }>)
     : [];

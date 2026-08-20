@@ -1,4 +1,5 @@
 import { API_URL } from "@/lib/api";
+import { toDateInputValue } from "../lib/dateFormat";
 
 const BASE = `${API_URL}/api/overtime`;
 
@@ -249,12 +250,12 @@ export function pdfDayUrl(employeeId: string, date: string) {
 }
 
 export function dayPrintPageUrl(employeeId: string, date: string) {
-  const d = date.slice(0, 10);
+  const d = toDateInputValue(date) || date.slice(0, 10);
   return `/imprimir/horas-extra/dia/${employeeId}/${d}`;
 }
 
 export async function fetchDayPrintData(employeeId: string, date: string) {
-  const d = date.slice(0, 10);
+  const d = toDateInputValue(date) || date.slice(0, 10);
   return request<TsDayPrintData>(`/pdf/employee/${employeeId}/day/${d}/print-data`);
 }
 

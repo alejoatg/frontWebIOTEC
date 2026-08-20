@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canSeeOvertimeReviewNav } from "@/features/dashboard/constants/nav";
 import { fetchPeriod, fetchPeriods, type OvertimePeriodDetail } from "../../api/overtimeApi";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 
 export default function ResumenContainer() {
+  const { user } = useAuth();
+  const showReview = canSeeOvertimeReviewNav(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -48,8 +52,12 @@ export default function ResumenContainer() {
         <Link href="/dashboard/contabilidad/horas-extra/cargar">Cargar Excel →</Link>
         <Link href="/dashboard/contabilidad/horas-extra/digitar">Digitar →</Link>
         <Link href="/dashboard/contabilidad/horas-extra/mis-registros">Mis registros →</Link>
-        <Link href="/dashboard/contabilidad/horas-extra/registros">Revisar registros →</Link>
-        <Link href="/dashboard/contabilidad/horas-extra/consolidado">Consolidado / cierre →</Link>
+        {showReview && (
+          <>
+            <Link href="/dashboard/contabilidad/horas-extra/registros">Revisar registros →</Link>
+            <Link href="/dashboard/contabilidad/horas-extra/consolidado">Consolidado / cierre →</Link>
+          </>
+        )}
       </div>
 
       {recent.length > 0 && (

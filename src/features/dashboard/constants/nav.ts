@@ -41,6 +41,14 @@ export function canManageOvertimeParams(role: string | undefined) {
 }
 
 /**
+ * Vistas de revisión/gestión contable en la cinta de horas extra.
+ * Digitadores (SUPERVISOR, CORDINADOR) no las ven: usan Digitar, Cargar y Mis registros.
+ */
+export function canSeeOvertimeReviewNav(role: string | undefined) {
+  return role !== "SUPERVISOR" && role !== "CORDINADOR";
+}
+
+/**
  * Quienes digitan (SUPERVISOR, CORDINADOR) no deben ver sueldos ni montos
  * calculados en horas extra; solo CONTABILIDAD y ADMIN gestionan esa parte.
  */

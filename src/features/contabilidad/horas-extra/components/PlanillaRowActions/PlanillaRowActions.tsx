@@ -1,9 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canReviewOvertime } from "@/features/dashboard/constants/nav";
+import {
+  canReviewOvertime,
+  canVoidAnyOvertime,
+} from "@/features/dashboard/constants/nav";
 import { approveEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
+import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "./PlanillaRowActions.module.scss";
 
 interface PlanillaRowActionsProps {
@@ -21,7 +26,9 @@ export default function PlanillaRowActions({
 }: PlanillaRowActionsProps) {
   const { user } = useAuth();
   const canReview = canReviewOvertime(user?.role);
+  const canVoid = canVoidAnyOvertime(user?.role);
   const isPending = entry.status === "PENDING";
+  const [voidOpen, setVoidOpen] = useState(false);
 
   async function handleApprove() {
     try {
@@ -53,6 +60,18 @@ export default function PlanillaRowActions({
           </button>
         </>
       )}
+      {canVoid && isPending && (
+        <button type="button" className={styles.btnDanger} onClick={() => setVoidOpen(true)}>
+          Anular
+        </button>
+      )}
+      <VoidEntryModal
+        open={voidOpen}
+        entryId={entry.id}
+        entryCode={entry.entryCode}
+        onClose={() => setVoidOpen(false)}
+        onSuccess={onActionComplete}
+      />
     </div>
   );
 }

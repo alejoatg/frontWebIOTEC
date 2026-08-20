@@ -128,6 +128,34 @@ export async function fetchEntries(params: {
   return request<EntriesPage>(`/entries?${q}`);
 }
 
+/** Registros digitados por el usuario autenticado. */
+export async function fetchMyEntries(params: {
+  year: number;
+  month: number;
+  status?: string;
+  documentNumber?: string;
+  workDateFrom?: string;
+  workDateTo?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  includeSuperseded?: boolean;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+    page: String(params.page ?? 1),
+    pageSize: String(params.pageSize ?? 50),
+  });
+  if (params.status) q.set("status", params.status);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
+  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
+  if (params.search) q.set("search", params.search);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  return request<EntriesPage>(`/entries/mine?${q}`);
+}
+
 export async function fetchEntry(id: string) {
   return request<OvertimeEntryRow>(`/entries/${id}`);
 }
@@ -140,6 +168,13 @@ export async function rejectEntry(id: string, accountingNote: string) {
   return request(`/entries/${id}/reject`, {
     method: "POST",
     body: JSON.stringify({ accountingNote }),
+  });
+}
+
+export async function voidEntry(id: string, accountingNote?: string) {
+  return request(`/entries/${id}/void`, {
+    method: "POST",
+    body: JSON.stringify({ accountingNote: accountingNote || undefined }),
   });
 }
 
@@ -309,10 +344,13 @@ export async function fetchPdfPlantillaPrintData(id: string) {
 export async function downloadAuthenticatedFile(url: string, filename: string) {
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) throw new Error("No se pudo descargar el archivo");
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  const resolvedName = match?.[1]?.trim() || filename;
   const blob = await res.blob();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.download = resolvedName;
   a.click();
   URL.revokeObjectURL(a.href);
 }

@@ -31,6 +31,11 @@ export function canReviewOvertime(role: string | undefined) {
   return role === "CONTABILIDAD" || role === "ADMIN";
 }
 
+/** Contabilidad/Admin pueden anular cualquier PENDING; digitadores solo los suyos (servidor). */
+export function canVoidAnyOvertime(role: string | undefined) {
+  return role === "CONTABILIDAD" || role === "ADMIN";
+}
+
 export function canManageOvertimeParams(role: string | undefined) {
   return role === "CONTABILIDAD" || role === "ADMIN";
 }

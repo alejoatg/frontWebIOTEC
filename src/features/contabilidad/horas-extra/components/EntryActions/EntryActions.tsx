@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canReviewOvertime } from "@/features/dashboard/constants/nav";
+import {
+  canReviewOvertime,
+  canVoidAnyOvertime,
+} from "@/features/dashboard/constants/nav";
 import {
   approveEntry,
   dayPrintPageUrl,
@@ -15,6 +18,7 @@ import {
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
+import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "../../styles/shared.module.scss";
 
 export interface EntryActionsProps {
@@ -28,6 +32,8 @@ export interface EntryActionsProps {
   periodMonth: number;
   onActionComplete?: () => void;
   showDetailLink?: boolean;
+  /** Mostrar Anular también para digitadores (p. ej. Mis registros / detalle propio). */
+  allowVoid?: boolean;
   layout?: "inline" | "stacked";
   redirectOnCorrect?: boolean;
 }
@@ -36,21 +42,25 @@ export default function EntryActions({
   entryId,
   employeeId,
   employeeDocumentNumber,
+  entryCode,
   workDate,
   status,
   periodYear,
   periodMonth,
   onActionComplete,
   showDetailLink = false,
+  allowVoid = false,
   layout = "inline",
   redirectOnCorrect = false,
 }: EntryActionsProps) {
   const router = useRouter();
   const { user } = useAuth();
   const canReview = canReviewOvertime(user?.role);
+  const canVoid = allowVoid || canVoidAnyOvertime(user?.role);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [correctOpen, setCorrectOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
 
   async function handleApprove() {
     try {
@@ -128,6 +138,11 @@ export default function EntryActions({
             </Button>
           </>
         )}
+        {canVoid && status === "PENDING" && (
+          <Button type="button" variant="outline" size="sm" onClick={() => setVoidOpen(true)}>
+            Anular
+          </Button>
+        )}
       </div>
 
       <CorrectEntryModal
@@ -135,6 +150,14 @@ export default function EntryActions({
         open={correctOpen}
         onClose={() => setCorrectOpen(false)}
         onSuccess={handleCorrectSuccess}
+      />
+
+      <VoidEntryModal
+        open={voidOpen}
+        entryId={entryId}
+        entryCode={entryCode}
+        onClose={() => setVoidOpen(false)}
+        onSuccess={() => onActionComplete?.()}
       />
 
       {rejectOpen && (

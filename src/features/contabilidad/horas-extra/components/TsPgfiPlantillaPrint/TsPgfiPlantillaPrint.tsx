@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import type { TsPlantillaPrintData } from "../../api/overtimeApi";
 import { fmtHours, formatPrintDate } from "../../lib/tsPrintFormat";
 import { formatClockTime } from "../../lib/timeFormat";
@@ -175,21 +173,11 @@ function Dato({ k, v }: { k: string; v: string }) {
   );
 }
 
-function fmtMoney(n: number | undefined): string {
-  return (n ?? 0).toLocaleString("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  });
-}
-
 interface Props {
   data: TsPlantillaPrintData;
 }
 
 export default function TsPgfiPlantillaPrint({ data }: Props) {
-  const { user } = useAuth();
-  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -335,7 +323,6 @@ export default function TsPgfiPlantillaPrint({ data }: Props) {
             <tr>
               <td colSpan={COLS} className="ts-total">
                 Total registros: {data.entryCount}
-                {canSeeMoney && <> · Total $: {fmtMoney(data.totalAmount)}</>}
               </td>
             </tr>
             <tr>

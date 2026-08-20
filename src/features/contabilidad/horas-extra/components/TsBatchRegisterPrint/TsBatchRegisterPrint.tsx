@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import type { BatchRegisterPrintData } from "../../api/overtimeApi";
 import { fmtHours, formatPrintDate } from "../../lib/tsPrintFormat";
 import { formatClockTime } from "../../lib/timeFormat";
 
 const PORTAL_ID = "ts-batch-print-portal";
-const COLS_WITH_MONEY = 11;
-const COLS_WITHOUT_MONEY = 10;
+const COLS = 10;
 
 const PRINT_CSS = `
 #${PORTAL_ID} .ts-print-root {
@@ -127,22 +124,11 @@ function Dato({ k, v }: { k: string; v: string }) {
   );
 }
 
-function fmtMoney(n: number | undefined) {
-  return (n ?? 0).toLocaleString("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  });
-}
-
 interface Props {
   data: BatchRegisterPrintData;
 }
 
 export default function TsBatchRegisterPrint({ data }: Props) {
-  const { user } = useAuth();
-  const canSeeMoney = canSeeOvertimeMoney(user?.role);
-  const COLS = canSeeMoney ? COLS_WITH_MONEY : COLS_WITHOUT_MONEY;
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -222,7 +208,6 @@ export default function TsBatchRegisterPrint({ data }: Props) {
               <th className="num">TSN</th>
               <th>Consigna</th>
               <th>Lugar</th>
-              {canSeeMoney && <th className="num">Total $</th>}
             </tr>
           </thead>
           <tfoot>
@@ -245,13 +230,11 @@ export default function TsBatchRegisterPrint({ data }: Props) {
                 <td className="cell num">{fmtHours(row.hoursTsn)}</td>
                 <td className="cell">{row.consigna}</td>
                 <td className="cell">{row.commissionMunicipality}</td>
-                {canSeeMoney && <td className="cell num">{fmtMoney(row.amountTotal)}</td>}
               </tr>
             ))}
             <tr>
               <td colSpan={COLS} className="ts-total">
                 Total registros: {data.entryCount}
-                {canSeeMoney && <> · Total $: {fmtMoney(data.totalAmount)}</>}
               </td>
             </tr>
           </tbody>

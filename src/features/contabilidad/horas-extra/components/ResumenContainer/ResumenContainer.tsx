@@ -40,11 +40,14 @@ export default function ResumenContainer() {
           <span>Pendientes: {counts.PENDING ?? 0}</span>
           <span>Aprobados: {counts.APPROVED ?? 0}</span>
           <span>Rechazados: {counts.REJECTED ?? 0}</span>
+          <span>Anulados: {counts.VOIDED ?? 0}</span>
         </div>
       )}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1.5rem" }}>
         <Link href="/dashboard/contabilidad/horas-extra/cargar">Cargar Excel →</Link>
+        <Link href="/dashboard/contabilidad/horas-extra/digitar">Digitar →</Link>
+        <Link href="/dashboard/contabilidad/horas-extra/mis-registros">Mis registros →</Link>
         <Link href="/dashboard/contabilidad/horas-extra/registros">Revisar registros →</Link>
         <Link href="/dashboard/contabilidad/horas-extra/consolidado">Consolidado / cierre →</Link>
       </div>

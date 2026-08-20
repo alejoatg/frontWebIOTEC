@@ -118,6 +118,12 @@ export default function CargaContainer() {
         </Button>
       </div>
 
+      <p className={styles.hint}>
+        La plantilla se genera al momento con el listado de trabajadores del catálogo
+        contable y listas desplegables (Sistema, Municipio, Proceso donde causa),
+        iguales a Digitar.
+      </p>
+
       {message && (
         <div
           className={`${styles.alert} ${

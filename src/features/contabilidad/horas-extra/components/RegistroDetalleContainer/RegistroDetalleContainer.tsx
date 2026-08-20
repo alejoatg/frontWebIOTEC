@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
 import { DETAIL_SECTIONS, MONEY_FIELD_IDS } from "../../lib/entrySpreadsheet";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import EntryActions from "../EntryActions/EntryActions";
 import styles from "./RegistroDetalleContainer.module.scss";
 import shared from "../../styles/shared.module.scss";
@@ -20,6 +21,8 @@ function statusClass(status: string) {
       return shared.badgeApproved;
     case "REJECTED":
       return shared.badgeRejected;
+    case "VOIDED":
+      return shared.badgeVoided;
     default:
       return shared.badgeSuperseded;
   }
@@ -83,6 +86,11 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           <p className={styles.subtitle}>
             {entry.employeeFullName} · {entry.employeeDocumentNumber}
           </p>
+          {entry.status === "VOIDED" && (
+            <p className={styles.supersededNote}>
+              Este registro fue anulado y no es reconocido como tiempo suplementario.
+            </p>
+          )}
           {entry.status === "SUPERSEDED" && (
             <p className={styles.supersededNote}>
               Este registro fue reemplazado por una corrección. Consulte la cadena de corrección
@@ -90,7 +98,9 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
             </p>
           )}
         </div>
-        <span className={`${shared.badge} ${statusClass(entry.status)}`}>{entry.status}</span>
+        <span className={`${shared.badge} ${statusClass(entry.status)}`}>
+          {overtimeStatusLabel(entry.status)}
+        </span>
       </div>
 
       <div className={styles.actionsCard}>
@@ -105,6 +115,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           periodYear={periodYear}
           periodMonth={periodMonth}
           onActionComplete={load}
+          allowVoid={entry.submittedBy?.id === user?.id}
           layout="stacked"
           redirectOnCorrect
         />

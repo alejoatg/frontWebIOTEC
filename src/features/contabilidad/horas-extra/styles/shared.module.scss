@@ -33,6 +33,13 @@
   color: #b91c1c;
 }
 
+.hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -60,6 +67,11 @@
 .badgeRejected {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.badgeVoided {
+  background: #ffedd5;
+  color: #9a3412;
 }
 
 .badgeSuperseded {

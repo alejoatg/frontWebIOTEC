@@ -13,14 +13,16 @@ import {
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
 import { MONEY_FIELD_IDS, SPREADSHEET_COLUMNS } from "../../lib/entrySpreadsheet";
+import {
+  OVERTIME_STATUS_OPTIONS,
+  overtimeStatusLabel,
+} from "../../lib/overtimeStatus";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
 import EmployeeFilterField from "../EmployeeFilterField/EmployeeFilterField";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import PlanillaRowActions from "../PlanillaRowActions/PlanillaRowActions";
 import styles from "./RegistrosPlanillaContainer.module.scss";
 import shared from "../../styles/shared.module.scss";
-
-const STATUS_OPTIONS = ["", "PENDING", "APPROVED", "REJECTED", "SUPERSEDED"];
 
 interface Filters {
   workDateFrom: string;
@@ -48,6 +50,8 @@ function statusClass(status: string) {
       return shared.badgeApproved;
     case "REJECTED":
       return shared.badgeRejected;
+    case "VOIDED":
+      return shared.badgeVoided;
     default:
       return shared.badgeSuperseded;
   }
@@ -259,9 +263,9 @@ export default function RegistrosPlanillaContainer() {
                 setPage(1);
               }}
             >
-              {STATUS_OPTIONS.map((s) => (
+              {OVERTIME_STATUS_OPTIONS.map((s) => (
                 <option key={s || "all"} value={s}>
-                  {s || "Vigentes (sin SUPERSEDED)"}
+                  {s ? overtimeStatusLabel(s) : "Vigentes (sin SUPERSEDED)"}
                 </option>
               ))}
             </select>
@@ -316,7 +320,7 @@ export default function RegistrosPlanillaContainer() {
                         const display =
                           col.id === "status" ? (
                             <span className={`${shared.badge} ${statusClass(entry.status)}`}>
-                              {entry.status}
+                              {overtimeStatusLabel(entry.status)}
                             </span>
                           ) : (
                             (raw ?? "")

@@ -11,6 +11,10 @@ import {
 } from "../../api/overtimeApi";
 import BatchRegisterSuccessModal from "../BatchRegisterSuccessModal/BatchRegisterSuccessModal";
 import PeriodSelector from "../../components/PeriodSelector/PeriodSelector";
+import {
+  formatHourTypes,
+  sumHourTypes,
+} from "../../lib/hourTypesDisplay";
 import styles from "../../styles/shared.module.scss";
 
 const now = new Date();
@@ -121,7 +125,8 @@ export default function CargaContainer() {
       <p className={styles.hint}>
         La plantilla se genera al momento con el listado de trabajadores del catálogo
         contable y listas desplegables (Sistema, Municipio, Proceso donde causa),
-        iguales a Digitar.
+        iguales a Digitar. La fila 2 es un ejemplo de guía y no se importa al
+        registrar.
       </p>
 
       {message && (
@@ -154,12 +159,18 @@ export default function CargaContainer() {
                   <th>Cédula</th>
                   <th>Nombre</th>
                   <th>Resultado</th>
-                  <th>Total</th>
+                  <th>Total horas</th>
+                  <th>Tipos de hora</th>
                   <th>Mensajes</th>
                 </tr>
               </thead>
               <tbody>
-                {preview.rows.map((row) => (
+                {preview.rows.map((row) => {
+                  const hoursTotal =
+                    row.categoriesTotal != null
+                      ? Number(row.categoriesTotal)
+                      : sumHourTypes(row.hours);
+                  return (
                   <tr key={row.excelRowNumber}>
                     <td>{row.excelRowNumber}</td>
                     <td>{row.documentNumber}</td>
@@ -177,14 +188,20 @@ export default function CargaContainer() {
                         {row.result}
                       </span>
                     </td>
-                    <td>{row.total.toLocaleString("es-CO")}</td>
+                    <td>
+                      {hoursTotal.toLocaleString("es-CO", {
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td>{formatHourTypes(row.hours)}</td>
                     <td>
                       {row.messages.map((m) => (
                         <div key={m.code}>{m.message}</div>
                       ))}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

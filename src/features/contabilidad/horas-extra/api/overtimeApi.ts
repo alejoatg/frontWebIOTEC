@@ -226,6 +226,11 @@ export async function fetchConsolidations(year: number, month: number) {
   return request<Consolidation[]>(`/consolidations?year=${year}&month=${month}`);
 }
 
+/** Excel de registros APPROVED con liquidación (Contabilidad/Admin). */
+export function consolidationsApprovedExcelUrl(year: number, month: number) {
+  return `${BASE}/consolidations/export/approved?year=${year}&month=${month}`;
+}
+
 export async function closePeriod(year: number, month: number) {
   return request<ClosePeriodResult>(`/periods/${year}/${month}/close`, {
     method: "POST",
@@ -343,7 +348,13 @@ export async function fetchPdfPlantillaPrintData(id: string) {
 
 export async function downloadAuthenticatedFile(url: string, filename: string) {
   const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error("No se pudo descargar el archivo");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg =
+      (body as { message?: string | string[] }).message ??
+      `No se pudo descargar el archivo (${res.status})`;
+    throw new Error(Array.isArray(msg) ? msg.join(", ") : String(msg));
+  }
   const disposition = res.headers.get("Content-Disposition") ?? "";
   const match = /filename="?([^";]+)"?/i.exec(disposition);
   const resolvedName = match?.[1]?.trim() || filename;
@@ -381,7 +392,18 @@ export interface ImportPreview {
     documentNumber: string;
     employeeFullName: string | null;
     result: string;
-    total: number;
+    /** Total en pesos (legacy; la UI de preview usa horas). */
+    total?: number;
+    categoriesTotal?: number;
+    hours?: {
+      RD?: number;
+      RN?: number;
+      TSD?: number;
+      TSN?: number;
+      HEDD?: number;
+      HEND?: number;
+      DISPONIBILIDAD?: number;
+    };
     messages: Array<{ code: string; severity: string; message: string }>;
   }>;
 }

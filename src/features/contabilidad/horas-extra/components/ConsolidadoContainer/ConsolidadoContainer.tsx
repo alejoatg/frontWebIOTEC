@@ -6,6 +6,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canReviewOvertime } from "@/features/dashboard/constants/nav";
 import {
   closePeriod,
+  consolidationsApprovedExcelUrl,
   downloadAuthenticatedFile,
   fetchConsolidations,
   fetchPeriod,
@@ -26,6 +27,7 @@ export default function ConsolidadoContainer() {
   const [items, setItems] = useState<Consolidation[]>([]);
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -69,22 +71,61 @@ export default function ConsolidadoContainer() {
     }
   }
 
+  async function handleExportApproved() {
+    setExporting(true);
+    setMessage(null);
+    try {
+      await downloadAuthenticatedFile(
+        consolidationsApprovedExcelUrl(year, month),
+        `consolidado-aprobados-${year}-${String(month).padStart(2, "0")}.xlsx`,
+      );
+    } catch (e) {
+      setMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "No se pudo descargar el Excel",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const approvedCount = period?.entryCounts?.APPROVED ?? 0;
+
   return (
     <div>
       <PeriodSelector year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
 
-      {period?.status === "OPEN" && canClose && (
-        <div className={styles.toolbar}>
-          <Button type="button" size="sm" disabled={closing} onClick={handleClose}>
-            Cerrar mes
+      <div className={styles.toolbar}>
+        {period?.status === "OPEN" && canClose && (
+          <>
+            <Button type="button" size="sm" disabled={closing} onClick={handleClose}>
+              Cerrar mes
+            </Button>
+            {period.entryCounts && (
+              <span style={{ fontSize: "0.875rem" }}>
+                Pendientes: {period.entryCounts.PENDING ?? 0} · Aprobados:{" "}
+                {period.entryCounts.APPROVED ?? 0}
+              </span>
+            )}
+          </>
+        )}
+        {canClose && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exporting || !period || approvedCount === 0}
+            onClick={() => void handleExportApproved()}
+          >
+            {exporting ? "Generando Excel…" : "Descargar Excel (aprobados)"}
           </Button>
-          {period.entryCounts && (
-            <span style={{ fontSize: "0.875rem" }}>
-              Pendientes: {period.entryCounts.PENDING ?? 0} · Aprobados:{" "}
-              {period.entryCounts.APPROVED ?? 0}
-            </span>
-          )}
-        </div>
+        )}
+      </div>
+
+      {canClose && period && approvedCount === 0 && !loading && (
+        <p className={styles.hint}>
+          No hay registros aprobados en este periodo para exportar.
+        </p>
       )}
 
       {message && (
@@ -100,6 +141,7 @@ export default function ConsolidadoContainer() {
       {!loading && period?.status === "OPEN" && items.length === 0 && (
         <div className={`${styles.alert} ${styles.alertInfo}`}>
           El periodo aún está abierto. Cierre el mes para generar el consolidado por empleado.
+          Puede descargar el Excel de registros aprobados en cualquier momento.
         </div>
       )}
 

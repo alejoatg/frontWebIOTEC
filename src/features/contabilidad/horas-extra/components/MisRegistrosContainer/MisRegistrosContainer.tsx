@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchMyEntries, type OvertimeEntryRow } from "../../api/overtimeApi";
+import { hoursFromEntry } from "../../lib/hourTypesDisplay";
 import {
   OVERTIME_STATUS_OPTIONS,
   overtimeStatusLabel,
@@ -39,8 +38,6 @@ function fmtHours(n: number | null | undefined) {
 }
 
 export default function MisRegistrosContainer() {
-  const { user } = useAuth();
-  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -134,22 +131,23 @@ export default function MisRegistrosContainer() {
                   <th>Fecha</th>
                   <th>Inicio</th>
                   <th>Fin</th>
-                  <th>TSD</th>
-                  <th>TSN</th>
+                  <th>Total horas</th>
+                  <th>Tipos de hora</th>
                   <th>Estado</th>
-                  {canSeeMoney && <th>Total</th>}
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={canSeeMoney ? 11 : 10}>
+                    <td colSpan={10}>
                       No hay registros digitados por usted en este periodo
                     </td>
                   </tr>
                 ) : (
-                  items.map((e) => (
+                  items.map((e) => {
+                    const { total, types } = hoursFromEntry(e);
+                    return (
                     <tr key={e.id}>
                       <td>
                         <Link
@@ -168,16 +166,13 @@ export default function MisRegistrosContainer() {
                       <td>{formatDate(e.workDate)}</td>
                       <td>{formatClockTime(e.startTime) || "—"}</td>
                       <td>{formatClockTime(e.endTime) || "—"}</td>
-                      <td>{fmtHours(e.hoursTsd)}</td>
-                      <td>{fmtHours(e.hoursTsn)}</td>
+                      <td>{fmtHours(total)}</td>
+                      <td>{types}</td>
                       <td>
                         <span className={`${styles.badge} ${statusClass(e.status)}`}>
                           {overtimeStatusLabel(e.status)}
                         </span>
                       </td>
-                      {canSeeMoney && (
-                        <td>{Number(e.amountTotal ?? 0).toLocaleString("es-CO")}</td>
-                      )}
                       <td>
                         <div className={styles.actions}>
                           <Link
@@ -200,7 +195,8 @@ export default function MisRegistrosContainer() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

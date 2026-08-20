@@ -33,6 +33,7 @@ import CategoriasTsHelpModal, {
   type CategoriaTsCode,
 } from "../CategoriasTsHelpModal/CategoriasTsHelpModal";
 import RegisterValidationModal from "../RegisterValidationModal/RegisterValidationModal";
+import RegisterConfirmModal from "./RegisterConfirmModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import shared from "../../styles/shared.module.scss";
 import EmployeeSuggestField from "./EmployeeSuggestField";
@@ -377,6 +378,7 @@ export default function DigitarContainer() {
   const [helpFocus, setHelpFocus] = useState<CategoriaTsCode | null>(null);
   const [registerValidationOpen, setRegisterValidationOpen] = useState(false);
   const [registerValidationErrors, setRegisterValidationErrors] = useState<string[]>([]);
+  const [registerConfirmOpen, setRegisterConfirmOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -702,7 +704,7 @@ export default function DigitarContainer() {
     setError(null);
   }
 
-  async function handleRegister() {
+  function handleRegisterClick() {
     setError(null);
     setSuccess(null);
 
@@ -713,6 +715,10 @@ export default function DigitarContainer() {
       return;
     }
 
+    setRegisterConfirmOpen(true);
+  }
+
+  async function handleRegisterConfirm() {
     const payload: ManualEntryPayload[] = rows.map((row) => ({
       documentNumber: row.documentNumber.replace(/\D/g, ""),
       workDate: row.workDate,
@@ -741,6 +747,7 @@ export default function DigitarContainer() {
     setRegistering(true);
     try {
       const result = await registerManualEntries({ year, month, rows: payload });
+      setRegisterConfirmOpen(false);
       setSuccess(
         `Planilla ${result.batchCode} registrada (${result.entryCount} registros). Quedan en pendiente de aprobación.`,
       );
@@ -757,6 +764,7 @@ export default function DigitarContainer() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al registrar";
       setError(msg);
+      setRegisterConfirmOpen(false);
     } finally {
       setRegistering(false);
     }
@@ -787,7 +795,7 @@ export default function DigitarContainer() {
           type="button"
           variant="primary"
           size="sm"
-          onClick={handleRegister}
+          onClick={handleRegisterClick}
           disabled={registering}
         >
           {registering ? "Registrando…" : "Registrar planilla"}
@@ -1050,6 +1058,15 @@ export default function DigitarContainer() {
         open={registerValidationOpen}
         errors={registerValidationErrors}
         onClose={() => setRegisterValidationOpen(false)}
+      />
+
+      <RegisterConfirmModal
+        open={registerConfirmOpen}
+        entryCount={rows.length}
+        periodLabel={`${year}-${String(month).padStart(2, "0")}`}
+        submitting={registering}
+        onClose={() => setRegisterConfirmOpen(false)}
+        onConfirm={() => void handleRegisterConfirm()}
       />
     </div>
   );

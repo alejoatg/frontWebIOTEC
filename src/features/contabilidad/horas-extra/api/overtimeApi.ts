@@ -67,6 +67,18 @@ export async function registerManualEntries(body: {
   });
 }
 
+/** Valida digitación sin persistir (incluye cruce de duplicados del periodo). */
+export async function previewManualEntries(body: {
+  year: number;
+  month: number;
+  rows: ManualEntryPayload[];
+}) {
+  return request<ImportPreview>(`/manual/preview`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchManualDraft() {
   return request<ManualDraftResult>(`/manual/draft`);
 }
@@ -161,8 +173,11 @@ export async function fetchEntry(id: string) {
   return request<OvertimeEntryRow>(`/entries/${id}`);
 }
 
-export async function approveEntry(id: string) {
-  return request(`/entries/${id}/approve`, { method: "POST" });
+export async function approveEntry(id: string, accountingNote: string) {
+  return request(`/entries/${id}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ accountingNote }),
+  });
 }
 
 export async function rejectEntry(id: string, accountingNote: string) {
@@ -585,6 +600,7 @@ export interface OvertimeEntryRow extends OvertimeEntry {
   operationalNote?: string | null;
   accountingNote?: string | null;
   validationMessages?: unknown;
+  createdAt?: string;
   reviewedAt?: string | null;
   importBatch?: { batchCode: string; originalFilename?: string; registeredAt?: string };
   submittedBy?: { id: string; name: string; email: string };
@@ -693,7 +709,7 @@ export interface CorrectEntryPayload {
   commissionMunicipality?: string;
   consigna?: string;
   operationalNote?: string;
-  accountingNote?: string;
+  accountingNote: string;
 }
 
 export interface TsDayPrintRow {

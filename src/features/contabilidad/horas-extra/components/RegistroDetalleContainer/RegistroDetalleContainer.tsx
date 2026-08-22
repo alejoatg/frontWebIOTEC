@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
-import { dateOnlyMonth, dateOnlyYear } from "../../lib/dateFormat";
-import { DETAIL_SECTIONS, MONEY_FIELD_IDS } from "../../lib/entrySpreadsheet";
-import { overtimeStatusLabel } from "../../lib/overtimeStatus";
+import { dateOnlyMonth, dateOnlyYear, formatDateOnly } from "../../lib/dateFormat";
+import { DETAIL_SECTIONS_NO_MONEY } from "../../lib/entrySpreadsheet";
+import {
+  overtimeSeverityLabel,
+  overtimeStatusLabel,
+} from "../../lib/overtimeStatus";
 import EntryActions from "../EntryActions/EntryActions";
 import styles from "./RegistroDetalleContainer.module.scss";
 import shared from "../../styles/shared.module.scss";
@@ -29,6 +31,93 @@ function statusClass(status: string) {
   }
 }
 
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return formatDateOnly(iso) || "—";
+  return d.toLocaleString("es-CO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+type HistoryItem = {
+  at: string;
+  sortKey: number;
+  title: string;
+  detail?: string;
+};
+
+function buildOperationHistory(entry: OvertimeEntryRow): HistoryItem[] {
+  const items: HistoryItem[] = [];
+
+  const push = (iso: string | null | undefined, title: string, detail?: string) => {
+    if (!iso) return;
+    const t = new Date(iso).getTime();
+    items.push({
+      at: formatDateTime(iso),
+      sortKey: Number.isFinite(t) ? t : 0,
+      title,
+      detail,
+    });
+  };
+
+  push(
+    entry.createdAt,
+    "Registro creado",
+    entry.submittedBy?.name ? `Digitó: ${entry.submittedBy.name}` : undefined,
+  );
+
+  if (entry.importBatch?.registeredAt || entry.importBatch?.batchCode) {
+    push(
+      entry.importBatch.registeredAt ?? entry.createdAt,
+      "Incluido en planilla",
+      entry.importBatch.batchCode
+        ? `Planilla ${entry.importBatch.batchCode}${
+            entry.importBatch.originalFilename
+              ? ` · ${entry.importBatch.originalFilename}`
+              : ""
+          }`
+        : undefined,
+    );
+  }
+
+  if (entry.correctedFromEntry) {
+    push(
+      entry.createdAt,
+      "Corrección de registro previo",
+      `${entry.correctedFromEntry.entryCode} (${overtimeStatusLabel(entry.correctedFromEntry.status)})`,
+    );
+  }
+
+  if (entry.reviewedAt) {
+    const actor = entry.reviewedBy?.name ? ` por ${entry.reviewedBy.name}` : "";
+    if (entry.status === "APPROVED") {
+      push(entry.reviewedAt, `Aprobado${actor}`, entry.accountingNote || undefined);
+    } else if (entry.status === "REJECTED") {
+      push(entry.reviewedAt, `Rechazado${actor}`, entry.accountingNote || undefined);
+    } else if (entry.status === "VOIDED") {
+      push(entry.reviewedAt, `Anulado${actor}`, entry.accountingNote || undefined);
+    } else {
+      push(entry.reviewedAt, `Revisado${actor}`, entry.accountingNote || undefined);
+    }
+  }
+
+  if (entry.supersededByEntry) {
+    push(
+      entry.reviewedAt ?? entry.createdAt,
+      "Corregido — reemplazado por nuevo registro",
+      `${entry.supersededByEntry.entryCode} (${overtimeStatusLabel(entry.supersededByEntry.status)})`,
+    );
+  }
+
+  items.sort((a, b) => a.sortKey - b.sortKey);
+  return items;
+}
+
 interface RegistroDetalleContainerProps {
   entryId: string;
 }
@@ -36,18 +125,11 @@ interface RegistroDetalleContainerProps {
 export default function RegistroDetalleContainer({ entryId }: RegistroDetalleContainerProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const sections = useMemo(() => {
-    if (canSeeMoney) return DETAIL_SECTIONS;
-    return DETAIL_SECTIONS.map((section) => ({
-      ...section,
-      fields: section.fields.filter((f) => !f.id || !MONEY_FIELD_IDS.has(f.id)),
-    })).filter((section) => section.fields.length > 0);
-  }, [canSeeMoney]);
+  const sections = DETAIL_SECTIONS_NO_MONEY;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +147,11 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
   useEffect(() => {
     load();
   }, [load]);
+
+  const history = useMemo(
+    () => (entry ? buildOperationHistory(entry) : []),
+    [entry],
+  );
 
   if (loading) return <div className={shared.loading}>Cargando registro…</div>;
   if (error) return <div className={shared.error}>{error}</div>;
@@ -94,8 +181,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           )}
           {entry.status === "SUPERSEDED" && (
             <p className={styles.supersededNote}>
-              Este registro fue reemplazado por una corrección. Consulte la cadena de corrección
-              abajo.
+              Este registro fue corregido. Consulte la cadena de corrección abajo.
             </p>
           )}
         </div>
@@ -128,7 +214,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           <ul className={styles.messageList}>
             {messages.map((m, i) => (
               <li key={`${m.code ?? "msg"}-${i}`}>
-                <strong>{m.severity ?? "INFO"}:</strong> {m.message ?? "—"}
+                <strong>{overtimeSeverityLabel(m.severity)}:</strong> {m.message ?? "—"}
               </li>
             ))}
           </ul>
@@ -151,6 +237,25 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
         ))}
       </div>
 
+      <section className={styles.card}>
+        <h3 className={styles.sectionTitle}>Historial de operaciones</h3>
+        {history.length === 0 ? (
+          <p className={styles.historyEmpty}>Sin eventos registrados.</p>
+        ) : (
+          <ol className={styles.historyList}>
+            {history.map((item, i) => (
+              <li key={`${item.sortKey}-${i}`} className={styles.historyItem}>
+                <time className={styles.historyTime}>{item.at}</time>
+                <div>
+                  <div className={styles.historyTitle}>{item.title}</div>
+                  {item.detail && <div className={styles.historyDetail}>{item.detail}</div>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
       {(entry.correctedFromEntry || entry.supersededByEntry) && (
         <section className={styles.card}>
           <h3 className={styles.sectionTitle}>Cadena de corrección</h3>
@@ -168,14 +273,15 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
                       )
                     }
                   >
-                    {entry.correctedFromEntry.entryCode} ({entry.correctedFromEntry.status})
+                    {entry.correctedFromEntry.entryCode} (
+                    {overtimeStatusLabel(entry.correctedFromEntry.status)})
                   </button>
                 </dd>
               </div>
             )}
             {entry.supersededByEntry && (
               <div className={styles.field}>
-                <dt>Reemplazado por</dt>
+                <dt>Corregido por</dt>
                 <dd>
                   <button
                     type="button"
@@ -186,7 +292,8 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
                       )
                     }
                   >
-                    {entry.supersededByEntry.entryCode} ({entry.supersededByEntry.status})
+                    {entry.supersededByEntry.entryCode} (
+                    {overtimeStatusLabel(entry.supersededByEntry.status)})
                   </button>
                 </dd>
               </div>

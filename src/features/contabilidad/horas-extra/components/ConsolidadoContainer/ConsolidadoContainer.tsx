@@ -52,7 +52,7 @@ export default function ConsolidadoContainer() {
   }, [load]);
 
   async function handleClose() {
-    if (!confirm("¿Cerrar el mes? Solo entran registros APPROVED. Esta acción no se puede deshacer.")) {
+    if (!confirm("¿Cerrar el mes? Solo entran registros aprobados. Esta acción no se puede deshacer.")) {
       return;
     }
     setClosing(true);

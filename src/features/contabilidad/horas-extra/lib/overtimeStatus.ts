@@ -22,8 +22,38 @@ export function overtimeStatusLabel(status: string): string {
     case "VOIDED":
       return "Anulado";
     case "SUPERSEDED":
-      return "Reemplazado";
+      return "Corregido";
+    case "OPEN":
+      return "Abierto";
+    case "CLOSED":
+      return "Cerrado";
     default:
       return status || "Todos";
+  }
+}
+
+export function overtimeValidationLabel(result: string | null | undefined): string {
+  switch (result) {
+    case "OK":
+      return "Correcto";
+    case "WARNING":
+      return "Advertencia";
+    case "ERROR":
+      return "Error";
+    default:
+      return result || "—";
+  }
+}
+
+export function overtimeSeverityLabel(severity: string | null | undefined): string {
+  switch (severity) {
+    case "ERROR":
+      return "Error";
+    case "WARNING":
+      return "Advertencia";
+    case "INFO":
+      return "Info";
+    default:
+      return severity || "Info";
   }
 }

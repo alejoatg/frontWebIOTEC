@@ -121,3 +121,42 @@
 .linkButton:hover {
   text-decoration: underline;
 }
+
+.historyEmpty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.historyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.historyItem {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) 1fr;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  align-items: start;
+}
+
+.historyTime {
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyTitle {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.historyDetail {
+  margin-top: 0.15rem;
+  color: #475569;
+  white-space: pre-wrap;
+}

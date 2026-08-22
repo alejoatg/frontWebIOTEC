@@ -25,6 +25,7 @@ export default function CargaContainer() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState("Validando…");
   const [message, setMessage] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
   const [successBatchId, setSuccessBatchId] = useState<string | null>(null);
 
@@ -34,6 +35,7 @@ export default function CargaContainer() {
       return;
     }
     setLoading(true);
+    setLoadingLabel("Validando duplicados…");
     setMessage(null);
     try {
       const result = await previewImport(year, month, file);
@@ -46,7 +48,7 @@ export default function CargaContainer() {
       } else {
         setMessage({
           type: "success",
-          text: `Vista previa OK: ${result.okRows} filas válidas${result.warningRows ? `, ${result.warningRows} con advertencia` : ""}.`,
+          text: `Vista previa correcta: ${result.okRows} filas válidas${result.warningRows ? `, ${result.warningRows} con advertencia` : ""}.`,
         });
       }
     } catch (e) {
@@ -59,6 +61,7 @@ export default function CargaContainer() {
   async function handleRegister() {
     if (!file) return;
     setLoading(true);
+    setLoadingLabel("Registrando planilla…");
     setMessage(null);
     try {
       const result = await registerImport(year, month, file);
@@ -110,7 +113,9 @@ export default function CargaContainer() {
           }}
         />
         <Button type="button" size="sm" disabled={!file || loading} onClick={handlePreview}>
-          Validar (preview)
+          {loading && loadingLabel.startsWith("Validando")
+            ? loadingLabel
+            : "Validar (preview)"}
         </Button>
         <Button
           type="button"
@@ -118,9 +123,17 @@ export default function CargaContainer() {
           disabled={!file || loading || !preview || preview.hasErrors}
           onClick={handleRegister}
         >
-          Registrar planilla
+          {loading && loadingLabel.startsWith("Registrando")
+            ? loadingLabel
+            : "Registrar planilla"}
         </Button>
       </div>
+
+      {loading && (
+        <p className={styles.hint} role="status" aria-live="polite">
+          {loadingLabel}
+        </p>
+      )}
 
       <p className={styles.hint}>
         La plantilla se genera al momento con el listado de trabajadores del catálogo
@@ -147,7 +160,7 @@ export default function CargaContainer() {
         <>
           <div className={styles.previewSummary}>
             <span>Total: {preview.totalRows}</span>
-            <span>OK: {preview.okRows}</span>
+            <span>Correctas: {preview.okRows}</span>
             <span>Advertencias: {preview.warningRows}</span>
             <span>Errores: {preview.errorRows}</span>
           </div>
@@ -185,7 +198,11 @@ export default function CargaContainer() {
                               : styles.badgeError
                         }`}
                       >
-                        {row.result}
+                        {row.result === "OK"
+                          ? "Correcto"
+                          : row.result === "WARNING"
+                            ? "Advertencia"
+                            : "Error"}
                       </span>
                     </td>
                     <td>

@@ -265,7 +265,7 @@ export default function RegistrosPlanillaContainer() {
             >
               {OVERTIME_STATUS_OPTIONS.map((s) => (
                 <option key={s || "all"} value={s}>
-                  {s ? overtimeStatusLabel(s) : "Vigentes (sin SUPERSEDED)"}
+                  {s ? overtimeStatusLabel(s) : "Vigentes (sin corregidos)"}
                 </option>
               ))}
             </select>

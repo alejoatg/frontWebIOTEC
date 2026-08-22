@@ -53,7 +53,11 @@ export default function PeriodSelector({ year, month, onChange }: PeriodSelector
         <span className={styles.badge} data-status={detail.status}>
           {detail.periodCode} — {detail.status === "OPEN" ? "Abierto" : "Cerrado"}
           {detail.entryCounts && (
-            <> · PENDING: {detail.entryCounts.PENDING ?? 0} · APPROVED: {detail.entryCounts.APPROVED ?? 0}</>
+            <>
+              {" "}
+              · Pendientes: {detail.entryCounts.PENDING ?? 0} · Aprobados:{" "}
+              {detail.entryCounts.APPROVED ?? 0}
+            </>
           )}
         </span>
       )}

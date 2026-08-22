@@ -2,7 +2,7 @@
  * Proceso donde causa el tiempo suplementario (digitación).
  *
  * Excepción fija en código: no usa catálogo API porque la lista es estable
- * y puede vincularse a topes/metas de horas extra por proceso.
+ * y puede vincularse a topes/metas de tiempo suplementario por proceso.
  */
 
 export const PROCESO_CAUSACION_OPTIONS = [

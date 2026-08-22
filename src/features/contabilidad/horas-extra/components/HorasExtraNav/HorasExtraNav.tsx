@@ -59,7 +59,7 @@ export default function HorasExtraNav() {
   const links = LINKS.filter((l) => !("reviewOnly" in l && l.reviewOnly) || showReview);
 
   return (
-    <nav className={styles.nav} aria-label="Horas extra">
+    <nav className={styles.nav} aria-label="Tiempo suplementario">
       {links.map((l) => (
         <Link
           key={l.href}

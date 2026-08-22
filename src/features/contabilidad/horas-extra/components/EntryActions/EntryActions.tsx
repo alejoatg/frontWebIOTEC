@@ -57,14 +57,21 @@ export default function EntryActions({
   const { user } = useAuth();
   const canReview = canReviewOvertime(user?.role);
   const canVoid = allowVoid || canVoidAnyOvertime(user?.role);
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approveNote, setApproveNote] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
   const [correctOpen, setCorrectOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
 
+  const canCorrect = canReview && (status === "PENDING" || status === "APPROVED");
+
   async function handleApprove() {
+    if (!approveNote.trim()) return;
     try {
-      await approveEntry(entryId);
+      await approveEntry(entryId, approveNote.trim());
+      setApproveOpen(false);
+      setApproveNote("");
       onActionComplete?.();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error al aprobar");
@@ -127,16 +134,18 @@ export default function EntryActions({
         </Button>
         {canReview && status === "PENDING" && (
           <>
-            <Button type="button" size="sm" onClick={handleApprove}>
+            <Button type="button" size="sm" onClick={() => setApproveOpen(true)}>
               Aprobar
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setCorrectOpen(true)}>
-              Corregir
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => setRejectOpen(true)}>
               Rechazar
             </Button>
           </>
+        )}
+        {canCorrect && (
+          <Button type="button" variant="outline" size="sm" onClick={() => setCorrectOpen(true)}>
+            Corregir
+          </Button>
         )}
         {canVoid && status === "PENDING" && (
           <Button type="button" variant="outline" size="sm" onClick={() => setVoidOpen(true)}>
@@ -159,6 +168,32 @@ export default function EntryActions({
         onClose={() => setVoidOpen(false)}
         onSuccess={() => onActionComplete?.()}
       />
+
+      {approveOpen && (
+        <div className={styles.alert} style={{ marginTop: "1rem" }}>
+          <p>Justificación de la aprobación (obligatoria):</p>
+          <textarea
+            value={approveNote}
+            onChange={(ev) => setApproveNote(ev.target.value)}
+            rows={3}
+            placeholder="Ej.: horas y consignación verificadas con evidencia operativa…"
+            style={{ width: "100%", marginBottom: "0.5rem" }}
+          />
+          <div className={styles.actions}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleApprove}
+              disabled={!approveNote.trim()}
+            >
+              Confirmar aprobación
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setApproveOpen(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
 
       {rejectOpen && (
         <div className={styles.alert} style={{ marginTop: "1rem" }}>

@@ -118,7 +118,7 @@ export default function EstadisticasContainer() {
     labels: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
     datasets: [
       {
-        label: "Horas extra semanales",
+        label: "Tiempo suplementario semanal",
         data: [320, 410, 380, 450],
         borderColor: "rgba(59, 130, 246, 1)",
         backgroundColor: "rgba(59, 130, 246, 0.2)",

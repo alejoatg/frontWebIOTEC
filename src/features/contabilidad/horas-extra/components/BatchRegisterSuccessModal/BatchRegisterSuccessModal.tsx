@@ -8,6 +8,7 @@ import {
   type BatchRegisterPrintData,
 } from "../../api/overtimeApi";
 import { formatClockTime } from "../../lib/timeFormat";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import styles from "./BatchRegisterSuccessModal.module.scss";
 
 interface Props {
@@ -101,7 +102,7 @@ export default function BatchRegisterSuccessModal({ batchId, onClose }: Props) {
                         <td>{formatClockTime(row.startTime) || row.startTime || "—"}</td>
                         <td>{formatClockTime(row.endTime) || row.endTime || "—"}</td>
                         <td className={styles.consigna}>{row.consigna || "—"}</td>
-                        <td>{row.status}</td>
+                        <td>{overtimeStatusLabel(row.status)}</td>
                       </tr>
                     ))}
                   </tbody>

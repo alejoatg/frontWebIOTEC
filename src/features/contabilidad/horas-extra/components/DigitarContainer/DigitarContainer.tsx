@@ -8,6 +8,7 @@ import {
   fetchManualDraft,
   fetchManualEmployees,
   lookupManualEmployee,
+  previewManualEntries,
   registerManualEntries,
   saveManualDraft,
   type ManualEmployeeLookup,
@@ -336,6 +337,22 @@ function collectRegisterErrors(
     }
   });
 
+  const seen = new Set<string>();
+  rows.forEach((row, index) => {
+    const doc = row.documentNumber.replace(/\D/g, "");
+    const start = (formatClockTime(row.startTime) || row.startTime || "").replace(/\D/g, "");
+    const end = (formatClockTime(row.endTime) || row.endTime || "").replace(/\D/g, "");
+    if (!doc || !row.workDate || !start || !end) return;
+    const key = `${doc}|${row.workDate}|${start}|${end}`;
+    if (seen.has(key)) {
+      errors.push(
+        `${rowLabel(row, index)}: fila duplicada (misma cédula, fecha y horario) en este lote. Remueva o modifique una de las filas.`,
+      );
+    } else {
+      seen.add(key);
+    }
+  });
+
   return errors;
 }
 
@@ -379,6 +396,8 @@ export default function DigitarContainer() {
   const [registerValidationOpen, setRegisterValidationOpen] = useState(false);
   const [registerValidationErrors, setRegisterValidationErrors] = useState<string[]>([]);
   const [registerConfirmOpen, setRegisterConfirmOpen] = useState(false);
+  const [validatingDuplicates, setValidatingDuplicates] = useState(false);
+  const [confirmDupErrors, setConfirmDupErrors] = useState<string[]>([]);
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
@@ -716,10 +735,12 @@ export default function DigitarContainer() {
     }
 
     setRegisterConfirmOpen(true);
+    setConfirmDupErrors([]);
+    setValidatingDuplicates(true);
   }
 
-  async function handleRegisterConfirm() {
-    const payload: ManualEntryPayload[] = rows.map((row) => ({
+  function buildManualPayload(): ManualEntryPayload[] {
+    return rows.map((row) => ({
       documentNumber: row.documentNumber.replace(/\D/g, ""),
       workDate: row.workDate,
       startTime: formatClockTime(row.startTime) || row.startTime,
@@ -743,6 +764,56 @@ export default function DigitarContainer() {
       attachmentRef: row.attachmentRef || undefined,
       operationalNote: row.operationalNote || undefined,
     }));
+  }
+
+  useEffect(() => {
+    if (!registerConfirmOpen) return;
+    let cancelled = false;
+    setValidatingDuplicates(true);
+    setConfirmDupErrors([]);
+
+    void (async () => {
+      try {
+        const preview = await previewManualEntries({
+          year,
+          month,
+          rows: buildManualPayload(),
+        });
+        if (cancelled) return;
+        const errs = preview.rows
+          .filter((r) => r.result === "ERROR")
+          .flatMap((r) =>
+            r.messages
+              .filter((m) => m.severity === "ERROR")
+              .map(
+                (m) =>
+                  `Fila ${r.excelRowNumber} (${r.documentNumber}${
+                    r.employeeFullName ? ` · ${r.employeeFullName}` : ""
+                  }): ${m.message}`,
+              ),
+          );
+        setConfirmDupErrors(errs);
+      } catch (e) {
+        if (cancelled) return;
+        setConfirmDupErrors([
+          e instanceof Error ? e.message : "No se pudo validar duplicados",
+        ]);
+      } finally {
+        if (!cancelled) setValidatingDuplicates(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Solo al abrir el modal; el payload se toma del estado actual de filas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- validate once when confirm opens
+  }, [registerConfirmOpen, year, month]);
+
+  async function handleRegisterConfirm() {
+    if (validatingDuplicates || confirmDupErrors.length) return;
+
+    const payload = buildManualPayload();
 
     setRegistering(true);
     try {
@@ -763,8 +834,7 @@ export default function DigitarContainer() {
       setSuccessBatchId(result.batchId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al registrar";
-      setError(msg);
-      setRegisterConfirmOpen(false);
+      setConfirmDupErrors([msg]);
     } finally {
       setRegistering(false);
     }
@@ -867,7 +937,7 @@ export default function DigitarContainer() {
               <th>Validador</th>
               <th>Proceso</th>
               <th>Zona</th>
-              <th className={styles.wideTh}>MUNICIPIO DONDE HIZO LA HORA EXTRA</th>
+              <th className={styles.wideTh}>MUNICIPIO DONDE CAUSÓ EL TIEMPO SUPLEMENTARIO</th>
               {OPTIONAL_COLUMNS.map((col) => (
                 <th key={col.key}>{OPTIONAL_FIELD_LABELS[col.key]}</th>
               ))}
@@ -1064,8 +1134,14 @@ export default function DigitarContainer() {
         open={registerConfirmOpen}
         entryCount={rows.length}
         periodLabel={`${year}-${String(month).padStart(2, "0")}`}
+        validating={validatingDuplicates}
         submitting={registering}
-        onClose={() => setRegisterConfirmOpen(false)}
+        validationErrors={confirmDupErrors}
+        onClose={() => {
+          if (validatingDuplicates || registering) return;
+          setRegisterConfirmOpen(false);
+          setConfirmDupErrors([]);
+        }}
         onConfirm={() => void handleRegisterConfirm()}
       />
     </div>

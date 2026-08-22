@@ -53,6 +53,23 @@
   color: #64748b;
 }
 
+.validating {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.errorList {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #991b1b;
+  max-height: 12rem;
+  overflow: auto;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

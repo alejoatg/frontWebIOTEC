@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeReviewNav } from "@/features/dashboard/constants/nav";
 import { fetchPeriod, fetchPeriods, type OvertimePeriodDetail } from "../../api/overtimeApi";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 
@@ -66,7 +67,7 @@ export default function ResumenContainer() {
           <ul style={{ fontSize: "0.875rem", color: "#475569" }}>
             {recent.map((p) => (
               <li key={p.periodCode}>
-                {p.periodCode} — {p.status}
+                {p.periodCode} — {overtimeStatusLabel(p.status)}
               </li>
             ))}
           </ul>

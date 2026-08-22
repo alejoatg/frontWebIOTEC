@@ -43,7 +43,7 @@ export default function RecalculateModal({
                 <p>Se actualizaron perfiles contables.</p>
               )}
               <p>
-                Hay <strong>{affectedCount}</strong> registro(s) vigente(s) (PENDING o APPROVED) en
+                Hay <strong>{affectedCount}</strong> registro(s) vigente(s) (pendientes o aprobados) en
                 periodo(s) abierto(s) que pueden recalcularse con el nuevo salario/factor.
               </p>
               {periodCodes && periodCodes.length > 0 && (

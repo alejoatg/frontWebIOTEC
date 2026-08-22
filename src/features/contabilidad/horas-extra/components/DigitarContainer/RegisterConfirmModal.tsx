@@ -9,7 +9,11 @@ interface RegisterConfirmModalProps {
   open: boolean;
   entryCount: number;
   periodLabel: string;
+  /** Consulta de duplicados / validación previa. */
+  validating?: boolean;
   submitting?: boolean;
+  /** Errores de validación (p. ej. duplicados) tras el check. */
+  validationErrors?: string[];
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -18,18 +22,23 @@ export default function RegisterConfirmModal({
   open,
   entryCount,
   periodLabel,
+  validating = false,
   submitting = false,
+  validationErrors = [],
   onClose,
   onConfirm,
 }: RegisterConfirmModalProps) {
+  const busy = validating || submitting;
+  const hasValidationErrors = validationErrors.length > 0;
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !submitting) onClose();
+      if (e.key === "Escape" && !busy) onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, submitting]);
+  }, [open, onClose, busy]);
 
   if (!open) return null;
 
@@ -38,7 +47,7 @@ export default function RegisterConfirmModal({
       className={styles.overlay}
       role="presentation"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !submitting) onClose();
+        if (e.target === e.currentTarget && !busy) onClose();
       }}
     >
       <div
@@ -54,15 +63,36 @@ export default function RegisterConfirmModal({
               Confirmar registro
             </h2>
           </div>
-          <p className={styles.body}>
-            Se registrarán <strong>{entryCount}</strong> registro(s) de tiempo
-            suplementario en el periodo <strong>{periodLabel}</strong>. Quedarán
-            pendientes de aprobación por Contabilidad.
-          </p>
-          <p className={styles.note}>
-            Revise que los datos sean correctos antes de continuar. Esta acción
-            crea la planilla en el sistema.
-          </p>
+
+          {validating ? (
+            <p className={styles.validating} role="status" aria-live="polite">
+              Validando duplicados…
+            </p>
+          ) : hasValidationErrors ? (
+            <>
+              <p className={styles.body}>
+                Se encontraron problemas. Remueva o modifique las filas antes de
+                registrar.
+              </p>
+              <ul className={styles.errorList}>
+                {validationErrors.map((msg) => (
+                  <li key={msg}>{msg}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <p className={styles.body}>
+                Se registrarán <strong>{entryCount}</strong> registro(s) de tiempo
+                suplementario en el periodo <strong>{periodLabel}</strong>. Quedarán
+                pendientes de aprobación por Contabilidad.
+              </p>
+              <p className={styles.note}>
+                Revise que los datos sean correctos antes de continuar. Esta acción
+                crea la planilla en el sistema.
+              </p>
+            </>
+          )}
         </header>
 
         <div className={styles.actions}>
@@ -71,13 +101,24 @@ export default function RegisterConfirmModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
           >
-            Cancelar
+            {hasValidationErrors ? "Cerrar" : "Cancelar"}
           </Button>
-          <Button type="button" size="sm" onClick={onConfirm} disabled={submitting}>
-            {submitting ? "Registrando…" : "Confirmar y registrar"}
-          </Button>
+          {!hasValidationErrors && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={onConfirm}
+              disabled={busy || validating}
+            >
+              {submitting
+                ? "Registrando…"
+                : validating
+                  ? "Validando…"
+                  : "Confirmar y registrar"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

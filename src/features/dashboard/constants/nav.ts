@@ -5,7 +5,7 @@ export const DASHBOARD_NAV_ITEMS = [
   { path: "/dashboard/catalogos", label: "Catálogos", icon: "BookOpen" },
   {
     path: "/dashboard/contabilidad/horas-extra",
-    label: "Horas extra",
+    label: "Tiempo suplementario",
     icon: "Clock",
     roles: ["CONTABILIDAD", "ADMIN", "SUPERVISOR", "CORDINADOR"],
   },

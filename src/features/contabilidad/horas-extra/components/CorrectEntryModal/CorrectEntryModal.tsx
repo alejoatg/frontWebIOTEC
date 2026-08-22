@@ -88,7 +88,7 @@ function buildPayload(form: FormState): CorrectEntryPayload {
     commissionMunicipality: form.commissionMunicipality.trim() || undefined,
     consigna: form.consigna.trim() || undefined,
     operationalNote: form.operationalNote.trim() || undefined,
-    accountingNote: form.accountingNote.trim() || undefined,
+    accountingNote: form.accountingNote.trim(),
   };
 }
 
@@ -155,7 +155,7 @@ export default function CorrectEntryModal({
   async function handleSubmit() {
     if (!form || !entry) return;
     if (!form.accountingNote.trim()) {
-      setError("Indique el motivo de la corrección (observación contabilidad).");
+      setError("Indique la justificación de la corrección.");
       return;
     }
     setSubmitting(true);
@@ -183,7 +183,13 @@ export default function CorrectEntryModal({
           {entry && (
             <p className={styles.subtitle}>
               {entry.entryCode} — {entry.employeeFullName}. Se creará un nuevo registro{" "}
-              <strong>aprobado</strong> y el actual quedará como <strong>SUPERSEDED</strong>.
+              <strong>aprobado</strong> y el actual quedará como <strong>corregido</strong>.
+              {entry.status === "APPROVED" && (
+                <>
+                  {" "}
+                  Este registro ya estaba aprobado: la justificación es obligatoria.
+                </>
+              )}
             </p>
           )}
         </div>
@@ -291,13 +297,13 @@ export default function CorrectEntryModal({
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>Contabilidad</h3>
                 <div className={styles.field}>
-                  <label htmlFor="corr-accounting">Motivo de la corrección *</label>
+                  <label htmlFor="corr-accounting">Justificación de la corrección *</label>
                   <textarea
                     id="corr-accounting"
                     rows={3}
                     value={form.accountingNote}
                     onChange={(e) => update("accountingNote", e.target.value)}
-                    placeholder="Ej.: Ajuste de horas TSD por error de digitación en planilla…"
+                    placeholder="Obligatoria. Ej.: ajuste de horas TSD por error de digitación…"
                   />
                 </div>
               </section>

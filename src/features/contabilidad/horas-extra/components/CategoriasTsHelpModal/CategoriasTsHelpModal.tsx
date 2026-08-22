@@ -23,7 +23,7 @@ const CATEGORIAS: Array<{
   {
     code: "RD",
     title: "Recargo dominical / festivo",
-    when: "Horas ordinarias trabajadas en domingo o festivo (no son horas extra completas).",
+    when: "Horas ordinarias trabajadas en domingo o festivo (no son tiempo suplementario completo).",
     autofill: "No se autocompleta: debe digitarse manualmente cuando aplique.",
     multiplier: "× 0,80 sobre el valor hora",
   },
@@ -37,28 +37,28 @@ const CATEGORIAS: Array<{
   {
     code: "TSD",
     title: "Tiempo suplementario diurno",
-    when: "Horas extra en día hábil, entre 6:00 y 21:00.",
+    when: "Tiempo suplementario en día hábil, entre 6:00 y 21:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 1,25 sobre el valor hora",
   },
   {
     code: "TSN",
     title: "Tiempo suplementario nocturno",
-    when: "Horas extra en día hábil, entre 21:00 y 6:00.",
+    when: "Tiempo suplementario en día hábil, entre 21:00 y 6:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 1,75 sobre el valor hora",
   },
   {
     code: "HEDD",
     title: "TS dominical/festivo diurno",
-    when: "Horas extra en domingo o festivo, entre 6:00 y 21:00.",
+    when: "Tiempo suplementario en domingo o festivo, entre 6:00 y 21:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 2,05 sobre el valor hora",
   },
   {
     code: "HEND",
     title: "TS dominical/festivo nocturno",
-    when: "Horas extra en domingo o festivo, entre 21:00 y 6:00.",
+    when: "Tiempo suplementario en domingo o festivo, entre 21:00 y 6:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 2,55 sobre el valor hora",
   },
@@ -131,7 +131,7 @@ export default function CategoriasTsHelpModal({
                 (legislación colombiana).
               </li>
               <li>
-                Si la fecha es <strong>domingo o festivo</strong>, las horas extra van en{" "}
+                Si la fecha es <strong>domingo o festivo</strong>, el tiempo suplementario va en{" "}
                 <strong>HEDD</strong> / <strong>HEND</strong> en lugar de TSD / TSN.
               </li>
               <li>

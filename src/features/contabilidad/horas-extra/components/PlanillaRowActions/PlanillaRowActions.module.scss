@@ -60,3 +60,40 @@
 .btnDanger:hover {
   background: #fecaca;
 }
+
+.approveBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  padding: 0.35rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  background: #f0fdf4;
+  min-width: 10rem;
+}
+
+.approveBox label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.approveBox textarea {
+  width: 100%;
+  font-size: 0.7rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 3px;
+  padding: 0.25rem;
+  resize: vertical;
+}
+
+.approveActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btnOk:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

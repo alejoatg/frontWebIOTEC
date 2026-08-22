@@ -1,5 +1,6 @@
 import type { OvertimeEntryRow } from "../api/overtimeApi";
 import { formatDateOnly } from "./dateFormat";
+import { overtimeStatusLabel, overtimeValidationLabel } from "./overtimeStatus";
 import { formatClockTime } from "./timeFormat";
 
 export interface SpreadsheetColumn {
@@ -79,7 +80,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "amountSubtotal", header: "SUBTOTAL", getValue: (e) => money(e.amountSubtotal), align: "right" },
   { id: "payrollFactorSnapshot", header: "FACTOR", getValue: (e) => num(e.payrollFactorSnapshot), align: "right" },
   { id: "amountTotal", header: "TOTAL", getValue: (e) => money(e.amountTotal), align: "right" },
-  { id: "commissionMunicipality", header: "MUNICIPIO DONDE CAUSO EL TIEMPO SUPLEMENTARIO", getValue: (e) => e.commissionMunicipality ?? "" },
+  { id: "commissionMunicipality", header: "MUNICIPIO DONDE CAUSÓ EL TIEMPO SUPLEMENTARIO", getValue: (e) => e.commissionMunicipality ?? "" },
   { id: "brigadeCode", header: "CODIGO DE BRIGADA / PORTATIL", getValue: (e) => e.brigadeCode ?? "" },
   { id: "baseMunicipality", header: "MUNICIPIO SEDE DONDE LABORA", getValue: (e) => e.baseMunicipality ?? "" },
   { id: "submittedBy", header: "SUPERVISOR QUIEN DIGITA", getValue: (e) => e.submittedBy?.name ?? "" },
@@ -90,7 +91,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "ticketRef", header: "TICKET", getValue: (e) => e.ticketRef ?? "" },
   { id: "consigna", header: "CONSIGNA", getValue: (e) => e.consigna ?? "" },
   { id: "attachmentRef", header: "ARCHIVO", getValue: (e) => e.attachmentRef ?? "" },
-  { id: "status", header: "ESTADO", getValue: (e) => e.status },
+  { id: "status", header: "ESTADO", getValue: (e) => overtimeStatusLabel(e.status) },
   { id: "operationalNote", header: "OBSERVACION OPERATIVA", getValue: (e) => e.operationalNote ?? "" },
   { id: "accountingNote", header: "OBSERVACION CONTABILIDAD", getValue: (e) => e.accountingNote ?? "" },
   { id: "genderSnapshot", header: "GENERO", getValue: (e) => e.genderSnapshot ?? "" },
@@ -174,7 +175,7 @@ export const DETAIL_SECTIONS: DetailSection[] = [
   {
     title: "Operativo",
     fields: [
-      { label: "Municipio causación", getValue: (e) => e.commissionMunicipality ?? "—" },
+      { label: "Municipio donde causó el tiempo suplementario", getValue: (e) => e.commissionMunicipality ?? "—" },
       { label: "Municipio sede", getValue: (e) => e.baseMunicipality ?? "—" },
       { label: "Brigada / portátil", getValue: (e) => e.brigadeCode ?? "—" },
       { label: "Sistema", getValue: (e) => e.systemName ?? "—" },
@@ -183,19 +184,32 @@ export const DETAIL_SECTIONS: DetailSection[] = [
       { label: "Trabajo", getValue: (e) => e.workRef ?? "—" },
       { label: "Ticket", getValue: (e) => e.ticketRef ?? "—" },
       { label: "Consigna", getValue: (e) => e.consigna ?? "—" },
-      { label: "Archivo adjunto", getValue: (e) => e.attachmentRef ?? "—" },
+      { label: "Proceso donde causa / archivo", getValue: (e) => e.attachmentRef ?? "—" },
+    ],
+  },
+  {
+    title: "Notas y observaciones",
+    fields: [
       { label: "Observación operativa", getValue: (e) => e.operationalNote ?? "—" },
+      { label: "Observación contabilidad", getValue: (e) => e.accountingNote ?? "—" },
     ],
   },
   {
     title: "Revisión",
     fields: [
-      { label: "Estado", getValue: (e) => e.status },
-      { label: "Validación", getValue: (e) => e.validationResult },
-      { label: "Supervisor", getValue: (e) => e.submittedBy?.name ?? "—" },
+      { label: "Estado", getValue: (e) => overtimeStatusLabel(e.status) },
+      { label: "Validación", getValue: (e) => overtimeValidationLabel(e.validationResult) },
+      { label: "Digitó", getValue: (e) => e.submittedBy?.name ?? "—" },
       { label: "Revisado por", getValue: (e) => e.reviewedBy?.name ?? "—" },
       { label: "Fecha revisión", getValue: (e) => (e.reviewedAt ? date(e.reviewedAt) : "—") },
-      { label: "Observación contabilidad", getValue: (e) => e.accountingNote ?? "—" },
     ],
   },
 ];
+
+/** Secciones del detalle sin montos ni parámetros económicos. */
+export const DETAIL_SECTIONS_NO_MONEY: DetailSection[] = DETAIL_SECTIONS.filter(
+  (section) => section.title !== "Contabilidad",
+).map((section) => ({
+  ...section,
+  fields: section.fields.filter((f) => !f.id || !MONEY_FIELD_IDS.has(f.id)),
+}));

@@ -29,6 +29,7 @@ const TIPOS_INSPECCION = [
   "Sistemas_de_puesta_a_tierra",
   "Evento",
   "Consigna",
+  "Trabajos_Previos",
 ];
 
 export default function AtuFormatoUnicoFilter({

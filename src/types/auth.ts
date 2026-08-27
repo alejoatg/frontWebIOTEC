@@ -8,6 +8,8 @@ export interface LinkedEmployee {
   jobPosition: string | null;
   zone: string | null;
   workProcess?: string | null;
+  /** Correo personal / contacto HR (informativo). */
+  personalEmail?: string | null;
 }
 
 /**

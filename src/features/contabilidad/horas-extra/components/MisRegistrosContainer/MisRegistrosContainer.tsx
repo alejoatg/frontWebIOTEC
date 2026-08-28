@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
-import { fetchMyEntries, type OvertimeEntryRow } from "../../api/overtimeApi";
+import {
+  downloadAuthenticatedFile,
+  fetchMyEntries,
+  myEntriesExportExcelUrl,
+  type OvertimeEntryRow,
+} from "../../api/overtimeApi";
 import { hoursFromEntry } from "../../lib/hourTypesDisplay";
 import {
   OVERTIME_STATUS_OPTIONS,
@@ -49,6 +54,7 @@ export default function MisRegistrosContainer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voidTarget, setVoidTarget] = useState<OvertimeEntryRow | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,6 +116,32 @@ export default function MisRegistrosContainer() {
         </label>
         <Button type="button" variant="outline" size="sm" onClick={load}>
           Actualizar
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={exporting || loading}
+          onClick={async () => {
+            setExporting(true);
+            setError(null);
+            try {
+              await downloadAuthenticatedFile(
+                myEntriesExportExcelUrl({
+                  year,
+                  month,
+                  status: status || undefined,
+                }),
+                `mis-registros-${year}-${String(month).padStart(2, "0")}.xlsx`,
+              );
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Error al exportar");
+            } finally {
+              setExporting(false);
+            }
+          }}
+        >
+          {exporting ? "Generando Excel…" : "Exportar Excel"}
         </Button>
       </div>
 

@@ -54,6 +54,48 @@
   text-align: right;
 }
 
+.draftSourceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.draftSourceLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.draftSourceSelect {
+  min-width: 14rem;
+  max-width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.readOnlyBanner {
+  margin-bottom: 0.85rem;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.gridFieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.gridFieldset:disabled {
+  opacity: 1;
+}
+
 .draftStatusError {
   color: #b91c1c;
 }

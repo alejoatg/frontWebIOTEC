@@ -6,11 +6,13 @@ import { Check } from "lucide-react";
 import { Button } from "@/components";
 import {
   fetchManualDraft,
+  fetchManualDraftViewableUsers,
   fetchManualEmployees,
   lookupManualEmployee,
   previewManualEntries,
   registerManualEntries,
   saveManualDraft,
+  type ManualDraftViewableOwner,
   type ManualEmployeeLookup,
   type ManualEmployeeOption,
   type ManualEntryPayload,
@@ -402,6 +404,13 @@ export default function DigitarContainer() {
     "idle",
   );
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [viewableOwners, setViewableOwners] = useState<ManualDraftViewableOwner[]>([]);
+  /** 'mine' = borrador propio; otro valor = id del usuario consultado (solo lectura). */
+  const [draftSource, setDraftSource] = useState<"mine" | string>("mine");
+  const [viewingOwner, setViewingOwner] = useState<{ name: string; email: string } | null>(
+    null,
+  );
+  const readOnly = draftSource !== "mine";
   const topScrollRef = useRef<HTMLDivElement>(null);
   const gridWrapRef = useRef<HTMLDivElement>(null);
   const topSpacerRef = useRef<HTMLDivElement>(null);
@@ -413,11 +422,39 @@ export default function DigitarContainer() {
   const yearRef = useRef(year);
   const monthRef = useRef(month);
   const rowsRef = useRef(rows);
+  const draftSourceRef = useRef(draftSource);
   yearRef.current = year;
   monthRef.current = month;
   rowsRef.current = rows;
+  draftSourceRef.current = draftSource;
 
   const bounds = useMemo(() => periodBounds(year, month), [year, month]);
+
+  const applyDraftToState = useCallback((draft: Awaited<ReturnType<typeof fetchManualDraft>>) => {
+    if (draft.year && draft.month) {
+      setYear(draft.year);
+      setMonth(draft.month);
+      yearRef.current = draft.year;
+      monthRef.current = draft.month;
+    }
+    const loadedRows = draft.rows.length
+      ? draft.rows.map(rowFromDraftPayload)
+      : [emptyRow()];
+    setRows(loadedRows);
+    lastSavedSnapshotRef.current = JSON.stringify(loadedRows.map(rowToDraftPayload));
+    if (draft.updatedAt) {
+      setDraftStatus("saved");
+      setDraftSavedAt(new Date(draft.updatedAt));
+    } else {
+      setDraftStatus("idle");
+      setDraftSavedAt(null);
+    }
+    setViewingOwner(
+      draft.readOnly && draft.owner
+        ? { name: draft.owner.name, email: draft.owner.email }
+        : null,
+    );
+  }, []);
 
   const flushDraftSave = useCallback(
     async (targetYear: number, targetMonth: number, payload: Record<string, unknown>[]) => {
@@ -451,27 +488,19 @@ export default function DigitarContainer() {
     [flushDraftSave],
   );
 
-  // Carga el único borrador del usuario (incluye el periodo en el que se quedó).
+  // Carga borrador propio y lista de usuarios consultables (si hay grants).
   useEffect(() => {
     let cancelled = false;
     draftReadyRef.current = false;
     (async () => {
       try {
-        const draft = await fetchManualDraft();
+        const [draft, viewable] = await Promise.all([
+          fetchManualDraft(),
+          fetchManualDraftViewableUsers().catch(() => [] as ManualDraftViewableOwner[]),
+        ]);
         if (cancelled) return;
-        if (draft.year && draft.month) {
-          setYear(draft.year);
-          setMonth(draft.month);
-        }
-        const loadedRows = draft.rows.length
-          ? draft.rows.map(rowFromDraftPayload)
-          : [emptyRow()];
-        setRows(loadedRows);
-        lastSavedSnapshotRef.current = JSON.stringify(loadedRows.map(rowToDraftPayload));
-        if (draft.updatedAt) {
-          setDraftStatus("saved");
-          setDraftSavedAt(new Date(draft.updatedAt));
-        }
+        setViewableOwners(viewable);
+        applyDraftToState({ ...draft, readOnly: false, owner: null });
       } catch {
         if (!cancelled) setRows([emptyRow()]);
       } finally {
@@ -481,7 +510,33 @@ export default function DigitarContainer() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyDraftToState]);
+
+  async function handleDraftSourceChange(value: string) {
+    if (value === draftSource) return;
+    setError(null);
+    setSuccess(null);
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    setDraftSource(value);
+    draftReadyRef.current = false;
+    try {
+      const draft =
+        value === "mine" ? await fetchManualDraft() : await fetchManualDraft(value);
+      applyDraftToState(draft);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo cargar el borrador");
+      if (value !== "mine") {
+        setDraftSource("mine");
+        const own = await fetchManualDraft();
+        applyDraftToState({ ...own, readOnly: false, owner: null });
+      }
+    } finally {
+      draftReadyRef.current = true;
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -489,14 +544,14 @@ export default function DigitarContainer() {
         clearTimeout(saveTimerRef.current);
         saveTimerRef.current = null;
       }
-      if (!draftReadyRef.current) return;
+      if (!draftReadyRef.current || draftSourceRef.current !== "mine") return;
       const payload = rowsRef.current.map(rowToDraftPayload);
       void saveManualDraft(yearRef.current, monthRef.current, payload).catch(() => undefined);
     };
   }, []);
 
   useEffect(() => {
-    if (!draftReadyRef.current) return;
+    if (!draftReadyRef.current || readOnly) return;
     const payload = rows.map(rowToDraftPayload);
     const serialized = JSON.stringify(payload);
     if (serialized === lastSavedSnapshotRef.current) return;
@@ -504,7 +559,7 @@ export default function DigitarContainer() {
     const immediate = forceImmediateSaveRef.current;
     forceImmediateSaveRef.current = false;
     scheduleDraftSave(payload, immediate);
-  }, [rows, scheduleDraftSave]);
+  }, [rows, scheduleDraftSave, readOnly]);
 
   const syncTopSpacerWidth = useCallback(() => {
     const wrap = gridWrapRef.current;
@@ -708,6 +763,7 @@ export default function DigitarContainer() {
   }
 
   function handlePeriodChange(newYear: number, newMonth: number) {
+    if (readOnly) return;
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
@@ -842,14 +898,50 @@ export default function DigitarContainer() {
 
   return (
     <div>
+      {viewableOwners.length > 0 && (
+        <div className={styles.draftSourceRow}>
+          <label className={styles.draftSourceLabel} htmlFor="draft-source-select">
+            Consultar borrador
+          </label>
+          <select
+            id="draft-source-select"
+            className={styles.draftSourceSelect}
+            value={draftSource}
+            onChange={(e) => void handleDraftSourceChange(e.target.value)}
+          >
+            <option value="mine">Mi borrador</option>
+            {viewableOwners.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+                {!o.hasDraft ? " (sin borrador)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {readOnly && viewingOwner && (
+        <div className={`${shared.alert} ${styles.readOnlyBanner}`}>
+          Viendo borrador de <strong>{viewingOwner.name}</strong> ({viewingOwner.email}) — solo
+          lectura.
+          {draftSavedAt && (
+            <>
+              {" "}
+              Última actualización: {formatDraftSavedAt(draftSavedAt)}.
+            </>
+          )}
+        </div>
+      )}
+
       <PeriodSelector
         year={year}
         month={month}
         onChange={handlePeriodChange}
+        disabled={readOnly}
       />
 
       <div className={styles.toolbar}>
-        <Button type="button" variant="outline" size="sm" onClick={addRow}>
+        <Button type="button" variant="outline" size="sm" onClick={addRow} disabled={readOnly}>
           Agregar fila
         </Button>
         <Button
@@ -857,7 +949,7 @@ export default function DigitarContainer() {
           variant="outline"
           size="sm"
           onClick={handleSaveDraftNow}
-          disabled={draftStatus === "saving"}
+          disabled={readOnly || draftStatus === "saving"}
         >
           Guardar borrador
         </Button>
@@ -866,26 +958,28 @@ export default function DigitarContainer() {
           variant="primary"
           size="sm"
           onClick={handleRegisterClick}
-          disabled={registering}
+          disabled={readOnly || registering}
         >
           {registering ? "Registrando…" : "Registrar planilla"}
         </Button>
         <span className={styles.count}>{rows.length} fila(s)</span>
-        <div className={styles.draftMeta}>
-          {draftStatus === "saving" && (
-            <span className={styles.draftStatus}>Guardando borrador…</span>
-          )}
-          {draftStatus === "saved" && draftSavedAt && (
-            <span className={styles.draftStatus}>
-              Último borrador: {formatDraftSavedAt(draftSavedAt)}
-            </span>
-          )}
-          {draftStatus === "error" && (
-            <span className={`${styles.draftStatus} ${styles.draftStatusError}`}>
-              No se pudo guardar el borrador. Usa &quot;Guardar borrador&quot; para reintentar.
-            </span>
-          )}
-        </div>
+        {!readOnly && (
+          <div className={styles.draftMeta}>
+            {draftStatus === "saving" && (
+              <span className={styles.draftStatus}>Guardando borrador…</span>
+            )}
+            {draftStatus === "saved" && draftSavedAt && (
+              <span className={styles.draftStatus}>
+                Último borrador: {formatDraftSavedAt(draftSavedAt)}
+              </span>
+            )}
+            {draftStatus === "error" && (
+              <span className={`${styles.draftStatus} ${styles.draftStatusError}`}>
+                No se pudo guardar el borrador. Usa &quot;Guardar borrador&quot; para reintentar.
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {error && <div className={`${shared.alert} ${shared.alertError}`}>{error}</div>}
@@ -898,6 +992,7 @@ export default function DigitarContainer() {
         </div>
       )}
 
+      <fieldset disabled={readOnly} className={styles.gridFieldset}>
       <div
         className={styles.topScroll}
         ref={topScrollRef}
@@ -1094,10 +1189,14 @@ export default function DigitarContainer() {
           </tbody>
         </table>
       </div>
+      </fieldset>
 
       <p className={styles.footnote}>
-        Hay un solo borrador por usuario: al volver a esta pestaña se restaura para seguir
-        digitando. Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
+        Hay un solo borrador por usuario: al volver a esta pestaña se restaura el tuyo para seguir
+        digitando.
+        {viewableOwners.length > 0 &&
+          " Si tienes permiso, puedes consultar en solo lectura el borrador de otro usuario desde el selector superior."}{" "}
+        Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
         de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
         <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
         (6:00–21:00) y festivo; RD, RN y Disponibilidad se digitán manualmente. Use{" "}

@@ -10,9 +10,10 @@ export interface PeriodSelectorProps {
   year: number;
   month: number;
   onChange: (year: number, month: number) => void;
+  disabled?: boolean;
 }
 
-export default function PeriodSelector({ year, month, onChange }: PeriodSelectorProps) {
+export default function PeriodSelector({ year, month, onChange, disabled }: PeriodSelectorProps) {
   const [detail, setDetail] = useState<OvertimePeriodDetail | null>(null);
 
   const load = useCallback(async () => {
@@ -32,6 +33,7 @@ export default function PeriodSelector({ year, month, onChange }: PeriodSelector
           type="number"
           className={styles.input}
           value={year}
+          disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value), month)}
         />
       </label>
@@ -43,10 +45,11 @@ export default function PeriodSelector({ year, month, onChange }: PeriodSelector
           max={12}
           className={styles.input}
           value={month}
+          disabled={disabled}
           onChange={(e) => onChange(year, Number(e.target.value))}
         />
       </label>
-      <Button type="button" variant="outline" size="sm" onClick={() => load()}>
+      <Button type="button" variant="outline" size="sm" onClick={() => load()} disabled={disabled}>
         Actualizar
       </Button>
       {detail && (

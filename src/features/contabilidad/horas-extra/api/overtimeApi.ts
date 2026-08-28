@@ -79,8 +79,13 @@ export async function previewManualEntries(body: {
   });
 }
 
-export async function fetchManualDraft() {
-  return request<ManualDraftResult>(`/manual/draft`);
+export async function fetchManualDraft(ownerUserId?: string) {
+  const q = ownerUserId ? `?ownerUserId=${encodeURIComponent(ownerUserId)}` : "";
+  return request<ManualDraftResult>(`/manual/draft${q}`);
+}
+
+export async function fetchManualDraftViewableUsers() {
+  return request<ManualDraftViewableOwner[]>(`/manual/draft/viewable-users`);
 }
 
 export async function saveManualDraft(
@@ -167,6 +172,30 @@ export async function fetchMyEntries(params: {
   if (params.search) q.set("search", params.search);
   if (params.includeSuperseded) q.set("includeSuperseded", "true");
   return request<EntriesPage>(`/entries/mine?${q}`);
+}
+
+/** Excel de mis registros según filtros en pantalla (sin paginación). */
+export function myEntriesExportExcelUrl(params: {
+  year: number;
+  month: number;
+  status?: string;
+  documentNumber?: string;
+  workDateFrom?: string;
+  workDateTo?: string;
+  search?: string;
+  includeSuperseded?: boolean;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.status) q.set("status", params.status);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
+  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
+  if (params.search) q.set("search", params.search);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  return `${BASE}/entries/mine/export?${q}`;
 }
 
 export async function fetchEntry(id: string) {
@@ -510,10 +539,22 @@ export interface ManualEmployeeOption {
 }
 
 export interface ManualDraftResult {
+  readOnly: boolean;
   year: number | null;
   month: number | null;
   rows: Record<string, unknown>[];
   updatedAt: string | null;
+  owner: { id: string; name: string; email: string } | null;
+}
+
+export interface ManualDraftViewableOwner {
+  id: string;
+  name: string;
+  email: string;
+  hasDraft: boolean;
+  draftUpdatedAt: string | null;
+  draftYear: number | null;
+  draftMonth: number | null;
 }
 
 export interface ManualEntryPayload {

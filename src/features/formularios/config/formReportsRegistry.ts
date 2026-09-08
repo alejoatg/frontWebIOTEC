@@ -223,12 +223,12 @@ export const FORM_REPORTS: FormReportConfig[] = [
     filterFields: [
       { type: "dateRange" },
       { type: "text", key: "placa", label: "Placa", placeholder: "ABC123" },
-      { type: "text", key: "organizacionVehiculo", label: "Organización", placeholder: "UTEN / Contratista" },
+      { type: "text", key: "organizacionVehiculo", label: "Afiliado/Colaborador de", placeholder: "UTEN / Contratista" },
     ],
     listColumns: [
       { key: "fecha", label: "Fecha", format: "shortDate" },
       { key: "placaVehiculo", label: "Placa" },
-      { key: "organizacionVehiculo", label: "Organización" },
+      { key: "organizacionVehiculo", label: "Afiliado/Colaborador de" },
       { key: "kilometrajeActual", label: "Kilometraje" },
       { key: "cedulaDiligencia", label: "Cédula" },
       { key: "submittedBy", label: "Técnico", accessor: (r) => (r.submittedBy as { name?: string })?.name },
@@ -307,6 +307,20 @@ export const FORM_REPORTS: FormReportConfig[] = [
         keys: [
           "presentaNovedadImpideOperacion", "esPrimerDiaMes", "observacionesGenerales",
           "startedAt", "completedAt", "syncedAt",
+        ],
+      },
+      {
+        title: "Chequeo somnolencia y fatiga",
+        keys: [
+          "somnolenciaDormidoMenos6h",
+          "somnolenciaCondicionImpideConducir",
+          "somnolenciaFarmacoReflejos",
+          "somnolenciaAlcoholMenos24h",
+          "somnolenciaMalestarEnfermedad",
+          "somnolenciaDificultadConcentracion",
+          "somnolenciaConducidoMas8h",
+          "horasConduccionAproximadas",
+          "somnolenciaInformadaSupervisor",
         ],
       },
     ],
@@ -408,6 +422,20 @@ export const FORM_REPORTS: FormReportConfig[] = [
         keys: [
           "esPrimerDiaO15Mes", "presentaNovedad",
           "startedAt", "completedAt", "syncedAt",
+        ],
+      },
+      {
+        title: "Chequeo somnolencia y fatiga",
+        keys: [
+          "somnolenciaDormidoMenos6h",
+          "somnolenciaCondicionImpideConducir",
+          "somnolenciaFarmacoReflejos",
+          "somnolenciaAlcoholMenos24h",
+          "somnolenciaMalestarEnfermedad",
+          "somnolenciaDificultadConcentracion",
+          "somnolenciaConducidoMas8h",
+          "horasConduccionAproximadas",
+          "somnolenciaInformadaSupervisor",
         ],
       },
     ],

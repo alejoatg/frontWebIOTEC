@@ -7,9 +7,9 @@ import {
   fetchCatalogItemsBatch,
   toSelectOptions,
 } from "@/features/catalogs/api/catalogsApi";
-import { createEmployee } from "../api/hrApi";
+import { createEmployee, fetchEmployee, updateEmployee } from "../api/hrApi";
 import { useHrOrg } from "../hooks/useHrOrg";
-import type { CreateEmployeePayload } from "../types";
+import type { CreateEmployeePayload, EmployeeDetail } from "../types";
 import styles from "./AgregarTrabajadorForm.module.scss";
 
 type FormState = {
@@ -23,6 +23,7 @@ type FormState = {
   mobilePhone: string;
   email: string;
   fieldWork: boolean;
+  isActive: boolean;
   startDate: string;
   contractTypeCatalogKey: string;
   managementUnitId: string;
@@ -45,6 +46,7 @@ const EMPTY: FormState = {
   mobilePhone: "",
   email: "",
   fieldWork: false,
+  isActive: true,
   startDate: new Date().toISOString().slice(0, 10),
   contractTypeCatalogKey: "",
   managementUnitId: "",
@@ -59,7 +61,45 @@ function optional(value: string): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
-export default function AgregarTrabajadorForm() {
+function toDateInput(value: string | null | undefined): string {
+  if (!value) return "";
+  return value.slice(0, 10);
+}
+
+function detailToForm(detail: EmployeeDetail): FormState {
+  const wl = detail.currentWorkLocation;
+  return {
+    documentNumber: detail.documentNumber,
+    firstName: detail.firstName,
+    lastName: detail.lastName,
+    birthDate: toDateInput(detail.birthDate),
+    genderCatalogKey: detail.genderCatalogKey ?? "",
+    bloodTypeCatalogKey: detail.bloodTypeCatalogKey ?? "",
+    maritalStatusCatalogKey: detail.maritalStatusCatalogKey ?? "",
+    mobilePhone: detail.mobilePhone ?? "",
+    email: detail.email ?? "",
+    fieldWork: detail.fieldWork ?? false,
+    isActive: detail.isActive,
+    startDate:
+      toDateInput(wl?.startDate) ||
+      toDateInput(detail.currentContract?.startDate) ||
+      new Date().toISOString().slice(0, 10),
+    contractTypeCatalogKey: detail.currentContract?.contractTypeCatalogKey ?? "",
+    managementUnitId: wl?.managementUnit?.id ?? "",
+    areaId: wl?.area?.id ?? "",
+    workProcessId: wl?.workProcess?.id ?? "",
+    jobPositionId: wl?.jobPosition?.id ?? "",
+    zoneId: wl?.zone?.id ?? "",
+  };
+}
+
+type Props = {
+  /** Si se pasa, el formulario carga y actualiza ese trabajador. */
+  employeeId?: string;
+};
+
+export default function AgregarTrabajadorForm({ employeeId }: Props) {
+  const isEdit = Boolean(employeeId);
   const router = useRouter();
   const { jobPositions, areas, zones, workProcesses, managementUnits, loading, error } =
     useHrOrg();
@@ -67,6 +107,8 @@ export default function AgregarTrabajadorForm() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEmployee, setLoadingEmployee] = useState(isEdit);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [catalogOptions, setCatalogOptions] = useState<{
     gender: { value: string; label: string }[];
     blood_type: { value: string; label: string }[];
@@ -105,20 +147,56 @@ export default function AgregarTrabajadorForm() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!employeeId) return;
+    let cancelled = false;
+    setLoadingEmployee(true);
+    setLoadError(null);
+    void (async () => {
+      try {
+        const detail = await fetchEmployee(employeeId);
+        if (cancelled) return;
+        setForm(detailToForm(detail));
+      } catch (err) {
+        if (cancelled) return;
+        setLoadError(
+          err instanceof Error ? err.message : "No se pudo cargar el trabajador",
+        );
+      } finally {
+        if (!cancelled) setLoadingEmployee(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [employeeId]);
+
   const filteredAreas = useMemo(() => {
     if (!form.managementUnitId) return areas;
     return areas.filter((a) => a.managementUnit?.id === form.managementUnitId);
   }, [areas, form.managementUnitId]);
 
   const filteredProcesses = useMemo(() => {
-    if (!form.areaId) {
-      if (!form.managementUnitId) return workProcesses;
-      return workProcesses.filter(
-        (p) => p.area?.managementUnit?.id === form.managementUnitId,
-      );
+    // En edición, si el proceso actual no filtra por área, igual lo mostramos.
+    const base = (() => {
+      if (!form.areaId) {
+        if (!form.managementUnitId) return workProcesses;
+        return workProcesses.filter(
+          (p) => p.area?.managementUnit?.id === form.managementUnitId,
+        );
+      }
+      return workProcesses.filter((p) => p.area?.id === form.areaId);
+    })();
+
+    if (
+      form.workProcessId &&
+      !base.some((p) => p.id === form.workProcessId)
+    ) {
+      const current = workProcesses.find((p) => p.id === form.workProcessId);
+      if (current) return [current, ...base];
     }
-    return workProcesses.filter((p) => p.area?.id === form.areaId);
-  }, [workProcesses, form.areaId, form.managementUnitId]);
+    return base;
+  }, [workProcesses, form.areaId, form.managementUnitId, form.workProcessId]);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => {
@@ -152,36 +230,44 @@ export default function AgregarTrabajadorForm() {
     return Object.keys(next).length === 0;
   };
 
+  const buildPayload = (): CreateEmployeePayload => ({
+    documentNumber: form.documentNumber.replace(/\D/g, ""),
+    firstName: form.firstName.trim(),
+    lastName: form.lastName.trim(),
+    birthDate: optional(form.birthDate),
+    genderCatalogKey: optional(form.genderCatalogKey),
+    bloodTypeCatalogKey: optional(form.bloodTypeCatalogKey),
+    maritalStatusCatalogKey: optional(form.maritalStatusCatalogKey),
+    mobilePhone: optional(form.mobilePhone),
+    email: optional(form.email),
+    fieldWork: form.fieldWork,
+    startDate: optional(form.startDate),
+    contractTypeCatalogKey: optional(form.contractTypeCatalogKey),
+    workLocation: {
+      managementUnitId: optional(form.managementUnitId),
+      areaId: optional(form.areaId),
+      workProcessId: optional(form.workProcessId),
+      jobPositionId: optional(form.jobPositionId),
+      zoneId: optional(form.zoneId),
+    },
+  });
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     if (!validate()) return;
 
-    const payload: CreateEmployeePayload = {
-      documentNumber: form.documentNumber.replace(/\D/g, ""),
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      birthDate: optional(form.birthDate),
-      genderCatalogKey: optional(form.genderCatalogKey),
-      bloodTypeCatalogKey: optional(form.bloodTypeCatalogKey),
-      maritalStatusCatalogKey: optional(form.maritalStatusCatalogKey),
-      mobilePhone: optional(form.mobilePhone),
-      email: optional(form.email),
-      fieldWork: form.fieldWork,
-      startDate: optional(form.startDate),
-      contractTypeCatalogKey: optional(form.contractTypeCatalogKey),
-      workLocation: {
-        managementUnitId: optional(form.managementUnitId),
-        areaId: optional(form.areaId),
-        workProcessId: optional(form.workProcessId),
-        jobPositionId: optional(form.jobPositionId),
-        zoneId: optional(form.zoneId),
-      },
-    };
-
+    const payload = buildPayload();
     setSubmitting(true);
     try {
-      await createEmployee(payload);
+      if (isEdit && employeeId) {
+        await updateEmployee(employeeId, {
+          ...payload,
+          isActive: form.isActive,
+        });
+      } else {
+        await createEmployee(payload);
+      }
       router.push("/dashboard/talento-humano/trabajadores");
       router.refresh();
     } catch (err) {
@@ -191,11 +277,30 @@ export default function AgregarTrabajadorForm() {
     }
   };
 
-  if (loading) {
+  if (loading || loadingEmployee) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner} />
-        <span>Cargando catálogos organizacionales...</span>
+        <span>
+          {loadingEmployee
+            ? "Cargando trabajador..."
+            : "Cargando catálogos organizacionales..."}
+        </span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.bannerError}>
+        <p>{loadError}</p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/dashboard/talento-humano/trabajadores")}
+        >
+          Volver al listado
+        </Button>
       </div>
     );
   }
@@ -254,6 +359,16 @@ export default function AgregarTrabajadorForm() {
             options={catalogOptions.marital_status}
             onChange={(v) => setField("maritalStatusCatalogKey", v)}
           />
+          {isEdit ? (
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setField("isActive", e.target.checked)}
+              />
+              Trabajador activo
+            </label>
+          ) : null}
         </div>
       </section>
 
@@ -342,7 +457,11 @@ export default function AgregarTrabajadorForm() {
           Cancelar
         </Button>
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Guardando..." : "Guardar trabajador"}
+          {submitting
+            ? "Guardando..."
+            : isEdit
+              ? "Guardar cambios"
+              : "Guardar trabajador"}
         </Button>
       </div>
     </form>

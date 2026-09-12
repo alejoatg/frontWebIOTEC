@@ -88,6 +88,10 @@
   background: #fef2f2;
   color: $color-error;
   font-size: $font-size-sm;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  align-items: flex-start;
 }
 
 .loading {

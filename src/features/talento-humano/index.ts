@@ -6,10 +6,12 @@ export { useEmployees } from "./hooks/useEmployees";
 export { useHrOrg } from "./hooks/useHrOrg";
 export type {
   EmployeeListItem,
+  EmployeeDetail,
   JobPositionItem,
   AreaItem,
   ZoneItem,
   WorkProcessItem,
   ManagementUnitItem,
   CreateEmployeePayload,
+  UpdateEmployeePayload,
 } from "./types";

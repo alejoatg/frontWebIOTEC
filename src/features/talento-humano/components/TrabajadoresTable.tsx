@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import type { EmployeeListItem } from "../types";
 import styles from "./tables.module.scss";
 
@@ -19,8 +21,10 @@ export default function TrabajadoresTable({ employees }: { employees: EmployeeLi
             <th>Cédula</th>
             <th>Cargo</th>
             <th>Área</th>
+            <th>Proceso</th>
             <th>Zona</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -33,6 +37,7 @@ export default function TrabajadoresTable({ employees }: { employees: EmployeeLi
               <td className={styles.doc}>{emp.documentNumber}</td>
               <td>{emp.jobPosition ?? "—"}</td>
               <td>{emp.area ?? "—"}</td>
+              <td>{emp.workProcess ?? "—"}</td>
               <td>{emp.zone ?? "—"}</td>
               <td>
                 <span
@@ -40,6 +45,16 @@ export default function TrabajadoresTable({ employees }: { employees: EmployeeLi
                 >
                   {emp.isActive ? "Activo" : "Inactivo"}
                 </span>
+              </td>
+              <td>
+                <Link
+                  href={`/dashboard/talento-humano/trabajadores/${emp.id}/editar`}
+                  className={styles.actionLink}
+                  title="Editar trabajador"
+                >
+                  <Pencil size={16} />
+                  Editar
+                </Link>
               </td>
             </tr>
           ))}

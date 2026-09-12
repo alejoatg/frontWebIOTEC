@@ -2,9 +2,11 @@ import { API_URL } from "@/lib/api";
 import type {
   AreaItem,
   CreateEmployeePayload,
+  EmployeeDetail,
   EmployeeListItem,
   JobPositionItem,
   ManagementUnitItem,
+  UpdateEmployeePayload,
   WorkProcessItem,
   ZoneItem,
 } from "../types";
@@ -46,6 +48,10 @@ export function fetchEmployees(options?: {
   return fetchJson(`/api/employees${qs ? `?${qs}` : ""}`);
 }
 
+export function fetchEmployee(id: string): Promise<EmployeeDetail> {
+  return fetchJson(`/api/employees/${id}`);
+}
+
 export async function createEmployee(
   data: CreateEmployeePayload,
 ): Promise<EmployeeListItem & Record<string, unknown>> {
@@ -57,6 +63,22 @@ export async function createEmployee(
   });
   if (!response.ok) {
     await parseError(response, "Error al crear el trabajador");
+  }
+  return response.json();
+}
+
+export async function updateEmployee(
+  id: string,
+  data: UpdateEmployeePayload,
+): Promise<EmployeeDetail> {
+  const response = await fetch(`${API_URL}/api/employees/${id}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    await parseError(response, "Error al actualizar el trabajador");
   }
   return response.json();
 }

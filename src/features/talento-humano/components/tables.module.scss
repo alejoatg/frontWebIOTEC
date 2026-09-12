@@ -109,3 +109,18 @@
   gap: $spacing-3;
   min-width: 0;
 }
+
+.actionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: $color-primary-600;
+  text-decoration: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

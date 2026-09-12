@@ -13,6 +13,43 @@ export type EmployeeListItem = {
   area: string | null;
   zone: string | null;
   managementUnit: string | null;
+  workProcess: string | null;
+};
+
+export type EmployeeOrgRef = {
+  id: string;
+  name: string;
+};
+
+export type EmployeeDetail = {
+  id: string;
+  documentNumber: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  birthDate: string | null;
+  genderCatalogKey: string | null;
+  bloodTypeCatalogKey: string | null;
+  maritalStatusCatalogKey: string | null;
+  mobilePhone: string | null;
+  email: string | null;
+  fieldWork: boolean | null;
+  isActive: boolean;
+  userId: string | null;
+  currentWorkLocation: {
+    id: string;
+    startDate: string | null;
+    managementUnit: EmployeeOrgRef | null;
+    area: EmployeeOrgRef | null;
+    workProcess: EmployeeOrgRef | null;
+    jobPosition: EmployeeOrgRef | null;
+    zone: EmployeeOrgRef | null;
+  } | null;
+  currentContract: {
+    id: string;
+    contractTypeCatalogKey: string | null;
+    startDate: string | null;
+  } | null;
 };
 
 export type JobPositionItem = {
@@ -86,4 +123,9 @@ export type CreateEmployeePayload = {
     jobPositionId?: string;
     zoneId?: string;
   };
+};
+
+export type UpdateEmployeePayload = Omit<CreateEmployeePayload, "documentNumber"> & {
+  documentNumber?: string;
+  isActive?: boolean;
 };

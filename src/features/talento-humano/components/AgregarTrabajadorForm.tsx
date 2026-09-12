@@ -171,22 +171,46 @@ export default function AgregarTrabajadorForm({ employeeId }: Props) {
     };
   }, [employeeId]);
 
+  /**
+   * Cascada suave: si UEN/área están vinculados en catálogo, prioriza coincidencias,
+   * pero siempre incluye ítems sin vínculo (la mayoría del seed no tiene UEN/área).
+   * Antes el filtro estricto dejaba Área y Proceso vacíos al elegir UEN.
+   */
   const filteredAreas = useMemo(() => {
     if (!form.managementUnitId) return areas;
-    return areas.filter((a) => a.managementUnit?.id === form.managementUnitId);
+    const linked = areas.filter(
+      (a) => a.managementUnit?.id === form.managementUnitId,
+    );
+    const unlinked = areas.filter((a) => !a.managementUnit);
+    // Si hay áreas ligadas a la UEN, muestra esas + sin UEN; si no, todas.
+    if (linked.length === 0) return areas;
+    const seen = new Set(linked.map((a) => a.id));
+    return [...linked, ...unlinked.filter((a) => !seen.has(a.id))];
   }, [areas, form.managementUnitId]);
 
   const filteredProcesses = useMemo(() => {
-    // En edición, si el proceso actual no filtra por área, igual lo mostramos.
-    const base = (() => {
-      if (!form.areaId) {
-        if (!form.managementUnitId) return workProcesses;
-        return workProcesses.filter(
-          (p) => p.area?.managementUnit?.id === form.managementUnitId,
-        );
-      }
-      return workProcesses.filter((p) => p.area?.id === form.areaId);
-    })();
+    const byArea = form.areaId
+      ? workProcesses.filter((p) => !p.area || p.area.id === form.areaId)
+      : null;
+    const byUen = form.managementUnitId
+      ? workProcesses.filter(
+          (p) =>
+            !p.area ||
+            !p.area.managementUnit ||
+            p.area.managementUnit.id === form.managementUnitId,
+        )
+      : null;
+
+    let base = workProcesses;
+    if (byArea) {
+      const linkedToArea = byArea.filter((p) => p.area?.id === form.areaId);
+      base = linkedToArea.length > 0 ? byArea : workProcesses;
+    } else if (byUen) {
+      const linkedToUen = byUen.filter(
+        (p) => p.area?.managementUnit?.id === form.managementUnitId,
+      );
+      base = linkedToUen.length > 0 ? byUen : workProcesses;
+    }
 
     if (
       form.workProcessId &&

@@ -15,6 +15,12 @@ export const DASHBOARD_NAV_ITEMS = [
     icon: "IdCard",
     roles: ["TALENTO_HUMANO", "ADMIN", "CORDINADOR"],
   },
+  {
+    path: "/dashboard/exclusiones-distribucion",
+    label: "Exclusiones Distribución",
+    icon: "Zap",
+    roles: ["ADMIN"],
+  },
   { path: "/dashboard/users", label: "Usuarios", icon: "Users" },
 ] as const;
 

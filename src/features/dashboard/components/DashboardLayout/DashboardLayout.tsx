@@ -15,6 +15,7 @@ import {
   BookOpen,
   Clock,
   IdCard,
+  Zap,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
@@ -35,6 +36,7 @@ const ICON_MAP = {
   BookOpen,
   Clock,
   IdCard,
+  Zap,
 } as const;
 
 export interface DashboardLayoutProps {

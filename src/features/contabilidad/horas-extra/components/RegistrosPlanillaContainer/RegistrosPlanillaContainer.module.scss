@@ -1,10 +1,26 @@
+.topScroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 14px;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: #f8fafc;
+}
+
+.topScrollSpacer {
+  height: 1px;
+  pointer-events: none;
+}
+
 .spreadsheetWrapper {
   overflow: auto;
   height: 800px;
   min-height: 800px;
   max-height: 800px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
 }
 
 .spreadsheet {
@@ -38,6 +54,88 @@
 
 .spreadsheet tbody tr:hover td {
   background: #f8fafc;
+}
+
+.headerStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+  white-space: normal;
+}
+
+.spreadsheet th.narrowDate,
+.spreadsheet td.narrowDate {
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+}
+
+.spreadsheet th.narrowQty,
+.spreadsheet td.narrowQty {
+  width: 4.15rem;
+  min-width: 4.15rem;
+  max-width: 4.15rem;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.cellStack > span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spreadsheet th.stackPerson,
+.spreadsheet td.stackPerson,
+.spreadsheet th.stackSchedule,
+.spreadsheet td.stackSchedule,
+.spreadsheet th.stackHours,
+.spreadsheet td.stackHours,
+.spreadsheet th.stackOrg,
+.spreadsheet td.stackOrg {
+  overflow: hidden;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.spreadsheet th.stackPerson,
+.spreadsheet td.stackPerson {
+  width: 11rem;
+  min-width: 9rem;
+  max-width: 11rem;
+}
+
+.spreadsheet th.stackSchedule,
+.spreadsheet td.stackSchedule {
+  width: 7.25rem;
+  min-width: 7.25rem;
+  max-width: 7.25rem;
+}
+
+.spreadsheet th.stackHours,
+.spreadsheet td.stackHours {
+  width: 5.6rem;
+  min-width: 5.6rem;
+  max-width: 6.5rem;
+}
+
+.spreadsheet th.stackOrg,
+.spreadsheet td.stackOrg {
+  width: 9rem;
+  min-width: 7.5rem;
+  max-width: 9rem;
 }
 
 .numCell {

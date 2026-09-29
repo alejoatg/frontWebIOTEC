@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -12,7 +12,11 @@ import {
   type OvertimeBatch,
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
-import { MONEY_FIELD_IDS, SPREADSHEET_COLUMNS } from "../../lib/entrySpreadsheet";
+import {
+  MONEY_FIELD_IDS,
+  SPREADSHEET_COLUMNS,
+  type SpreadsheetColumn,
+} from "../../lib/entrySpreadsheet";
 import {
   OVERTIME_STATUS_OPTIONS,
   overtimeStatusLabel,
@@ -41,6 +45,18 @@ const EMPTY_FILTERS: Filters = {
   fileName: "",
   zoneName: "",
 };
+
+function columnClass(col: SpreadsheetColumn, extra?: string) {
+  const parts = [extra];
+  if (col.narrow === "date") parts.push(styles.narrowDate);
+  if (col.narrow === "qty") parts.push(styles.narrowQty);
+  if (col.narrow === "person") parts.push(styles.stackPerson);
+  if (col.narrow === "schedule") parts.push(styles.stackSchedule);
+  if (col.narrow === "hours") parts.push(styles.stackHours);
+  if (col.narrow === "org") parts.push(styles.stackOrg);
+  if (col.align === "right") parts.push(styles.numCell);
+  return parts.filter(Boolean).join(" ") || undefined;
+}
 
 function statusClass(status: string) {
   switch (status) {
@@ -83,6 +99,10 @@ export default function RegistrosPlanillaContainer() {
   const [correctId, setCorrectId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState("");
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const topSpacerRef = useRef<HTMLDivElement>(null);
+  const gridWrapRef = useRef<HTMLDivElement>(null);
+  const syncingScroll = useRef(false);
 
   const loadBatches = useCallback(async () => {
     try {
@@ -127,6 +147,45 @@ export default function RegistrosPlanillaContainer() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const syncTopSpacerWidth = useCallback(() => {
+    const wrap = gridWrapRef.current;
+    const spacer = topSpacerRef.current;
+    if (!wrap || !spacer) return;
+    const table = wrap.querySelector("table");
+    spacer.style.width = `${table?.scrollWidth ?? wrap.scrollWidth}px`;
+  }, []);
+
+  useEffect(() => {
+    syncTopSpacerWidth();
+    const wrap = gridWrapRef.current;
+    if (!wrap) return;
+    const ro = new ResizeObserver(() => syncTopSpacerWidth());
+    ro.observe(wrap);
+    const table = wrap.querySelector("table");
+    if (table) ro.observe(table);
+    return () => ro.disconnect();
+  }, [items, columns, syncTopSpacerWidth]);
+
+  function handleTopScroll() {
+    if (syncingScroll.current) return;
+    const top = topScrollRef.current;
+    const wrap = gridWrapRef.current;
+    if (!top || !wrap) return;
+    syncingScroll.current = true;
+    wrap.scrollLeft = top.scrollLeft;
+    syncingScroll.current = false;
+  }
+
+  function handleGridScroll() {
+    if (syncingScroll.current) return;
+    const top = topScrollRef.current;
+    const wrap = gridWrapRef.current;
+    if (!top || !wrap) return;
+    syncingScroll.current = true;
+    top.scrollLeft = wrap.scrollLeft;
+    syncingScroll.current = false;
+  }
 
   function applyFilters() {
     setAppliedFilters(filters);
@@ -295,13 +354,33 @@ export default function RegistrosPlanillaContainer() {
 
       {!loading && !error && (
         <>
-          <div className={styles.spreadsheetWrapper}>
+          <div
+            className={styles.topScroll}
+            ref={topScrollRef}
+            onScroll={handleTopScroll}
+            aria-hidden="true"
+          >
+            <div className={styles.topScrollSpacer} ref={topSpacerRef} />
+          </div>
+          <div
+            className={styles.spreadsheetWrapper}
+            ref={gridWrapRef}
+            onScroll={handleGridScroll}
+          >
             <table className={styles.spreadsheet}>
               <thead>
                 <tr>
                   {columns.map((col) => (
-                    <th key={col.id} title={col.header}>
-                      {col.header}
+                    <th key={col.id} title={col.header} className={columnClass(col)}>
+                      {col.headerLines ? (
+                        <span className={styles.headerStack}>
+                          {col.headerLines.map((line) => (
+                            <span key={line}>{line}</span>
+                          ))}
+                        </span>
+                      ) : (
+                        col.header
+                      )}
                     </th>
                   ))}
                   <th className={styles.stickyActions}>Acciones</th>
@@ -316,11 +395,18 @@ export default function RegistrosPlanillaContainer() {
                   items.map((entry) => (
                     <tr key={entry.id}>
                       {columns.map((col) => {
+                        const lines = col.getLines?.(entry);
                         const raw = col.getValue(entry);
                         const display =
                           col.id === "status" ? (
                             <span className={`${shared.badge} ${statusClass(entry.status)}`}>
                               {overtimeStatusLabel(entry.status)}
+                            </span>
+                          ) : lines ? (
+                            <span className={styles.cellStack}>
+                              {lines.map((line, index) => (
+                                <span key={`${col.id}-${index}`}>{line}</span>
+                              ))}
                             </span>
                           ) : (
                             (raw ?? "")
@@ -328,7 +414,7 @@ export default function RegistrosPlanillaContainer() {
                         return (
                           <td
                             key={col.id}
-                            className={col.align === "right" ? styles.numCell : undefined}
+                            className={columnClass(col)}
                             title={typeof raw === "string" ? raw : undefined}
                           >
                             {display}

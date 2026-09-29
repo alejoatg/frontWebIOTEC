@@ -6,7 +6,13 @@ import { formatClockTime } from "./timeFormat";
 export interface SpreadsheetColumn {
   id: string;
   header: string;
+  /** Encabezado en varias líneas para estrechar columnas de contenido corto. */
+  headerLines?: string[];
+  /** Ancho fijo acorde al contenido. */
+  narrow?: "date" | "qty" | "person" | "schedule" | "hours" | "org";
   getValue: (entry: OvertimeEntryRow) => string | number | null | undefined;
+  /** Contenido en varios renglones. Si existe, la celda lo muestra en lugar del texto plano. */
+  getLines?: (entry: OvertimeEntryRow) => string[];
   align?: "left" | "right";
 }
 
@@ -47,28 +53,97 @@ function date(v: string | null | undefined): string {
   return formatDateOnly(v);
 }
 
-/** Columnas alineadas con la hoja `Carga TS` del Excel. */
+function isNonZero(v: unknown): boolean {
+  const n = Number(v);
+  return Number.isFinite(n) && n !== 0;
+}
+
+function personLines(e: OvertimeEntryRow): string[] {
+  return [e.employeeDocumentNumber || "—", e.employeeFullName || "—"];
+}
+
+function scheduleLines(e: OvertimeEntryRow): string[] {
+  return [
+    `Inicio ${formatClockTime(e.startTime) || "—"}`,
+    `Final ${formatClockTime(e.endTime) || "—"}`,
+    `Total ${num(e.hoursStartEndTotal) || "—"}`,
+  ];
+}
+
+function orgLines(e: OvertimeEntryRow): string[] {
+  return [e.processName || "—", e.zoneName || "—"];
+}
+
+/** Solo categorías con horas distintas de cero, un renglón por cada una. */
+function categoryHourLines(e: OvertimeEntryRow): string[] {
+  const pairs: Array<[string, unknown]> = [
+    ["RD", e.hoursRd],
+    ["RN", e.hoursRn],
+    ["TSD", e.hoursTsd],
+    ["TSN", e.hoursTsn],
+    ["HEDD", e.hoursHedd],
+    ["HEND", e.hoursHend],
+    ["Disp.", e.hoursDisponibilidad],
+  ];
+  const lines = pairs.filter(([, v]) => isNonZero(v)).map(([label, v]) => `${label}: ${num(v)}`);
+  return lines.length > 0 ? lines : ["—"];
+}
+
+/** Columnas de la vista planilla (contabilidad). */
 export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "entryCode", header: "CÓDIGO", getValue: (e) => e.entryCode },
-  { id: "excelRowNumber", header: "FILA EXCEL", getValue: (e) => e.excelRowNumber ?? "" },
-  { id: "workDate", header: "FECHA (DIA/MES/AÑO)", getValue: (e) => date(e.workDate) },
-  { id: "employeeDocumentNumber", header: "CEDULA", getValue: (e) => e.employeeDocumentNumber },
-  { id: "employeeFullName", header: "NOMBRES", getValue: (e) => e.employeeFullName },
-  { id: "jobPositionName", header: "CARGO", getValue: (e) => e.jobPositionName ?? "" },
-  { id: "processName", header: "PROCESO", getValue: (e) => e.processName ?? "" },
-  { id: "zoneName", header: "ZONA", getValue: (e) => e.zoneName ?? "" },
-  { id: "startTime", header: "HORA INICIO TS", getValue: (e) => formatClockTime(e.startTime) },
-  { id: "endTime", header: "HORA FINAL TS", getValue: (e) => formatClockTime(e.endTime) },
-  { id: "hoursStartEndTotal", header: "Total Horas Inicio-Final TS", getValue: (e) => num(e.hoursStartEndTotal), align: "right" },
-  { id: "hoursRd", header: "RD", getValue: (e) => num(e.hoursRd), align: "right" },
-  { id: "hoursRn", header: "RN", getValue: (e) => num(e.hoursRn), align: "right" },
-  { id: "hoursTsd", header: "TSD", getValue: (e) => num(e.hoursTsd), align: "right" },
-  { id: "hoursTsn", header: "TSN", getValue: (e) => num(e.hoursTsn), align: "right" },
-  { id: "hoursHedd", header: "HEDD", getValue: (e) => num(e.hoursHedd), align: "right" },
-  { id: "hoursHend", header: "HEND", getValue: (e) => num(e.hoursHend), align: "right" },
-  { id: "hoursDisponibilidad", header: "DISPONIBILIDAD", getValue: (e) => num(e.hoursDisponibilidad), align: "right" },
-  { id: "hoursCategoriesTotal", header: "TOTAL DE HORAS", getValue: (e) => num(e.hoursCategoriesTotal), align: "right" },
-  { id: "hoursValidatorDelta", header: "VALIDADOR", getValue: (e) => num(e.hoursValidatorDelta), align: "right" },
+  {
+    id: "workDate",
+    header: "FECHA",
+    narrow: "date",
+    getValue: (e) => date(e.workDate),
+  },
+  {
+    id: "employee",
+    header: "Cédula y nombre",
+    headerLines: ["Cédula", "Nombre"],
+    narrow: "person",
+    getLines: personLines,
+    getValue: (e) => personLines(e).join("\n"),
+  },
+  {
+    id: "schedule",
+    header: "Horario",
+    narrow: "schedule",
+    getLines: scheduleLines,
+    getValue: (e) => scheduleLines(e).join("\n"),
+  },
+  {
+    id: "categoryHours",
+    header: "Horas con valor",
+    narrow: "hours",
+    getLines: categoryHourLines,
+    getValue: (e) => categoryHourLines(e).join("\n"),
+  },
+  {
+    id: "hoursCategoriesTotal",
+    header: "TOTAL DE HORAS",
+    headerLines: ["Total de", "horas"],
+    narrow: "qty",
+    getValue: (e) => num(e.hoursCategoriesTotal),
+    align: "right",
+  },
+  {
+    id: "hoursValidatorDelta",
+    header: "VALIDADOR",
+    headerLines: ["Valida-", "dor"],
+    narrow: "qty",
+    getValue: (e) => num(e.hoursValidatorDelta),
+    align: "right",
+  },
+  {
+    id: "processZone",
+    header: "Proceso y zona",
+    headerLines: ["Proceso", "Zona"],
+    narrow: "org",
+    getLines: orgLines,
+    getValue: (e) => orgLines(e).join("\n"),
+  },
   { id: "salarySnapshot", header: "COMPENSACION", getValue: (e) => money(e.salarySnapshot), align: "right" },
   { id: "amountRd", header: "RD $", getValue: (e) => money(e.amountRd), align: "right" },
   { id: "amountRn", header: "RN $", getValue: (e) => money(e.amountRn), align: "right" },
@@ -91,11 +166,13 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "ticketRef", header: "TICKET", getValue: (e) => e.ticketRef ?? "" },
   { id: "consigna", header: "CONSIGNA", getValue: (e) => e.consigna ?? "" },
   { id: "attachmentRef", header: "ARCHIVO", getValue: (e) => e.attachmentRef ?? "" },
+  { id: "jobPositionName", header: "CARGO", getValue: (e) => e.jobPositionName ?? "" },
   { id: "status", header: "ESTADO", getValue: (e) => overtimeStatusLabel(e.status) },
   { id: "operationalNote", header: "OBSERVACION OPERATIVA", getValue: (e) => e.operationalNote ?? "" },
   { id: "accountingNote", header: "OBSERVACION CONTABILIDAD", getValue: (e) => e.accountingNote ?? "" },
   { id: "genderSnapshot", header: "GENERO", getValue: (e) => e.genderSnapshot ?? "" },
   { id: "importBatch", header: "PLANILLA", getValue: (e) => e.importBatch?.batchCode ?? "" },
+  { id: "excelRowNumber", header: "FILA EXCEL", getValue: (e) => e.excelRowNumber ?? "" },
 ];
 
 export interface DetailField {

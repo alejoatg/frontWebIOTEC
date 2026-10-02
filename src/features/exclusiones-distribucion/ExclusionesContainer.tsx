@@ -312,7 +312,7 @@ export default function ExclusionesContainer() {
         <>
           <p className={styles.hint}>
             Suba el CONSOLIDADO en <strong>.xlsx</strong>. El flujo usa solo filas con{" "}
-            <strong>entregado = 0</strong> del contratista elegido. La firma va en la celda del contratista.
+            <strong>Entregado a Mto = 0</strong> del contratista elegido. La firma va en la celda del contratista.
           </p>
           <div className={styles.row}>
             <div className={styles.field}>
@@ -355,7 +355,7 @@ export default function ExclusionesContainer() {
                   <strong>{preview.totalRows}</strong>Filas
                 </div>
                 <div className={styles.stat}>
-                  <strong>{preview.pendientes}</strong>Casos con entregado = 0
+                  <strong>{preview.pendientes}</strong>Casos con Entregado a Mto = 0
                 </div>
                 <div className={styles.stat}>
                   <strong>{preview.contratistas.length}</strong>Contratistas
@@ -550,7 +550,7 @@ export default function ExclusionesContainer() {
         <>
           <p className={styles.hint}>
             {restantes.length} casos siguen pendientes, incluidos los de orden público que no se agruparon. Cada
-            continuación sale en un Excel. Al final, el consolidado marca entregado = 1 solo en los casos ya generados.
+            continuación sale en un Excel. Al final, el consolidado marca Entregado a Mto = 1 solo en los casos ya generados.
           </p>
           <div className={styles.stats}>
             <div className={styles.stat}>

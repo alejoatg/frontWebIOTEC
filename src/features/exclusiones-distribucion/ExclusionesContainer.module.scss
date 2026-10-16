@@ -11,6 +11,38 @@
   line-height: 1.45;
 }
 
+.dupesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.dupes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dupes li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+}
+
+.dupes strong {
+  font-variant-numeric: tabular-nums;
+}
+
 .row {
   display: flex;
   flex-wrap: wrap;

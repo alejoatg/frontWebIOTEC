@@ -271,6 +271,12 @@ export default function ExclusionesContainer() {
   }
 
   const contratista = preview?.contratistas.find((item) => item.nombre === responsable);
+  const repetidos = useMemo(() => {
+    if (!preview || responsable === null) return [];
+    return preview.casos
+      .filter((item) => item.responsable === responsable && item.filas > 1)
+      .sort((a, b) => b.filas - a.filas || a.caso.localeCompare(b.caso, "es"));
+  }, [preview, responsable]);
 
   return (
     <div className={styles.wrap}>
@@ -355,7 +361,10 @@ export default function ExclusionesContainer() {
                   <strong>{preview.totalRows}</strong>Filas
                 </div>
                 <div className={styles.stat}>
-                  <strong>{preview.pendientes}</strong>Casos con Entregado a Mto = 0
+                  <strong>{preview.filasPendientes}</strong>Filas con Entregado a Mto = 0
+                </div>
+                <div className={styles.stat}>
+                  <strong>{preview.pendientes}</strong>Casos distintos
                 </div>
                 <div className={styles.stat}>
                   <strong>{preview.contratistas.length}</strong>Contratistas
@@ -378,7 +387,9 @@ export default function ExclusionesContainer() {
                   {preview.contratistas.map((item) => (
                     <option key={item.nombre || "vacio"} value={item.nombre}>
                       {(item.nombre || "(Sin contratista)") +
-                        ` · ${item.pendientes} pendientes · ${item.ordenPublico} orden público`}
+                        ` · ${item.filas} filas · ${item.pendientes} casos` +
+                        (item.duplicados > 0 ? ` · ${item.duplicados} repetidos` : "") +
+                        ` · ${item.ordenPublico} orden público`}
                     </option>
                   ))}
                 </select>
@@ -405,10 +416,31 @@ export default function ExclusionesContainer() {
                 </Button>
               </div>
               {contratista ? (
-                <p className={styles.hint}>
-                  {contratista.ordenPublico} casos de orden público y {contratista.pendientes - contratista.ordenPublico}{" "}
-                  del resto.
-                </p>
+                <div className={styles.dupesBlock}>
+                  <p className={styles.hint}>
+                    {contratista.filas} filas con Entregado a Mto = 0. Son {contratista.pendientes} casos:{" "}
+                    {contratista.ordenPublico} de orden público y {contratista.pendientes - contratista.ordenPublico} del
+                    resto.
+                  </p>
+                  {repetidos.length > 0 ? (
+                    <>
+                      <p className={styles.hint}>
+                        {repetidos.length === 1
+                          ? "1 caso se repite en varias filas, con el mismo número en distintos circuitos. Esos circuitos salen juntos en un solo informe."
+                          : `${repetidos.length} casos se repiten en varias filas, con el mismo número en distintos circuitos. Cada uno sale en un solo informe, con todos sus circuitos.`}
+                      </p>
+                      <ul className={styles.dupes}>
+                        {repetidos.map((item) => (
+                          <li key={item.caso}>
+                            <strong>{item.caso}</strong>
+                            <span>{item.filas} filas</span>
+                            <span>{item.circuitos.filter(Boolean).join(", ")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+                </div>
               ) : null}
             </>
           ) : null}

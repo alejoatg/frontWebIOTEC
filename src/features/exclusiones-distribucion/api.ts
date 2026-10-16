@@ -14,16 +14,20 @@ export interface WorkflowCase {
   fechaFin: string | null;
   asociados: string[];
   veredas: string[];
+  filas: number;
 }
 
 export interface WorkflowContratista {
   nombre: string;
+  filas: number;
   pendientes: number;
+  duplicados: number;
   ordenPublico: number;
 }
 
 export interface WorkflowPreview {
   totalRows: number;
+  filasPendientes: number;
   pendientes: number;
   contratistas: WorkflowContratista[];
   casos: WorkflowCase[];

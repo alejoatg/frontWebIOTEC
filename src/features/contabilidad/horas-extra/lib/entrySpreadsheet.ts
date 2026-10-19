@@ -9,7 +9,7 @@ export interface SpreadsheetColumn {
   /** Encabezado en varias líneas para estrechar columnas de contenido corto. */
   headerLines?: string[];
   /** Ancho fijo acorde al contenido. */
-  narrow?: "date" | "qty" | "person" | "schedule" | "hours" | "org";
+  narrow?: "date" | "qty" | "person" | "schedule" | "org";
   getValue: (entry: OvertimeEntryRow) => string | number | null | undefined;
   /** Contenido en varios renglones. Si existe, la celda lo muestra en lugar del texto plano. */
   getLines?: (entry: OvertimeEntryRow) => string[];
@@ -53,11 +53,6 @@ function date(v: string | null | undefined): string {
   return formatDateOnly(v);
 }
 
-function isNonZero(v: unknown): boolean {
-  const n = Number(v);
-  return Number.isFinite(n) && n !== 0;
-}
-
 function personLines(e: OvertimeEntryRow): string[] {
   return [e.employeeDocumentNumber || "—", e.employeeFullName || "—"];
 }
@@ -74,24 +69,8 @@ function orgLines(e: OvertimeEntryRow): string[] {
   return [e.processName || "—", e.zoneName || "—"];
 }
 
-/** Solo categorías con horas distintas de cero, un renglón por cada una. */
-function categoryHourLines(e: OvertimeEntryRow): string[] {
-  const pairs: Array<[string, unknown]> = [
-    ["RD", e.hoursRd],
-    ["RN", e.hoursRn],
-    ["TSD", e.hoursTsd],
-    ["TSN", e.hoursTsn],
-    ["HEDD", e.hoursHedd],
-    ["HEND", e.hoursHend],
-    ["Disp.", e.hoursDisponibilidad],
-  ];
-  const lines = pairs.filter(([, v]) => isNonZero(v)).map(([label, v]) => `${label}: ${num(v)}`);
-  return lines.length > 0 ? lines : ["—"];
-}
-
 /** Columnas de la vista planilla (contabilidad). */
 export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
-  { id: "entryCode", header: "CÓDIGO", getValue: (e) => e.entryCode },
   {
     id: "workDate",
     header: "FECHA",
@@ -106,6 +85,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
     getLines: personLines,
     getValue: (e) => personLines(e).join("\n"),
   },
+  { id: "attachmentRef", header: "ARCHIVO", getValue: (e) => e.attachmentRef ?? "" },
   {
     id: "schedule",
     header: "Horario",
@@ -113,12 +93,19 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
     getLines: scheduleLines,
     getValue: (e) => scheduleLines(e).join("\n"),
   },
+  { id: "hoursRd", header: "RD", narrow: "qty", getValue: (e) => num(e.hoursRd), align: "right" },
+  { id: "hoursRn", header: "RN", narrow: "qty", getValue: (e) => num(e.hoursRn), align: "right" },
+  { id: "hoursTsd", header: "TSD", narrow: "qty", getValue: (e) => num(e.hoursTsd), align: "right" },
+  { id: "hoursTsn", header: "TSN", narrow: "qty", getValue: (e) => num(e.hoursTsn), align: "right" },
+  { id: "hoursHedd", header: "HEDD", narrow: "qty", getValue: (e) => num(e.hoursHedd), align: "right" },
+  { id: "hoursHend", header: "HEND", narrow: "qty", getValue: (e) => num(e.hoursHend), align: "right" },
   {
-    id: "categoryHours",
-    header: "Horas con valor",
-    narrow: "hours",
-    getLines: categoryHourLines,
-    getValue: (e) => categoryHourLines(e).join("\n"),
+    id: "hoursDisponibilidad",
+    header: "DISPONIBILIDAD",
+    headerLines: ["Disponi-", "bilidad"],
+    narrow: "qty",
+    getValue: (e) => num(e.hoursDisponibilidad),
+    align: "right",
   },
   {
     id: "hoursCategoriesTotal",
@@ -145,13 +132,6 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
     getValue: (e) => orgLines(e).join("\n"),
   },
   { id: "salarySnapshot", header: "COMPENSACION", getValue: (e) => money(e.salarySnapshot), align: "right" },
-  { id: "amountRd", header: "RD $", getValue: (e) => money(e.amountRd), align: "right" },
-  { id: "amountRn", header: "RN $", getValue: (e) => money(e.amountRn), align: "right" },
-  { id: "amountTsd", header: "TSD $", getValue: (e) => money(e.amountTsd), align: "right" },
-  { id: "amountTsn", header: "TSN $", getValue: (e) => money(e.amountTsn), align: "right" },
-  { id: "amountHedd", header: "HEDD $", getValue: (e) => money(e.amountHedd), align: "right" },
-  { id: "amountHend", header: "HEND $", getValue: (e) => money(e.amountHend), align: "right" },
-  { id: "amountDisponibilidad", header: "DISPONIBILIDAD $", getValue: (e) => money(e.amountDisponibilidad), align: "right" },
   { id: "amountSubtotal", header: "SUBTOTAL", getValue: (e) => money(e.amountSubtotal), align: "right" },
   { id: "payrollFactorSnapshot", header: "FACTOR", getValue: (e) => num(e.payrollFactorSnapshot), align: "right" },
   { id: "amountTotal", header: "TOTAL", getValue: (e) => money(e.amountTotal), align: "right" },
@@ -165,7 +145,6 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "workRef", header: "TRABAJO", getValue: (e) => e.workRef ?? "" },
   { id: "ticketRef", header: "TICKET", getValue: (e) => e.ticketRef ?? "" },
   { id: "consigna", header: "CONSIGNA", getValue: (e) => e.consigna ?? "" },
-  { id: "attachmentRef", header: "ARCHIVO", getValue: (e) => e.attachmentRef ?? "" },
   { id: "jobPositionName", header: "CARGO", getValue: (e) => e.jobPositionName ?? "" },
   { id: "status", header: "ESTADO", getValue: (e) => overtimeStatusLabel(e.status) },
   { id: "operationalNote", header: "OBSERVACION OPERATIVA", getValue: (e) => e.operationalNote ?? "" },
@@ -173,6 +152,7 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "genderSnapshot", header: "GENERO", getValue: (e) => e.genderSnapshot ?? "" },
   { id: "importBatch", header: "PLANILLA", getValue: (e) => e.importBatch?.batchCode ?? "" },
   { id: "excelRowNumber", header: "FILA EXCEL", getValue: (e) => e.excelRowNumber ?? "" },
+  { id: "entryCode", header: "CÓDIGO", getValue: (e) => e.entryCode },
 ];
 
 export interface DetailField {

@@ -52,7 +52,6 @@ function columnClass(col: SpreadsheetColumn, extra?: string) {
   if (col.narrow === "qty") parts.push(styles.narrowQty);
   if (col.narrow === "person") parts.push(styles.stackPerson);
   if (col.narrow === "schedule") parts.push(styles.stackSchedule);
-  if (col.narrow === "hours") parts.push(styles.stackHours);
   if (col.narrow === "org") parts.push(styles.stackOrg);
   if (col.align === "right") parts.push(styles.numCell);
   return parts.filter(Boolean).join(" ") || undefined;

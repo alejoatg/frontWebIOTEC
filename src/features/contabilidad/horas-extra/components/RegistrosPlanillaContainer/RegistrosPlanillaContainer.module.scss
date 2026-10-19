@@ -101,8 +101,6 @@
 .spreadsheet td.stackPerson,
 .spreadsheet th.stackSchedule,
 .spreadsheet td.stackSchedule,
-.spreadsheet th.stackHours,
-.spreadsheet td.stackHours,
 .spreadsheet th.stackOrg,
 .spreadsheet td.stackOrg {
   overflow: hidden;
@@ -122,13 +120,6 @@
   width: 7.25rem;
   min-width: 7.25rem;
   max-width: 7.25rem;
-}
-
-.spreadsheet th.stackHours,
-.spreadsheet td.stackHours {
-  width: 5.6rem;
-  min-width: 5.6rem;
-  max-width: 6.5rem;
 }
 
 .spreadsheet th.stackOrg,

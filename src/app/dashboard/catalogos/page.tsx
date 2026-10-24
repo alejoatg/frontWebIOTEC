@@ -2,14 +2,17 @@
 
 import { Card } from "@/components";
 import { CatalogsListContainer } from "@/features/catalogs";
+import AdminOnly from "@/features/dashboard/components/AdminOnly/AdminOnly";
 import styles from "./page.module.scss";
 
 export default function CatalogosPage() {
   return (
-    <div className={styles.page}>
-      <Card title="Catálogos del sistema">
-        <CatalogsListContainer />
-      </Card>
-    </div>
+    <AdminOnly title="Catálogos del sistema">
+      <div className={styles.page}>
+        <Card title="Catálogos del sistema">
+          <CatalogsListContainer />
+        </Card>
+      </div>
+    </AdminOnly>
   );
 }

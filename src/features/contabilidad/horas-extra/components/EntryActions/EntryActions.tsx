@@ -67,7 +67,6 @@ export default function EntryActions({
   const canCorrect = canReview && (status === "PENDING" || status === "APPROVED");
 
   async function handleApprove() {
-    if (!approveNote.trim()) return;
     try {
       await approveEntry(entryId, approveNote.trim());
       setApproveOpen(false);
@@ -171,21 +170,16 @@ export default function EntryActions({
 
       {approveOpen && (
         <div className={styles.alert} style={{ marginTop: "1rem" }}>
-          <p>Justificación de la aprobación (obligatoria):</p>
+          <p>Justificación de la aprobación (opcional):</p>
           <textarea
             value={approveNote}
             onChange={(ev) => setApproveNote(ev.target.value)}
             rows={3}
-            placeholder="Ej.: horas y consignación verificadas con evidencia operativa…"
+            placeholder="Opcional. Ej.: horas y consignación verificadas…"
             style={{ width: "100%", marginBottom: "0.5rem" }}
           />
           <div className={styles.actions}>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleApprove}
-              disabled={!approveNote.trim()}
-            >
+            <Button type="button" size="sm" onClick={handleApprove}>
               Confirmar aprobación
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => setApproveOpen(false)}>

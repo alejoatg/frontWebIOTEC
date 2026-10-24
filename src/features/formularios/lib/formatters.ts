@@ -30,6 +30,26 @@ export function formatTipoInspeccion(value: string | null | undefined): string {
   return value.replace(/_/g, " ");
 }
 
+export function labelForReportField(
+  config: { listColumns: { key: string; label: string }[] },
+  key: string,
+): string {
+  return config.listColumns.find((col) => col.key === key)?.label ?? humanizeFieldKey(key);
+}
+
+export function formatForReportField(
+  config: { listColumns: { key: string; label: string; format?: string }[] },
+  key: string,
+  value: unknown,
+): string {
+  const format = config.listColumns.find((col) => col.key === key)?.format;
+  if (value === undefined || value === null || value === "") return "—";
+  const text = String(value);
+  if (format === "shortDate") return formatShortDate(text);
+  if (format === "datetime") return formatDateTime(text);
+  return formatCellValue(value);
+}
+
 export function humanizeFieldKey(key: string): string {
   return key
     .replace(/([A-Z])/g, " $1")

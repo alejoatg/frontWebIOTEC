@@ -224,6 +224,10 @@ export function buildExportColumns(
     submittedByEmail: "Email técnico",
   };
 
+  for (const col of config.listColumns) {
+    labelOverrides[col.key] = col.label;
+  }
+
   for (const field of config.evidenceFields) {
     labelOverrides[field.key] = field.label;
   }

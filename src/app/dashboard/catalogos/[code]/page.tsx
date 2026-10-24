@@ -1,4 +1,5 @@
 import { CatalogDetailContainer } from "@/features/catalogs";
+import AdminOnly from "@/features/dashboard/components/AdminOnly/AdminOnly";
 import styles from "./page.module.scss";
 
 interface Props {
@@ -9,8 +10,10 @@ export default async function CatalogDetailPage({ params }: Props) {
   const { code } = await params;
 
   return (
-    <div className={styles.page}>
-      <CatalogDetailContainer code={code} />
-    </div>
+    <AdminOnly title="Catálogo">
+      <div className={styles.page}>
+        <CatalogDetailContainer code={code} />
+      </div>
+    </AdminOnly>
   );
 }

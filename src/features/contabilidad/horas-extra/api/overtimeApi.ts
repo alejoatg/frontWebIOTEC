@@ -202,10 +202,11 @@ export async function fetchEntry(id: string) {
   return request<OvertimeEntryRow>(`/entries/${id}`);
 }
 
-export async function approveEntry(id: string, accountingNote: string) {
+export async function approveEntry(id: string, accountingNote?: string) {
+  const note = accountingNote?.trim();
   return request(`/entries/${id}/approve`, {
     method: "POST",
-    body: JSON.stringify({ accountingNote }),
+    body: JSON.stringify(note ? { accountingNote: note } : {}),
   });
 }
 

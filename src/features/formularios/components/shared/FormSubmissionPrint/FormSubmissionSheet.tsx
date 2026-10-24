@@ -5,9 +5,9 @@ import { MediaImage } from "@/components/MediaImage";
 import type { FormReportConfig } from "../../../config/formReportTypes";
 import { collectEvidences } from "../../../lib/collectEvidences";
 import {
-  formatCellValue,
   formatDateTime,
-  humanizeFieldKey,
+  formatForReportField,
+  labelForReportField,
 } from "../../../lib/formatters";
 import { parseCoordinate } from "../../../lib/parseCoordinate";
 import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
@@ -114,8 +114,8 @@ const FormSubmissionSheet = forwardRef<HTMLElement, FormSubmissionSheetProps>(
             <dl className={styles.fieldList}>
               {section.keys.map((key) => (
                 <div key={key} className={styles.fieldRow} data-pdf-block>
-                  <dt>{humanizeFieldKey(key)}</dt>
-                  <dd>{formatCellValue(record[key])}</dd>
+                  <dt>{labelForReportField(config, key)}</dt>
+                  <dd>{formatForReportField(config, key, record[key])}</dd>
                 </div>
               ))}
             </dl>

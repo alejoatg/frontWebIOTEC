@@ -824,7 +824,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
     id: "podas-diario",
     slug: "podas-diario",
     title: "Actividades Diarias — Podas",
-    subtitle: "UTEN_PODAS_DIARIO_v5 — Registro diario del proyecto de Podas (IOTEC Forms)",
+    subtitle: "UTEN_PODAS_DIARIO_v6 — Registro diario del proyecto de Podas (IOTEC Forms)",
     icon: "FileText",
     color: "#16a34a",
     apiBasePath: "/api/podas-diario",
@@ -838,7 +838,8 @@ export const FORM_REPORTS: FormReportConfig[] = [
       { type: "text", key: "ordenTrabajo", label: "Orden de trabajo", placeholder: "Número de orden" },
     ],
     listColumns: [
-      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "fechaEjecucion", label: "Fecha de ejecución", format: "shortDate" },
+      { key: "fecha", label: "Fecha de diligenciamiento", format: "shortDate" },
       { key: "ordenTrabajo", label: "Orden trabajo" },
       { key: "brigada", label: "Brigada" },
       { key: "municipio", label: "Municipio" },
@@ -852,7 +853,7 @@ export const FORM_REPORTS: FormReportConfig[] = [
       {
         title: "Ubicación y orden",
         keys: [
-          "zona", "fecha", "municipio", "municipioOtro", "vereda", "subestacion", "subestacionOtro",
+          "zona", "fechaEjecucion", "fecha", "municipio", "municipioOtro", "vereda", "subestacion", "subestacionOtro",
           "linea", "lineaOtro", "nivelTension", "brigada", "numeroActaActividad", "numeroTransformador",
           "tipoOrden", "ordenTrabajo", "numTrabajo", "direccionPuntual", "ubicacion", "area",
         ],

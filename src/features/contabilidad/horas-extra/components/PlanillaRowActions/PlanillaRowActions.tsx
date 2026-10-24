@@ -34,7 +34,6 @@ export default function PlanillaRowActions({
   const [approveNote, setApproveNote] = useState("");
 
   async function handleApprove() {
-    if (!approveNote.trim()) return;
     try {
       await approveEntry(entry.id, approveNote.trim());
       setApproveOpen(false);
@@ -75,20 +74,19 @@ export default function PlanillaRowActions({
       )}
       {approveOpen && (
         <div className={styles.approveBox}>
-          <label htmlFor={`approve-note-${entry.id}`}>Justificación de la aprobación</label>
+          <label htmlFor={`approve-note-${entry.id}`}>Justificación de la aprobación (opcional)</label>
           <textarea
             id={`approve-note-${entry.id}`}
             value={approveNote}
             onChange={(e) => setApproveNote(e.target.value)}
             rows={2}
-            placeholder="Obligatoria…"
+            placeholder="Opcional…"
           />
           <div className={styles.approveActions}>
             <button
               type="button"
               className={styles.btnOk}
               onClick={() => void handleApprove()}
-              disabled={!approveNote.trim()}
             >
               Confirmar
             </button>

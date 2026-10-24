@@ -8,9 +8,9 @@ import { exportSheetToPdf } from "../../../lib/exportPdf";
 import { FormSubmissionSheet } from "../FormSubmissionPrint";
 import DownloadReportButton from "../DownloadReportButton";
 import {
-  formatCellValue,
   formatDateTime,
-  humanizeFieldKey,
+  formatForReportField,
+  labelForReportField,
 } from "../../../lib/formatters";
 import { Button } from "@/components/Button";
 import LocationMap from "@/components/LocationMap/LocationMap";
@@ -144,8 +144,8 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
             <dl className={styles.fieldList}>
               {section.keys.map((key) => (
                 <div key={key} className={styles.fieldRow}>
-                  <dt>{humanizeFieldKey(key)}</dt>
-                  <dd>{formatCellValue(record[key])}</dd>
+                  <dt>{labelForReportField(config, key)}</dt>
+                  <dd>{formatForReportField(config, key, record[key])}</dd>
                 </div>
               ))}
             </dl>

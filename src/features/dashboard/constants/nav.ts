@@ -1,8 +1,18 @@
 export const DASHBOARD_NAV_ITEMS = [
   { path: "/dashboard", label: "Inicio", icon: "Home" },
   { path: "/dashboard/formularios", label: "Formularios", icon: "FileText" },
-  { path: "/dashboard/motorcycles", label: "Motocicletas", icon: "Bike" },
-  { path: "/dashboard/catalogos", label: "Catálogos", icon: "BookOpen" },
+  {
+    path: "/dashboard/motorcycles",
+    label: "Motocicletas",
+    icon: "Bike",
+    roles: ["ADMIN"],
+  },
+  {
+    path: "/dashboard/catalogos",
+    label: "Catálogos",
+    icon: "BookOpen",
+    roles: ["ADMIN"],
+  },
   {
     path: "/dashboard/contabilidad/horas-extra",
     label: "Tiempo suplementario",
@@ -21,7 +31,12 @@ export const DASHBOARD_NAV_ITEMS = [
     icon: "Zap",
     roles: ["ADMIN"],
   },
-  { path: "/dashboard/users", label: "Usuarios", icon: "Users" },
+  {
+    path: "/dashboard/users",
+    label: "Usuarios",
+    icon: "Users",
+    roles: ["ADMIN"],
+  },
 ] as const;
 
 export type DashboardNavItem = (typeof DASHBOARD_NAV_ITEMS)[number];

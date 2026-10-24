@@ -129,6 +129,20 @@
   max-width: 9rem;
 }
 
+.spreadsheet th.narrowPlace,
+.spreadsheet td.narrowPlace {
+  width: 6.4rem;
+  min-width: 6.4rem;
+  max-width: 6.4rem;
+  vertical-align: bottom;
+}
+
+.spreadsheet th.narrowPlace {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .numCell {
   text-align: right;
   font-variant-numeric: tabular-nums;

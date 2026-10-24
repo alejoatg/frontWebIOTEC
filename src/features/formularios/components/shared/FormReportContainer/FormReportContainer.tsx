@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
+import { Archive, ArrowLeft, FileSpreadsheet, FileText, X } from "lucide-react";
 import type { FormReportListResponse } from "../../../config/formReportTypes";
 import { getFormReportBySlug } from "../../../config/formReportsRegistry";
 import {
@@ -10,6 +10,11 @@ import {
   fetchFormReportList,
 } from "../../../api/formReportsApi";
 import { exportFormReportRows } from "../../../lib/exportFormReport";
+import {
+  BULK_CHUNK_SIZE,
+  downloadFilterReports,
+  listFilterRecordIds,
+} from "../../../lib/downloadFilterReports";
 import { Button } from "@/components/Button";
 import FormReportFilter from "../FormReportFilter";
 import FormReportTable from "../FormReportTable";
@@ -34,6 +39,10 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isBulkRunning, setIsBulkRunning] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+  const [bulkSummary, setBulkSummary] = useState<string | null>(null);
+  const bulkAbortRef = useRef<AbortController | null>(null);
 
   const handleSearch = async (filter: Record<string, unknown>) => {
     setIsLoading(true);
@@ -77,6 +86,57 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
     }
   };
 
+  const handleBulkDownload = async () => {
+    if (!currentFilter || isBulkRunning) return;
+    setError(null);
+    setBulkSummary(null);
+    setIsBulkRunning(true);
+    setBulkProgress("Consultando registros del filtro...");
+    try {
+      const ids = await listFilterRecordIds(config, currentFilter);
+      if (ids.length === 0) {
+        setBulkSummary("El filtro no tiene registros para descargar.");
+        return;
+      }
+      const parts = Math.ceil(ids.length / BULK_CHUNK_SIZE);
+      const accepted = window.confirm(
+        `Se descargarán ${ids.length} registro(s) con su PDF, fotos y firmas, ` +
+          `en ${parts} archivo(s) ZIP de hasta ${BULK_CHUNK_SIZE} registros.\n\n` +
+          "El proceso puede tardar varios minutos: mantén esta pestaña abierta " +
+          "y, si el navegador lo pregunta, permite las descargas múltiples.\n\n" +
+          "¿Continuar?",
+      );
+      if (!accepted) return;
+
+      const controller = new AbortController();
+      bulkAbortRef.current = controller;
+      const result = await downloadFilterReports(config, ids, {
+        signal: controller.signal,
+        onProgress: (p) =>
+          setBulkProgress(
+            `Registro ${p.current}/${p.total} · Parte ${p.part}/${p.parts} · ${p.message}`,
+          ),
+      });
+      setBulkSummary(
+        `${result.cancelled ? "Cancelado. " : ""}Procesados ${result.processed} de ${result.total} registro(s) en ${result.parts} ZIP` +
+          (result.failedRecords > 0
+            ? `. ${result.failedRecords} con incidencias (ver errores.txt dentro de cada ZIP).`
+            : "."),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error en la descarga masiva");
+    } finally {
+      bulkAbortRef.current = null;
+      setIsBulkRunning(false);
+      setBulkProgress(null);
+    }
+  };
+
+  const handleBulkCancel = () => {
+    bulkAbortRef.current?.abort();
+    setBulkProgress("Cancelando: se entregará lo procesado en la parte actual...");
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -108,10 +168,26 @@ export default function FormReportContainer({ slug }: FormReportContainerProps) 
             <FileText size={18} />
             {isExporting ? "Exportando..." : "CSV"}
           </Button>
+          <Button
+            onClick={handleBulkDownload}
+            disabled={isExporting || isLoading || isBulkRunning}
+            variant="secondary"
+          >
+            <Archive size={18} />
+            {isBulkRunning ? "Descargando..." : "Reportes y fotos (ZIP)"}
+          </Button>
+          {isBulkRunning ? (
+            <Button onClick={handleBulkCancel} variant="outline">
+              <X size={18} />
+              Cancelar
+            </Button>
+          ) : null}
           <span className={styles.exportHint}>
-            {exportProgress ??
-              "Exporta todos los registros de la consulta con los mismos campos del detalle. Fotos y firmas como enlaces."}
+            {bulkProgress ??
+              exportProgress ??
+              "Excel/CSV: todos los registros de la consulta (fotos y firmas como enlaces). ZIP: PDF, fotos y firmas de cada registro, en partes de hasta 15."}
           </span>
+          {bulkSummary ? <span className={styles.exportHint}>{bulkSummary}</span> : null}
         </div>
       ) : null}
 

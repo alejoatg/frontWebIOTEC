@@ -72,7 +72,13 @@ export default function MediaImage({ src, alt, className }: MediaImageProps) {
   }
 
   if (!blobUrl) {
-    return <div className={`${styles.placeholder} ${className ?? ""}`} aria-hidden />;
+    return (
+      <div
+        className={`${styles.placeholder} ${className ?? ""}`}
+        aria-hidden
+        data-media-loading="true"
+      />
+    );
   }
 
   return <img src={blobUrl} alt={alt} className={className} />;

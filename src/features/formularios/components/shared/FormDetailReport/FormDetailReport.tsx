@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import type { FormReportConfig } from "../../../config/formReportTypes";
 import { collectEvidences } from "../../../lib/collectEvidences";
 import { MediaImage } from "@/components/MediaImage";
-import { exportElementToPdf } from "../../../lib/exportPdf";
+import { exportSheetToPdf } from "../../../lib/exportPdf";
+import { FormSubmissionSheet } from "../FormSubmissionPrint";
+import DownloadReportButton from "../DownloadReportButton";
 import {
   formatCellValue,
   formatDateTime,
@@ -24,8 +26,9 @@ export interface FormDetailReportProps {
 }
 
 export default function FormDetailReport({ config, record }: FormDetailReportProps) {
-  const reportRef = useRef<HTMLDivElement>(null);
+  const pdfSheetRef = useRef<HTMLElement>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const tecnico = (record.submittedBy as { name?: string })?.name ?? "—";
   const evidences = collectEvidences(record, config.evidenceFields);
@@ -50,14 +53,17 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
   };
 
   const handleExportPdf = async () => {
-    if (!reportRef.current) return;
+    if (!pdfSheetRef.current) return;
     setExportingPdf(true);
+    setPdfError(null);
     try {
-      await exportElementToPdf(
-        reportRef.current,
+      await exportSheetToPdf(
+        pdfSheetRef.current,
         `${config.excelFileName}-${String(record.id).slice(0, 8)}.pdf`,
-        config.title,
+        { footerLabel: `${config.title} · ${config.detailTitle(record)}` },
       );
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "No se pudo generar el PDF");
     } finally {
       setExportingPdf(false);
     }
@@ -70,9 +76,20 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
         <Button variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
           {exportingPdf ? "Generando PDF..." : "Exportar PDF"}
         </Button>
+        <DownloadReportButton config={config} record={record} />
+      </div>
+      {pdfError ? <p className={styles.pdfError}>{pdfError}</p> : null}
+
+      <div className={styles.pdfStage} aria-hidden>
+        <FormSubmissionSheet
+          ref={pdfSheetRef}
+          config={config}
+          record={record}
+          variant="pdf"
+        />
       </div>
 
-      <div ref={reportRef} className={styles.report}>
+      <div className={styles.report}>
         <header className={styles.reportHeader}>
           <h1 className={styles.reportTitle}>{config.title}</h1>
           <p className={styles.reportSubtitle}>{config.detailTitle(record)}</p>

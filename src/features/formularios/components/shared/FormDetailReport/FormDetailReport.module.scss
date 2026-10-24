@@ -9,6 +9,21 @@
   gap: 0.5rem;
 }
 
+.pdfError {
+  margin: 0 0 1rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+/* Hoja de impresión fuera de pantalla: debe seguir en el layout (no display:none) para que html2canvas la mida. */
+.pdfStage {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  background: #fff;
+  pointer-events: none;
+}
+
 .report {
   background: #fff;
   border: 1px solid #e5e7eb;

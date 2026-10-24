@@ -9,7 +9,7 @@ export interface SpreadsheetColumn {
   /** Encabezado en varias líneas para estrechar columnas de contenido corto. */
   headerLines?: string[];
   /** Ancho fijo acorde al contenido. */
-  narrow?: "date" | "qty" | "person" | "schedule" | "org";
+  narrow?: "date" | "qty" | "person" | "schedule" | "org" | "place";
   getValue: (entry: OvertimeEntryRow) => string | number | null | undefined;
   /** Contenido en varios renglones. Si existe, la celda lo muestra en lugar del texto plano. */
   getLines?: (entry: OvertimeEntryRow) => string[];
@@ -135,9 +135,27 @@ export const SPREADSHEET_COLUMNS: SpreadsheetColumn[] = [
   { id: "amountSubtotal", header: "SUBTOTAL", getValue: (e) => money(e.amountSubtotal), align: "right" },
   { id: "payrollFactorSnapshot", header: "FACTOR", getValue: (e) => num(e.payrollFactorSnapshot), align: "right" },
   { id: "amountTotal", header: "TOTAL", getValue: (e) => money(e.amountTotal), align: "right" },
-  { id: "commissionMunicipality", header: "MUNICIPIO DONDE CAUSÓ EL TIEMPO SUPLEMENTARIO", getValue: (e) => e.commissionMunicipality ?? "" },
-  { id: "brigadeCode", header: "CODIGO DE BRIGADA / PORTATIL", getValue: (e) => e.brigadeCode ?? "" },
-  { id: "baseMunicipality", header: "MUNICIPIO SEDE DONDE LABORA", getValue: (e) => e.baseMunicipality ?? "" },
+  {
+    id: "commissionMunicipality",
+    header: "Municipio donde causó el tiempo suplementario",
+    headerLines: ["Municipio", "donde causó"],
+    narrow: "place",
+    getValue: (e) => e.commissionMunicipality ?? "",
+  },
+  {
+    id: "brigadeCode",
+    header: "Código de brigada / portátil",
+    headerLines: ["Código", "brigada"],
+    narrow: "place",
+    getValue: (e) => e.brigadeCode ?? "",
+  },
+  {
+    id: "baseMunicipality",
+    header: "Municipio sede donde labora",
+    headerLines: ["Municipio", "sede"],
+    narrow: "place",
+    getValue: (e) => e.baseMunicipality ?? "",
+  },
   { id: "submittedBy", header: "SUPERVISOR QUIEN DIGITA", getValue: (e) => e.submittedBy?.name ?? "" },
   { id: "systemName", header: "SISTEMA", getValue: (e) => e.systemName ?? "" },
   { id: "itinerary", header: "ITINERARIO", getValue: (e) => e.itinerary ?? "" },

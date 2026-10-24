@@ -53,6 +53,7 @@ function columnClass(col: SpreadsheetColumn, extra?: string) {
   if (col.narrow === "person") parts.push(styles.stackPerson);
   if (col.narrow === "schedule") parts.push(styles.stackSchedule);
   if (col.narrow === "org") parts.push(styles.stackOrg);
+  if (col.narrow === "place") parts.push(styles.narrowPlace);
   if (col.align === "right") parts.push(styles.numCell);
   return parts.filter(Boolean).join(" ") || undefined;
 }

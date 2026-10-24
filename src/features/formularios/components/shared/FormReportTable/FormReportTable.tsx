@@ -11,6 +11,7 @@ import {
   formatTipoInspeccion,
 } from "../../../lib/formatters";
 import { buildListColumns } from "../../../lib/buildFormReportDisplay";
+import DownloadReportButton from "../DownloadReportButton";
 import styles from "./FormReportTable.module.scss";
 
 export interface FormReportTableProps {
@@ -92,12 +93,19 @@ export default function FormReportTable({
             {data.data.map((row) => (
               <tr key={String(row.id)} className={styles.row}>
                 <td className={styles.colDetalle}>
-                  <Link
-                    href={`/dashboard/formularios/${config.slug}/${row.id}`}
-                    className={styles.linkDetalle}
-                  >
-                    Ver informe
-                  </Link>
+                  <div className={styles.detalleActions}>
+                    <Link
+                      href={`/dashboard/formularios/${config.slug}/${row.id}`}
+                      className={styles.linkDetalle}
+                    >
+                      Ver informe
+                    </Link>
+                    <DownloadReportButton
+                      config={config}
+                      id={String(row.id)}
+                      variant="link"
+                    />
+                  </div>
                 </td>
                 {columns.map((col) => (
                   <td key={col.key}>{formatColumnValue(row, col)}</td>

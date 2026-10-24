@@ -76,6 +76,12 @@ thead .colDetalle {
   background: var(--color-bg-hover, #f9fafb);
 }
 
+.detalleActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .linkDetalle {
   color: var(--color-primary, #3b82f6);
   text-decoration: none;

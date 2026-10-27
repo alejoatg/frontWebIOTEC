@@ -79,8 +79,8 @@ export default function ExclusionesContainer() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [file, setFile] = useState<File | null>(null);
   const [template, setTemplate] = useState<File | null>(null);
-  const [strictAssociation, setStrictAssociation] = useState(false);
-  const [cleanNotes, setCleanNotes] = useState(false);
+  const [strictAssociation, setStrictAssociation] = useState(true);
+  const [cleanNotes, setCleanNotes] = useState(true);
   const [preview, setPreview] = useState<WorkflowPreview | null>(null);
   const [responsable, setResponsable] = useState<string | null>(null);
   const [coordinador, setCoordinador] = useState("");
@@ -89,6 +89,7 @@ export default function ExclusionesContainer() {
   const [error, setError] = useState<string | null>(null);
 
   const [municipios, setMunicipios] = useState<string[]>([]);
+  const [municipioQuery, setMunicipioQuery] = useState("");
   const [circuitos, setCircuitos] = useState<string[]>([]);
   const [circuitoQuery, setCircuitoQuery] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -120,6 +121,23 @@ export default function ExclusionesContainer() {
     const query = circuitKey(circuitoQuery);
     return circuitosDisponibles.filter((name) => !query || circuitKey(name).includes(query));
   }, [circuitoQuery, circuitosDisponibles]);
+
+  const municipiosDisponibles = useMemo(
+    () =>
+      [...MUNICIPIO_PODAS_OPTIONS].sort((a, b) => {
+        if (a.key === "other") return 1;
+        if (b.key === "other") return -1;
+        return a.value.localeCompare(b.value, "es");
+      }),
+    [],
+  );
+
+  const listaMunicipios = useMemo(() => {
+    const query = circuitKey(municipioQuery);
+    return municipiosDisponibles.filter(
+      (item) => !query || circuitKey(item.value).includes(query),
+    );
+  }, [municipioQuery, municipiosDisponibles]);
 
   const casosSeleccion = useMemo(() => {
     const wanted = new Set(circuitos.map(circuitKey));
@@ -158,6 +176,7 @@ export default function ExclusionesContainer() {
     setIndividuales([]);
     setIndividualTotal(0);
     setMunicipios([]);
+    setMunicipioQuery("");
     setCircuitos([]);
     setCircuitoQuery("");
     setDescripcion("");
@@ -456,8 +475,17 @@ export default function ExclusionesContainer() {
           <div className={styles.split}>
             <div className={styles.field}>
               <label>Municipios</label>
+              <input
+                type="search"
+                value={municipioQuery}
+                placeholder="Filtrar municipios…"
+                onChange={(e) => setMunicipioQuery(e.target.value)}
+              />
               <div className={styles.pickList}>
-                {MUNICIPIO_PODAS_OPTIONS.map((item) => (
+                {listaMunicipios.length === 0 ? (
+                  <p className={styles.hint}>No hay municipios con ese texto.</p>
+                ) : null}
+                {listaMunicipios.map((item) => (
                   <label key={item.key}>
                     <input
                       type="checkbox"

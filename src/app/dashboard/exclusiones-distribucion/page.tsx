@@ -9,7 +9,7 @@ export default function ExclusionesDistribucionPage() {
 
   if (loading) return null;
 
-  if (user?.role !== "ADMIN") {
+  if (user?.role !== "ADMIN" && user?.role !== "CORDINADOR") {
     return (
       <Card title="Exclusiones Distribución">
         <p>No tiene permiso para este módulo.</p>

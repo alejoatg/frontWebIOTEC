@@ -29,7 +29,7 @@ export const DASHBOARD_NAV_ITEMS = [
     path: "/dashboard/exclusiones-distribucion",
     label: "Exclusiones Distribución",
     icon: "Zap",
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "CORDINADOR"],
   },
   {
     path: "/dashboard/users",

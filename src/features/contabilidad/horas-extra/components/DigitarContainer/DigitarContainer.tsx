@@ -355,7 +355,58 @@ function collectRegisterErrors(
     }
   });
 
+  const ranges: Array<{ index: number; doc: string; start: number; end: number; label: string }> = [];
+  rows.forEach((row, index) => {
+    const doc = row.documentNumber.replace(/\D/g, "");
+    const range = scheduleRange(row.workDate, row.startTime, row.endTime);
+    if (!doc || !range) return;
+    const startLabel = formatClockTime(row.startTime) || row.startTime;
+    const endLabel = formatClockTime(row.endTime) || row.endTime;
+    ranges.push({
+      index,
+      doc,
+      start: range.start,
+      end: range.end,
+      label: `${rowLabel(row, index)} (${startLabel}–${endLabel})`,
+    });
+  });
+  for (let i = 0; i < ranges.length; i++) {
+    for (let j = i + 1; j < ranges.length; j++) {
+      const a = ranges[i];
+      const b = ranges[j];
+      if (a.doc !== b.doc) continue;
+      if (!(a.start < b.end && b.start < a.end)) continue;
+      if (a.start === b.start && a.end === b.end) continue;
+      errors.push(
+        `${a.label} se cruza con ${b.label}. Una misma hora no puede quedar en dos filas del mismo trabajador.`,
+      );
+    }
+  }
+
   return errors;
+}
+
+/** Minutos absolutos. Si la hora fin no es posterior al inicio, el turno cruza medianoche. */
+function scheduleRange(
+  workDate: string,
+  startTime: string,
+  endTime: string,
+): { start: number; end: number } | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) return null;
+  const startClock = formatClockTime(startTime);
+  const endClock = formatClockTime(endTime);
+  if (!startClock || !endClock) return null;
+  const [y, m, d] = workDate.split("-").map(Number);
+  const [sh, sm] = startClock.split(":").map(Number);
+  const [eh, em] = endClock.split(":").map(Number);
+  const day = Date.UTC(y, m - 1, d) / 86_400_000;
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
+  const start = day * 1440 + startMin;
+  let end = day * 1440 + endMin;
+  if (endMin <= startMin) end += 1440;
+  if (end <= start) return null;
+  return { start, end };
 }
 
 function patchFromEmployee(emp: {
@@ -852,7 +903,7 @@ export default function DigitarContainer() {
       } catch (e) {
         if (cancelled) return;
         setConfirmDupErrors([
-          e instanceof Error ? e.message : "No se pudo validar duplicados",
+          e instanceof Error ? e.message : "No se pudo validar horarios",
         ]);
       } finally {
         if (!cancelled) setValidatingDuplicates(false);
@@ -1199,7 +1250,7 @@ export default function DigitarContainer() {
         Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
         de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
         <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
-        (6:00–21:00) y festivo; RD, RN y Disponibilidad se digitán manualmente. Use{" "}
+        (6:00–19:00) y festivo; RD, RN y Disponibilidad se digitan manualmente. Use{" "}
         <button type="button" className={styles.inlineHelp} onClick={() => openCategoryHelp()}>
           Guía de categorías
         </button>{" "}

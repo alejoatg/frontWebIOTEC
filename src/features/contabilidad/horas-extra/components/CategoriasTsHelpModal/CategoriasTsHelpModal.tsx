@@ -30,35 +30,35 @@ const CATEGORIAS: Array<{
   {
     code: "RN",
     title: "Recargo nocturno",
-    when: "Trabajo en horario nocturno (21:00 a 6:00) dentro de la jornada habitual en día hábil.",
+    when: "Trabajo en horario nocturno (19:00 a 6:00) dentro de la jornada habitual en día hábil.",
     autofill: "No se autocompleta: debe digitarse manualmente cuando aplique.",
     multiplier: "× 0,35 sobre el valor hora",
   },
   {
     code: "TSD",
     title: "Tiempo suplementario diurno",
-    when: "Tiempo suplementario en día hábil, entre 6:00 y 21:00.",
+    when: "Tiempo suplementario en día hábil, entre 6:00 y 19:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 1,25 sobre el valor hora",
   },
   {
     code: "TSN",
     title: "Tiempo suplementario nocturno",
-    when: "Tiempo suplementario en día hábil, entre 21:00 y 6:00.",
+    when: "Tiempo suplementario en día hábil, entre 19:00 y 6:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 1,75 sobre el valor hora",
   },
   {
     code: "HEDD",
     title: "TS dominical/festivo diurno",
-    when: "Tiempo suplementario en domingo o festivo, entre 6:00 y 21:00.",
+    when: "Tiempo suplementario en domingo o festivo, entre 6:00 y 19:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 2,05 sobre el valor hora",
   },
   {
     code: "HEND",
     title: "TS dominical/festivo nocturno",
-    when: "Tiempo suplementario en domingo o festivo, entre 21:00 y 6:00.",
+    when: "Tiempo suplementario en domingo o festivo, entre 19:00 y 6:00.",
     autofill: "Se propone al indicar Fecha + Inicio + Fin.",
     multiplier: "× 2,55 sobre el valor hora",
   },
@@ -127,15 +127,15 @@ export default function CategoriasTsHelpModal({
             <h3 className={styles.rulesTitle}>Reglas de autollenado</h3>
             <ul>
               <li>
-                <strong>Diurno:</strong> 6:00 a 21:00 · <strong>Nocturno:</strong> 21:00 a 6:00
-                (legislación colombiana).
+                <strong>Diurno:</strong> 6:00 a 19:00 · <strong>Nocturno:</strong> 19:00 a 6:00
+                (Ley 2466 de 2025).
               </li>
               <li>
                 Si la fecha es <strong>domingo o festivo</strong>, el tiempo suplementario va en{" "}
                 <strong>HEDD</strong> / <strong>HEND</strong> en lugar de TSD / TSN.
               </li>
               <li>
-                Si el tramo cruza las 6:00, las 21:00 o la medianoche, se reparte en bloques de
+                Si el tramo cruza las 6:00, las 19:00 o la medianoche, se reparte en bloques de
                 media hora.
               </li>
               <li>

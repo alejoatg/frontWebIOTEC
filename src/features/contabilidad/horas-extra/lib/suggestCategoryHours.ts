@@ -1,9 +1,12 @@
 import { isSundayOrHoliday } from "./colombiaHolidays";
 import { formatClockTime, isHalfHourClock } from "./timeFormat";
 
-/** Horario diurno Colombia (CST): 6:00 inclusive – 21:00 exclusive. */
+/**
+ * Ley 2466 de 2025, art. 10 (vigente desde el 25 de diciembre de 2025).
+ * Diurno: 6:00 inclusive – 19:00 exclusive. Nocturno: 19:00 – 6:00.
+ */
 const DIURNAL_START_MIN = 6 * 60;
-const DIURNAL_END_MIN = 21 * 60;
+const DIURNAL_END_MIN = 19 * 60;
 const SLOT_MINUTES = 30;
 
 export type SuggestedSupplementalHours = {

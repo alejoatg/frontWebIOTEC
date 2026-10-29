@@ -21,6 +21,45 @@ const ATU_TIPOS_INSPECCION = [
   { value: "Consigna", label: "Consigna" },
 ];
 
+function jornadaClock(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "—";
+  const raw = String(value);
+  if (/^\d{2}:\d{2}/.test(raw)) return raw.slice(0, 5);
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function mapJornadaRow(row: Record<string, unknown>): Record<string, unknown> {
+  const { actividades: rawActividades, novedades: rawNovedades, ...rest } = row;
+  const actividades = Array.isArray(rawActividades) ? rawActividades as Record<string, unknown>[] : [];
+  const novedades = Array.isArray(rawNovedades) ? rawNovedades as Record<string, unknown>[] : [];
+  const fotos = novedades
+    .map((item) => item.fotoUrl)
+    .filter((url): url is string => typeof url === "string" && url.startsWith("http"));
+  return {
+    ...rest,
+    horaInicio: jornadaClock(row.horaInicio),
+    horaFin: jornadaClock(row.horaFin),
+    actividadesCount: actividades.length,
+    novedadesCount: novedades.length,
+    actividadesResumen: actividades
+      .map((item) => {
+        const especie = item.especie === "other" ? item.especieOtro : item.especie;
+        return `${jornadaClock(item.horaInicio)}–${jornadaClock(item.horaFin)} ${String(especie ?? "—")}`;
+      })
+      .join("; ") || "—",
+    novedadesResumen: novedades
+      .map((item) => {
+        const motivo = item.motivo === "other" ? item.motivoOtro : item.motivo;
+        const detalle = item.detalle ? ` — ${item.detalle}` : "";
+        return `${jornadaClock(item.horaInicio)}–${jornadaClock(item.horaFin)} ${String(motivo ?? "—")}${detalle}`;
+      })
+      .join("; ") || "—",
+    novedadFotosUrls: fotos,
+  };
+}
+
 function appendOptional(params: URLSearchParams, filter: Record<string, unknown>, keys: string[]) {
   keys.forEach((key) => {
     const v = filter[key];
@@ -901,6 +940,55 @@ export const FORM_REPORTS: FormReportConfig[] = [
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
       if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
       appendOptional(params, filter, ["zona", "municipio", "brigada", "ordenTrabajo"]);
+      return params;
+    },
+  },
+  {
+    id: "jornada-trabajo",
+    slug: "jornada-trabajo",
+    title: "Jornada de trabajo",
+    subtitle: "Registro diario de jornada, actividades y novedades (IOTEC Forms)",
+    icon: "FileText",
+    color: "#16a34a",
+    apiBasePath: "/api/jornada-trabajo",
+    excelFileName: "jornada-trabajo",
+    detailTitle: (r) => `Jornada ${String(r.fecha ?? "—")} · ${String(r.brigada ?? "—")}`,
+    mapListRow: mapJornadaRow,
+    mapDetailRecord: mapJornadaRow,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "brigada", label: "Brigada", placeholder: "Ej: POZC1" },
+      { type: "text", key: "proceso", label: "Proceso", placeholder: "Poda" },
+    ],
+    listColumns: [
+      { key: "fecha", label: "Fecha", format: "shortDate" },
+      { key: "brigada", label: "Brigada" },
+      { key: "proceso", label: "Proceso" },
+      { key: "horaInicio", label: "Inicio" },
+      { key: "horaFin", label: "Fin" },
+      { key: "actividadesCount", label: "Actividades" },
+      { key: "novedadesCount", label: "Novedades" },
+      { key: "submittedBy", label: "Diligenció", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "General",
+        keys: ["fecha", "brigada", "proceso", "horaInicio", "horaFin"],
+      },
+      {
+        title: "Actividades y novedades",
+        keys: ["actividadesResumen", "novedadesResumen"],
+      },
+    ],
+    evidenceFields: [
+      { label: "Foto novedad", key: "novedadFotosUrls", multiple: true },
+    ],
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, ["brigada", "proceso"]);
       return params;
     },
   },

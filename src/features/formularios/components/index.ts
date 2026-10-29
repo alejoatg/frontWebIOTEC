@@ -6,5 +6,6 @@ export { default as AtuFormatoUnicoContainer } from "./AtuFormatoUnicoContainer"
 export { default as AtuFormatoUnicoFilter } from "./AtuFormatoUnicoFilter";
 export { default as AtuFormatoUnicoTable } from "./AtuFormatoUnicoTable";
 export { default as FormReportContainer } from "./shared/FormReportContainer";
+export { default as FormAlertsContainer } from "./shared/FormAlertsContainer";
 export { default as FormDetailReport } from "./shared/FormDetailReport";
 export { default as InspectionsMapContainer } from "./InspectionsMap/InspectionsMapContainer";

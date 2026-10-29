@@ -11,6 +11,15 @@ const ICON_BY_TYPE: Record<string, FormularioCard["icon"]> = {
 
 export const FORMULARIOS_CARDS: FormularioCard[] = [
   {
+    id: "alertas-formularios",
+    title: "Alertas",
+    description:
+      "Preoperacionales del día con no conforme, novedad, somnolencia u observación",
+    icon: "AlertTriangle",
+    path: "/dashboard/formularios/alertas",
+    color: "#ea580c",
+  },
+  {
     id: "mapa-inspecciones",
     title: "Mapa de inspecciones",
     description:

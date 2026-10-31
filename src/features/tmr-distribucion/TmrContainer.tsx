@@ -23,6 +23,7 @@ import {
 } from "./api";
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
+import TmrMensual from "./TmrMensual";
 import styles from "./TmrContainer.module.scss";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -61,7 +62,7 @@ export default function TmrContainer() {
   const [municipio, setMunicipio] = useState("");
   const [crew, setCrew] = useState("");
   const [page, setPage] = useState(0);
-  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias">("listado");
+  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias" | "mensual">("listado");
 
   const summary = preview?.summary;
   const municipios = useMemo(
@@ -206,13 +207,20 @@ export default function TmrContainer() {
           className={section === "reincidencias" ? styles.tabOn : styles.tab}
           onClick={() => setSection("reincidencias")}
         >
-          Análisis de reincidencias
-        </button>
-      </div>
+            Análisis de reincidencias
+          </button>
+          <button
+            type="button"
+            className={section === "mensual" ? styles.tabOn : styles.tab}
+            onClick={() => setSection("mensual")}
+          >
+            Análisis mensual
+          </button>
+        </div>
       {!summary ? (
         <p className={styles.hint}>
-          Suba el consolidado y pulse Analizar. Después podrá entrar a jornada y
-          reincidencias con esos resultados.
+          Suba el consolidado y pulse Analizar. Después podrá entrar a jornada,
+          reincidencias y el análisis mensual.
         </p>
       ) : null}
 
@@ -463,6 +471,7 @@ export default function TmrContainer() {
 
       {summary && section === "jornada" ? <TmrJornada rows={rows} /> : null}
       {summary && section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
+      {summary && section === "mensual" ? <TmrMensual rows={rows} /> : null}
     </div>
   );
 }

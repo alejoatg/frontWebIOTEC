@@ -21,6 +21,8 @@ import {
   type TmrPreview,
   type TmrRow,
 } from "./api";
+import TmrJornada from "./TmrJornada";
+import TmrReincidencias from "./TmrReincidencias";
 import styles from "./TmrContainer.module.scss";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -59,6 +61,7 @@ export default function TmrContainer() {
   const [municipio, setMunicipio] = useState("");
   const [crew, setCrew] = useState("");
   const [page, setPage] = useState(0);
+  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias">("listado");
 
   const summary = preview?.summary;
   const municipios = useMemo(
@@ -165,6 +168,7 @@ export default function TmrContainer() {
               setFile(e.target.files?.[0] ?? null);
               setPreview(null);
               setRows([]);
+              setSection("listado");
             }}
           />
         </div>
@@ -271,6 +275,35 @@ export default function TmrContainer() {
             </div>
           </div>
 
+          <div className={styles.tabs}>
+            <button
+              type="button"
+              className={section === "listado" ? styles.tabOn : styles.tab}
+              onClick={() => setSection("listado")}
+            >
+              Listado conciliado
+            </button>
+            <button
+              type="button"
+              className={section === "jornada" ? styles.tabOn : styles.tab}
+              onClick={() => setSection("jornada")}
+            >
+              Análisis de jornada
+            </button>
+            <button
+              type="button"
+              className={section === "reincidencias" ? styles.tabOn : styles.tab}
+              onClick={() => setSection("reincidencias")}
+            >
+              Análisis de reincidencias
+            </button>
+          </div>
+
+          {section === "jornada" ? <TmrJornada rows={rows} /> : null}
+          {section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
+
+          {section === "listado" ? (
+          <>
           <div className={styles.filters}>
             <div className={styles.field}>
               <label>Buscar</label>
@@ -424,6 +457,8 @@ export default function TmrContainer() {
               Siguiente
             </Button>
           </div>
+          </>
+          ) : null}
         </>
       ) : null}
     </div>

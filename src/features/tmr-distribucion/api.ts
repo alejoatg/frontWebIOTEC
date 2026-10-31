@@ -15,6 +15,7 @@ export type TmrExclusion = (typeof TMR_EXCLUSIONS)[number];
 export interface TmrRow {
   id: string;
   caseSerial: string;
+  ticketSerial: string;
   jobSerial: string;
   crew: string;
   municipality: string;
@@ -22,6 +23,13 @@ export interface TmrRow {
   ubicacion: string;
   workType: string;
   circuitCode: string;
+  location: string;
+  cause: string;
+  deviceCause: string;
+  weatherCause: string;
+  caseDescription: string;
+  ticketDescription: string;
+  createdAt: string | null;
   startTime: string | null;
   assignedAt: string | null;
   enRouteAt: string | null;
@@ -29,6 +37,9 @@ export interface TmrRow {
   completedAt: string | null;
   startValidado: string | null;
   dia: string;
+  tmrAlist: number | null;
+  tmrDesp: number | null;
+  tmrSer: number | null;
   tmrDuracion: number | null;
   tmrDuracionUten: number | null;
   rangoUten: string;

@@ -137,6 +137,29 @@
   font-size: 0.875rem;
 }
 
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab,
+.tabOn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+  color: #334155;
+}
+
+.tabOn {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #115e59;
+  font-weight: 600;
+}
+
 .pager {
   display: flex;
   gap: 0.75rem;

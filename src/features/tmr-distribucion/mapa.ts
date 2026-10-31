@@ -5,6 +5,15 @@ import { DESP_LARGA_H, EJEC_LARGA_H, rowsForMonth } from "./mensual";
 export type MapLevel = "municipio" | "nucleo";
 export type MapMetric = "desp" | "ejec" | "tmr" | "jobs";
 
+export interface MapJobLite {
+  id: string;
+  caseSerial: string;
+  jobSerial: string;
+  crew: string;
+  startTime: string | null;
+  tmrDesp: number | null;
+}
+
 export interface MapPoint {
   key: string;
   name: string;
@@ -18,7 +27,7 @@ export interface MapPoint {
   despLargos: number;
   ejecLargas: number;
   source: "catalogo" | "derivado";
-  rows: TmrRow[];
+  rows: MapJobLite[];
 }
 
 function mean(values: Array<number | null | undefined>): number | null {
@@ -87,7 +96,17 @@ export function buildMapPoints(rows: TmrRow[], month: string, level: MapLevel): 
       despLargos: group.filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H).length,
       ejecLargas: group.filter((row) => row.tmrSer != null && row.tmrSer > EJEC_LARGA_H).length,
       source: resolved.source,
-      rows: [...group].sort((a, b) => (b.tmrDesp ?? -1) - (a.tmrDesp ?? -1)),
+      rows: [...group]
+        .sort((a, b) => (b.tmrDesp ?? -1) - (a.tmrDesp ?? -1))
+        .slice(0, 10)
+        .map((row) => ({
+          id: row.id,
+          caseSerial: row.caseSerial,
+          jobSerial: row.jobSerial,
+          crew: row.crew,
+          startTime: row.startTime,
+          tmrDesp: row.tmrDesp,
+        })),
     });
   }
 

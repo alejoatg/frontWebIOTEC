@@ -1,11 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TmrRow } from "./api";
 import { formatSpan, formatTs } from "./jornada";
 import { availableMonths, monthLabel } from "./mensual";
-import { buildMapPoints, type MapLevel, type MapMetric } from "./mapa";
+import { buildMapPoints, type MapLevel, type MapMetric, type MapPoint } from "./mapa";
 import styles from "./TmrMapa.module.scss";
 
 const TmrMapaCanvas = dynamic(() => import("./TmrMapaCanvas"), {
@@ -46,11 +46,26 @@ export default function TmrMapa({ rows }: Props) {
   const [level, setLevel] = useState<MapLevel>("municipio");
   const [metric, setMetric] = useState<MapMetric>("desp");
   const [selected, setSelected] = useState<string | null>(null);
+  const [points, setPoints] = useState<MapPoint[]>([]);
+  const [unmatched, setUnmatched] = useState<string[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
-  const { points, unmatched } = useMemo(
-    () => (month ? buildMapPoints(rows, month, level) : { points: [], unmatched: [] }),
-    [rows, month, level],
-  );
+  useEffect(() => {
+    if (!month) {
+      setPoints([]);
+      setUnmatched([]);
+      setMapReady(false);
+      return;
+    }
+    setMapReady(false);
+    const timer = window.setTimeout(() => {
+      const next = buildMapPoints(rows, month, level);
+      setPoints(next.points);
+      setUnmatched(next.unmatched);
+      setMapReady(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [rows, month, level]);
   const current = points.find((item) => item.key === selected) ?? points[0] ?? null;
 
   return (
@@ -103,12 +118,16 @@ export default function TmrMapa({ rows }: Props) {
 
       <div className={styles.layout}>
         <div className={styles.mapBox}>
-          <TmrMapaCanvas
-            points={points}
-            metric={metric}
-            selected={current?.key ?? null}
-            onSelect={setSelected}
-          />
+          {mapReady ? (
+            <TmrMapaCanvas
+              points={points}
+              metric={metric}
+              selected={current?.key ?? null}
+              onSelect={setSelected}
+            />
+          ) : (
+            <p className={styles.hint}>Armando puntos del mapa…</p>
+          )}
           <div className={styles.legend}>
             <strong>{METRIC_LABEL[metric]}</strong>
             {(metric === "jobs" ? LEGEND_JOBS : LEGEND_HOURS).map((item) => (

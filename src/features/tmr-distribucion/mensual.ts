@@ -114,10 +114,12 @@ export function buildMonthGeneral(rows: TmrRow[], month: string): MonthGeneral {
     tmrUtenMedio: mean(list.map((row) => row.tmrDuracionUten)),
     despLargos: [...list]
       .filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H)
-      .sort((a, b) => (b.tmrDesp ?? 0) - (a.tmrDesp ?? 0)),
+      .sort((a, b) => (b.tmrDesp ?? 0) - (a.tmrDesp ?? 0))
+      .slice(0, 12),
     ejecLargas: [...list]
       .filter((row) => row.tmrSer != null && row.tmrSer > EJEC_LARGA_H)
-      .sort((a, b) => (b.tmrSer ?? 0) - (a.tmrSer ?? 0)),
+      .sort((a, b) => (b.tmrSer ?? 0) - (a.tmrSer ?? 0))
+      .slice(0, 12),
     nucleos: placeStats(list, (row) => row.nucleo),
     municipios: placeStats(list, (row) => row.municipality),
   };
@@ -172,10 +174,12 @@ export function buildCrewMonths(rows: TmrRow[], month: string): CrewMonth[] {
         porDia,
         despLargos: list
           .filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H)
-          .sort((a, b) => (b.tmrDesp ?? 0) - (a.tmrDesp ?? 0)),
+          .sort((a, b) => (b.tmrDesp ?? 0) - (a.tmrDesp ?? 0))
+          .slice(0, 12),
         ejecLargas: list
           .filter((row) => row.tmrSer != null && row.tmrSer > EJEC_LARGA_H)
-          .sort((a, b) => (b.tmrSer ?? 0) - (a.tmrSer ?? 0)),
+          .sort((a, b) => (b.tmrSer ?? 0) - (a.tmrSer ?? 0))
+          .slice(0, 12),
       };
     })
     .sort((a, b) => b.actividades - a.actividades || a.crew.localeCompare(b.crew, "es"));

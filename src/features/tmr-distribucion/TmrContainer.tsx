@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import {
   Chart as ChartJS,
@@ -23,9 +24,17 @@ import {
 } from "./api";
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
-import TmrMensual from "./TmrMensual";
-import TmrMapa from "./TmrMapa";
 import styles from "./TmrContainer.module.scss";
+
+const TmrMensual = dynamic(() => import("./TmrMensual"), {
+  ssr: false,
+  loading: () => <p className={styles.hint}>Preparando análisis mensual…</p>,
+});
+
+const TmrMapa = dynamic(() => import("./TmrMapa"), {
+  ssr: false,
+  loading: () => <p className={styles.hint}>Preparando mapa…</p>,
+});
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -64,6 +73,10 @@ export default function TmrContainer() {
   const [crew, setCrew] = useState("");
   const [page, setPage] = useState(0);
   const [section, setSection] = useState<"listado" | "jornada" | "reincidencias" | "mensual" | "mapa">("listado");
+  const [mensualOn, setMensualOn] = useState(false);
+  const [mapaOn, setMapaOn] = useState(false);
+  const [mensualBusy, setMensualBusy] = useState(false);
+  const [mapaBusy, setMapaBusy] = useState(false);
 
   const summary = preview?.summary;
   const municipios = useMemo(
@@ -127,6 +140,10 @@ export default function TmrContainer() {
       setPreview(result);
       setRows(result.rows);
       setPage(0);
+      setMensualOn(false);
+      setMapaOn(false);
+      setMensualBusy(false);
+      setMapaBusy(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al analizar");
     } finally {
@@ -154,9 +171,9 @@ export default function TmrContainer() {
   return (
     <div className={styles.wrap}>
       <p className={styles.hint}>
-        Suba el consolidado con las hojas Datos y BRIGADAS UTEN. El análisis queda en esta
-        sesión: se calculan TMR, rangos, sobreasignación y una exclusión automática. Puede
-        corregir exclusión, observación y nota CEO antes de descargar.
+        Suba el consolidado con las hojas Datos y BRIGADAS UTEN. Analizar solo concilia el
+        listado (TMR, rangos, sobreasignación y exclusión). El análisis mensual y el mapa
+        se generan después, cada uno con su botón, para no saturar la misma carga.
       </p>
 
       <div className={styles.row}>
@@ -171,6 +188,10 @@ export default function TmrContainer() {
               setPreview(null);
               setRows([]);
               setSection("listado");
+              setMensualOn(false);
+              setMapaOn(false);
+              setMensualBusy(false);
+              setMapaBusy(false);
             }}
           />
         </div>
@@ -228,7 +249,7 @@ export default function TmrContainer() {
       {!summary ? (
         <p className={styles.hint}>
           Suba el consolidado y pulse Analizar. Después podrá entrar a jornada,
-          reincidencias, el análisis mensual y el mapa de calor.
+          reincidencias. Mensual y mapa se piden aparte, con su botón.
         </p>
       ) : null}
 
@@ -479,8 +500,61 @@ export default function TmrContainer() {
 
       {summary && section === "jornada" ? <TmrJornada rows={rows} /> : null}
       {summary && section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
-      {summary && section === "mensual" ? <TmrMensual rows={rows} /> : null}
-      {summary && section === "mapa" ? <TmrMapa rows={rows} /> : null}
+      {summary && section === "mensual" ? (
+        mensualOn ? (
+          <TmrMensual rows={rows} />
+        ) : (
+          <LazyStart
+            title="Análisis mensual"
+            text="Este cálculo no corre con Analizar. Pulse el botón cuando quiera el panorama del mes y el detalle por brigada."
+            busy={mensualBusy}
+            onStart={() => {
+              setMensualBusy(true);
+              window.setTimeout(() => setMensualOn(true), 40);
+            }}
+          />
+        )
+      ) : null}
+      {summary && section === "mapa" ? (
+        mapaOn ? (
+          <TmrMapa rows={rows} />
+        ) : (
+          <LazyStart
+            title="Mapa de calor"
+            text="Leaflet y el catálogo de municipios/núcleos se cargan solo aquí, no junto al listado ni al mensual."
+            busy={mapaBusy}
+            action="Cargar mapa"
+            onStart={() => {
+              setMapaBusy(true);
+              window.setTimeout(() => setMapaOn(true), 40);
+            }}
+          />
+        )
+      ) : null}
+    </div>
+  );
+}
+
+function LazyStart({
+  title,
+  text,
+  onStart,
+  busy,
+  action = "Generar análisis",
+}: {
+  title: string;
+  text: string;
+  onStart: () => void;
+  busy: boolean;
+  action?: string;
+}) {
+  return (
+    <div className={styles.lazy}>
+      <h3>{title}</h3>
+      <p>{text}</p>
+      <Button type="button" onClick={onStart} disabled={busy}>
+        {busy ? "Generando…" : action}
+      </Button>
     </div>
   );
 }

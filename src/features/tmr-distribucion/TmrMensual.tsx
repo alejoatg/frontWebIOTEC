@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TmrRow } from "./api";
 import { formatSpan, formatTs } from "./jornada";
 import {
@@ -12,6 +12,7 @@ import {
   EJEC_LARGA_H,
   monthLabel,
   type CrewMonth,
+  type MonthGeneral,
   type PlaceStat,
 } from "./mensual";
 import styles from "./TmrMensual.module.scss";
@@ -25,13 +26,42 @@ interface Props {
 export default function TmrMensual({ rows }: Props) {
   const months = useMemo(() => availableMonths(rows), [rows]);
   const [month, setMonth] = useState(months[0] ?? "");
-  const general = useMemo(() => (month ? buildMonthGeneral(rows, month) : null), [rows, month]);
-  const crews = useMemo(() => (month ? buildCrewMonths(rows, month) : []), [rows, month]);
-  const [crew, setCrew] = useState(crews[0]?.crew ?? "");
+  const [general, setGeneral] = useState<MonthGeneral | null>(null);
+  const [crews, setCrews] = useState<CrewMonth[]>([]);
+  const [phase, setPhase] = useState<"panorama" | "brigadas" | "listo">("panorama");
+  const [crew, setCrew] = useState("");
   const selected = crews.find((item) => item.crew === crew) ?? crews[0];
   const [pickedDay, setPickedDay] = useState<string | null>(null);
   const cells = useMemo(() => (month ? calendarCells(month) : []), [month]);
   const dayRows = pickedDay && selected ? (selected.porDia[pickedDay] ?? []) : [];
+
+  useEffect(() => {
+    if (!month) {
+      setGeneral(null);
+      setCrews([]);
+      return;
+    }
+    let cancel = false;
+    setPhase("panorama");
+    setCrews([]);
+    const first = window.setTimeout(() => {
+      if (cancel) return;
+      const nextGeneral = buildMonthGeneral(rows, month);
+      setGeneral(nextGeneral);
+      setPhase("brigadas");
+      window.setTimeout(() => {
+        if (cancel) return;
+        const nextCrews = buildCrewMonths(rows, month);
+        setCrews(nextCrews);
+        setCrew((current) => nextCrews.some((item) => item.crew === current) ? current : (nextCrews[0]?.crew ?? ""));
+        setPhase("listo");
+      }, 0);
+    }, 0);
+    return () => {
+      cancel = true;
+      window.clearTimeout(first);
+    };
+  }, [rows, month]);
 
   return (
     <div className={styles.wrap}>
@@ -60,6 +90,12 @@ export default function TmrMensual({ rows }: Props) {
           </select>
         </label>
       </div>
+
+      {phase !== "listo" ? (
+        <p className={styles.hint}>
+          {phase === "panorama" ? "Generando panorama del mes…" : "Cargando brigadas…"}
+        </p>
+      ) : null}
 
       {general ? (
         <section className={styles.general}>
@@ -128,6 +164,7 @@ export default function TmrMensual({ rows }: Props) {
       ) : null}
 
       <h3 className={styles.blockTitle}>Por brigada</h3>
+      {phase !== "listo" ? <p className={styles.hint}>El detalle por brigada se arma después del panorama.</p> : null}
       <div className={styles.layout}>
         <div className={styles.list}>
           <h3>Brigadas</h3>
@@ -213,9 +250,9 @@ export default function TmrMensual({ rows }: Props) {
               />
             </section>
           </div>
-        ) : (
+        ) : phase === "listo" ? (
           <p className={styles.hint}>No hay brigadas en ese mes.</p>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
   BookOpen,
   Clock,
   IdCard,
+  Timer,
   Zap,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -36,6 +37,7 @@ const ICON_MAP = {
   BookOpen,
   Clock,
   IdCard,
+  Timer,
   Zap,
 } as const;
 

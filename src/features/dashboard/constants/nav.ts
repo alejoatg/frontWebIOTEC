@@ -32,6 +32,12 @@ export const DASHBOARD_NAV_ITEMS = [
     roles: ["ADMIN", "CORDINADOR"],
   },
   {
+    path: "/dashboard/tmr-distribucion",
+    label: "TMR Distribución",
+    icon: "Timer",
+    roles: ["ADMIN"],
+  },
+  {
     path: "/dashboard/users",
     label: "Usuarios",
     icon: "Users",

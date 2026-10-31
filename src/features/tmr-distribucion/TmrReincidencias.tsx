@@ -11,7 +11,7 @@ import {
 } from "./reincidencias";
 import styles from "./TmrReincidencias.module.scss";
 
-const TIPOS: Array<RecidivaTipo | ""> = ["", "reiterativa", "reincidencia", "relacionados", "unico"];
+const TIPOS: RecidivaTipo[] = ["reiterativa", "reincidencia", "relacionados", "unico"];
 
 function top(list: { name: string; count: number }[], n = 2): string {
   return list
@@ -80,7 +80,7 @@ export default function TmrReincidencias({ rows }: Props) {
           Tipo
           <select value={tipo} onChange={(e) => setTipo(e.target.value as RecidivaTipo | "")}>
             <option value="">Todos</option>
-            {TIPOS.filter(Boolean).map((item) => (
+            {TIPOS.map((item) => (
               <option key={item} value={item}>
                 {RECIDIVA_LABEL[item]}
               </option>

@@ -186,7 +186,37 @@ export default function TmrContainer() {
       </div>
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      {summary ? (
+      <div className={styles.tabs}>
+        <button
+          type="button"
+          className={section === "listado" ? styles.tabOn : styles.tab}
+          onClick={() => setSection("listado")}
+        >
+          Listado conciliado
+        </button>
+        <button
+          type="button"
+          className={section === "jornada" ? styles.tabOn : styles.tab}
+          onClick={() => setSection("jornada")}
+        >
+          Análisis de jornada
+        </button>
+        <button
+          type="button"
+          className={section === "reincidencias" ? styles.tabOn : styles.tab}
+          onClick={() => setSection("reincidencias")}
+        >
+          Análisis de reincidencias
+        </button>
+      </div>
+      {!summary ? (
+        <p className={styles.hint}>
+          Suba el consolidado y pulse Analizar. Después podrá entrar a jornada y
+          reincidencias con esos resultados.
+        </p>
+      ) : null}
+
+      {summary && section === "listado" ? (
         <>
           <div className={styles.stats}>
             <div className={styles.stat}>
@@ -275,35 +305,6 @@ export default function TmrContainer() {
             </div>
           </div>
 
-          <div className={styles.tabs}>
-            <button
-              type="button"
-              className={section === "listado" ? styles.tabOn : styles.tab}
-              onClick={() => setSection("listado")}
-            >
-              Listado conciliado
-            </button>
-            <button
-              type="button"
-              className={section === "jornada" ? styles.tabOn : styles.tab}
-              onClick={() => setSection("jornada")}
-            >
-              Análisis de jornada
-            </button>
-            <button
-              type="button"
-              className={section === "reincidencias" ? styles.tabOn : styles.tab}
-              onClick={() => setSection("reincidencias")}
-            >
-              Análisis de reincidencias
-            </button>
-          </div>
-
-          {section === "jornada" ? <TmrJornada rows={rows} /> : null}
-          {section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
-
-          {section === "listado" ? (
-          <>
           <div className={styles.filters}>
             <div className={styles.field}>
               <label>Buscar</label>
@@ -457,10 +458,11 @@ export default function TmrContainer() {
               Siguiente
             </Button>
           </div>
-          </>
-          ) : null}
         </>
       ) : null}
+
+      {summary && section === "jornada" ? <TmrJornada rows={rows} /> : null}
+      {summary && section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
     </div>
   );
 }

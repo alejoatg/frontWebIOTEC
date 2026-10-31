@@ -56,6 +56,73 @@ export function mondayIndex(month: string): number {
   return (dow + 6) % 7;
 }
 
+export interface PlaceStat {
+  name: string;
+  jobs: number;
+  despMedio: number | null;
+  ejecMedio: number | null;
+  despLargos: number;
+  ejecLargas: number;
+}
+
+export interface MonthGeneral {
+  actividades: number;
+  despMedio: number | null;
+  ejecMedio: number | null;
+  alistMedio: number | null;
+  tmrUtenMedio: number | null;
+  despLargos: TmrRow[];
+  ejecLargas: TmrRow[];
+  nucleos: PlaceStat[];
+  municipios: PlaceStat[];
+}
+
+export function rowsForMonth(rows: TmrRow[], month: string): TmrRow[] {
+  return rows.filter((row) => {
+    const day = executionDayKey(row);
+    return Boolean(day && monthKeyFromDay(day) === month);
+  });
+}
+
+function placeStats(rows: TmrRow[], nameOf: (row: TmrRow) => string): PlaceStat[] {
+  const groups = new Map<string, TmrRow[]>();
+  for (const row of rows) {
+    const name = nameOf(row).trim() || "(sin dato)";
+    const list = groups.get(name);
+    if (list) list.push(row);
+    else groups.set(name, [row]);
+  }
+  return [...groups.entries()]
+    .map(([name, list]) => ({
+      name,
+      jobs: list.length,
+      despMedio: mean(list.map((row) => row.tmrDesp)),
+      ejecMedio: mean(list.map((row) => row.tmrSer)),
+      despLargos: list.filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H).length,
+      ejecLargas: list.filter((row) => row.tmrSer != null && row.tmrSer > EJEC_LARGA_H).length,
+    }))
+    .sort((a, b) => (b.despMedio ?? -1) - (a.despMedio ?? -1) || b.jobs - a.jobs);
+}
+
+export function buildMonthGeneral(rows: TmrRow[], month: string): MonthGeneral {
+  const list = rowsForMonth(rows, month);
+  return {
+    actividades: list.length,
+    despMedio: mean(list.map((row) => row.tmrDesp)),
+    ejecMedio: mean(list.map((row) => row.tmrSer)),
+    alistMedio: mean(list.map((row) => row.tmrAlist)),
+    tmrUtenMedio: mean(list.map((row) => row.tmrDuracionUten)),
+    despLargos: [...list]
+      .filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H)
+      .sort((a, b) => (b.tmrDesp ?? 0) - (a.tmrDesp ?? 0)),
+    ejecLargas: [...list]
+      .filter((row) => row.tmrSer != null && row.tmrSer > EJEC_LARGA_H)
+      .sort((a, b) => (b.tmrSer ?? 0) - (a.tmrSer ?? 0)),
+    nucleos: placeStats(list, (row) => row.nucleo),
+    municipios: placeStats(list, (row) => row.municipality),
+  };
+}
+
 export function availableMonths(rows: TmrRow[]): string[] {
   const set = new Set<string>();
   for (const row of rows) {

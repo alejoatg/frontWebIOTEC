@@ -6,11 +6,13 @@ import { formatSpan, formatTs } from "./jornada";
 import {
   availableMonths,
   buildCrewMonths,
+  buildMonthGeneral,
   calendarCells,
   DESP_LARGA_H,
   EJEC_LARGA_H,
   monthLabel,
   type CrewMonth,
+  type PlaceStat,
 } from "./mensual";
 import styles from "./TmrMensual.module.scss";
 
@@ -23,6 +25,7 @@ interface Props {
 export default function TmrMensual({ rows }: Props) {
   const months = useMemo(() => availableMonths(rows), [rows]);
   const [month, setMonth] = useState(months[0] ?? "");
+  const general = useMemo(() => (month ? buildMonthGeneral(rows, month) : null), [rows, month]);
   const crews = useMemo(() => (month ? buildCrewMonths(rows, month) : []), [rows, month]);
   const [crew, setCrew] = useState(crews[0]?.crew ?? "");
   const selected = crews.find((item) => item.crew === crew) ?? crews[0];
@@ -33,9 +36,10 @@ export default function TmrMensual({ rows }: Props) {
   return (
     <div className={styles.wrap}>
       <p className={styles.hint}>
-        Estadísticas por brigada en el mes. El calendario usa el día de ejecución. Un
-        desplazamiento cuenta como largo si supera {DESP_LARGA_H} h; una ejecución, si
-        supera {EJEC_LARGA_H} h.
+        Primero el panorama de todas las brigadas (viajes, servicios y lugares con más
+        desplazamiento). Debajo, el detalle por brigada. El calendario usa el día de
+        ejecución. Un desplazamiento cuenta como largo si supera {DESP_LARGA_H} h; una
+        ejecución, si supera {EJEC_LARGA_H} h.
       </p>
 
       <div className={styles.toolbar}>
@@ -57,6 +61,73 @@ export default function TmrMensual({ rows }: Props) {
         </label>
       </div>
 
+      {general ? (
+        <section className={styles.general}>
+          <h3>Panorama del mes</h3>
+          <p className={styles.hint}>
+            Todas las brigadas UTEN. Desplazamiento = En ruta → en sitio. Ejecución = en
+            sitio → completado.
+          </p>
+          <div className={styles.kpis}>
+            <div>
+              <strong>{general.actividades}</strong>
+              Actividades
+            </div>
+            <div>
+              <strong>{formatSpan(general.despMedio)}</strong>
+              Desplazamiento medio
+            </div>
+            <div>
+              <strong>{formatSpan(general.ejecMedio)}</strong>
+              Ejecución media
+            </div>
+            <div>
+              <strong>{formatSpan(general.alistMedio)}</strong>
+              Alistamiento medio
+            </div>
+            <div>
+              <strong>{formatSpan(general.tmrUtenMedio)}</strong>
+              TMR UTEN medio
+            </div>
+            <div>
+              <strong>{general.despLargos.length}</strong>
+              Viajes &gt; {DESP_LARGA_H} h
+            </div>
+            <div>
+              <strong>{general.ejecLargas.length}</strong>
+              Servicios &gt; {EJEC_LARGA_H} h
+            </div>
+          </div>
+
+          <div className={styles.split}>
+            <Special
+              title={`Desplazamientos más largos (> ${DESP_LARGA_H} h)`}
+              rows={general.despLargos}
+              getValue={(row) => row.tmrDesp}
+              showCrew
+            />
+            <Special
+              title={`Ejecuciones más largas (> ${EJEC_LARGA_H} h)`}
+              rows={general.ejecLargas}
+              getValue={(row) => row.tmrSer}
+              showCrew
+            />
+          </div>
+
+          <div className={styles.split}>
+            <PlaceTable
+              title="Núcleos con más tiempo de desplazamiento"
+              rows={general.nucleos}
+            />
+            <PlaceTable
+              title="Municipios con más tiempo de desplazamiento"
+              rows={general.municipios}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      <h3 className={styles.blockTitle}>Por brigada</h3>
       <div className={styles.layout}>
         <div className={styles.list}>
           <h3>Brigadas</h3>
@@ -219,10 +290,12 @@ function Special({
   title,
   rows,
   getValue,
+  showCrew = false,
 }: {
   title: string;
   rows: TmrRow[];
   getValue: (row: TmrRow) => number | null;
+  showCrew?: boolean;
 }) {
   return (
     <div className={styles.special}>
@@ -236,12 +309,50 @@ function Special({
           {rows.slice(0, 12).map((row) => (
             <li key={row.id}>
               <strong>{formatSpan(getValue(row))}</strong>
+              {showCrew ? <span>{row.crew}</span> : null}
               <span>{row.caseSerial || row.jobSerial}</span>
               <span>{formatTs(row.startTime)}</span>
               <span>{row.municipality || "—"}</span>
+              {row.nucleo ? <span>{row.nucleo}</span> : null}
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+function PlaceTable({ title, rows }: { title: string; rows: PlaceStat[] }) {
+  return (
+    <div className={styles.special}>
+      <h3>{title}</h3>
+      {rows.length === 0 ? (
+        <p className={styles.hint}>Sin datos de ubicación en este mes.</p>
+      ) : (
+        <div className={styles.placeWrap}>
+          <table className={styles.place}>
+            <thead>
+              <tr>
+                <th>Lugar</th>
+                <th>Jobs</th>
+                <th>Desp. medio</th>
+                <th>Ejec. media</th>
+                <th>Viajes largos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 12).map((row) => (
+                <tr key={row.name}>
+                  <td>{row.name}</td>
+                  <td>{row.jobs}</td>
+                  <td>{formatSpan(row.despMedio)}</td>
+                  <td>{formatSpan(row.ejecMedio)}</td>
+                  <td>{row.despLargos}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

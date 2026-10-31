@@ -24,6 +24,7 @@ import {
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
 import TmrMensual from "./TmrMensual";
+import TmrMapa from "./TmrMapa";
 import styles from "./TmrContainer.module.scss";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -62,7 +63,7 @@ export default function TmrContainer() {
   const [municipio, setMunicipio] = useState("");
   const [crew, setCrew] = useState("");
   const [page, setPage] = useState(0);
-  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias" | "mensual">("listado");
+  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias" | "mensual" | "mapa">("listado");
 
   const summary = preview?.summary;
   const municipios = useMemo(
@@ -216,11 +217,18 @@ export default function TmrContainer() {
           >
             Análisis mensual
           </button>
+          <button
+            type="button"
+            className={section === "mapa" ? styles.tabOn : styles.tab}
+            onClick={() => setSection("mapa")}
+          >
+            Mapa de calor
+          </button>
         </div>
       {!summary ? (
         <p className={styles.hint}>
           Suba el consolidado y pulse Analizar. Después podrá entrar a jornada,
-          reincidencias y el análisis mensual.
+          reincidencias, el análisis mensual y el mapa de calor.
         </p>
       ) : null}
 
@@ -472,6 +480,7 @@ export default function TmrContainer() {
       {summary && section === "jornada" ? <TmrJornada rows={rows} /> : null}
       {summary && section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
       {summary && section === "mensual" ? <TmrMensual rows={rows} /> : null}
+      {summary && section === "mapa" ? <TmrMapa rows={rows} /> : null}
     </div>
   );
 }

@@ -13,6 +13,12 @@
   height: 100%;
 }
 
+.map :global(.leaflet-container),
+.map.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
 .missingKey {
   padding: 1.5rem;
   border-radius: 12px;

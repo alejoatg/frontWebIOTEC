@@ -6,7 +6,11 @@
 const holidayCache = new Map<number, Set<string>>();
 
 function isoDateUtc(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function isIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 /** Domingo de Pascua (algoritmo de Meeus/Jones/Butcher, calendario gregoriano). */
@@ -30,17 +34,21 @@ function easterSunday(year: number): { month: number; day: number } {
 
 function addDaysIso(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T12:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return isoDate;
   d.setUTCDate(d.getUTCDate() + days);
+  if (Number.isNaN(d.getTime())) return isoDate;
   return d.toISOString().slice(0, 10);
 }
 
 /** Traslada al lunes siguiente (Ley Emiliani), salvo que ya sea lunes. */
 function toEmilianiMonday(isoDate: string): string {
   const d = new Date(`${isoDate}T12:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return isoDate;
   const dow = d.getUTCDay();
   if (dow === 1) return isoDate;
   const add = dow === 0 ? 1 : 8 - dow;
   d.setUTCDate(d.getUTCDate() + add);
+  if (Number.isNaN(d.getTime())) return isoDate;
   return d.toISOString().slice(0, 10);
 }
 
@@ -93,13 +101,15 @@ function holidaysForYear(year: number): Set<string> {
 }
 
 export function isSunday(isoDate: string): boolean {
+  if (!isIsoDate(isoDate)) return false;
   const d = new Date(`${isoDate}T12:00:00.000Z`);
   return d.getUTCDay() === 0;
 }
 
 export function isColombiaHoliday(isoDate: string): boolean {
+  if (!isIsoDate(isoDate)) return false;
   const year = Number(isoDate.slice(0, 4));
-  if (!Number.isFinite(year)) return false;
+  if (!Number.isFinite(year) || year < 1900) return false;
   return holidaysForYear(year).has(isoDate);
 }
 

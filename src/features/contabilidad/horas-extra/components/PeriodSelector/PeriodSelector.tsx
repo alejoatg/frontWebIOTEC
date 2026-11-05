@@ -11,9 +11,16 @@ export interface PeriodSelectorProps {
   month: number;
   onChange: (year: number, month: number) => void;
   disabled?: boolean;
+  hideCounts?: boolean;
 }
 
-export default function PeriodSelector({ year, month, onChange, disabled }: PeriodSelectorProps) {
+export default function PeriodSelector({
+  year,
+  month,
+  onChange,
+  disabled,
+  hideCounts = false,
+}: PeriodSelectorProps) {
   const [detail, setDetail] = useState<OvertimePeriodDetail | null>(null);
 
   const load = useCallback(async () => {
@@ -55,7 +62,7 @@ export default function PeriodSelector({ year, month, onChange, disabled }: Peri
       {detail && (
         <span className={styles.badge} data-status={detail.status}>
           {detail.periodCode} — {detail.status === "OPEN" ? "Abierto" : "Cerrado"}
-          {detail.entryCounts && (
+          {detail.entryCounts && !hideCounts && (
             <>
               {" "}
               · Pendientes: {detail.entryCounts.PENDING ?? 0} · Aprobados:{" "}

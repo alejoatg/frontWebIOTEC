@@ -1,0 +1,86 @@
+@use "@/styles/variables" as *;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  padding: $spacing-4;
+}
+
+.dialog {
+  width: min(32rem, 100%);
+  max-height: min(80vh, 40rem);
+  overflow: auto;
+  background: #fff;
+  border-radius: $radius-lg;
+  padding: $spacing-5;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.title {
+  margin: 0 0 $spacing-2;
+  font-size: $font-size-lg;
+}
+
+.hint {
+  margin: 0 0 $spacing-3;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+}
+
+.error {
+  margin: 0 0 $spacing-3;
+  color: #b91c1c;
+  font-size: $font-size-sm;
+}
+
+.list {
+  list-style: none;
+  margin: 0 0 $spacing-4;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.option {
+  display: flex;
+  gap: $spacing-3;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.meta {
+  display: block;
+  color: $color-text-muted;
+  font-size: $font-size-xs;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+}
+
+.primary,
+.secondary {
+  border-radius: $radius-md;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  cursor: pointer;
+}
+
+.primary {
+  border: none;
+  background: $color-primary-600;
+  color: #fff;
+}
+
+.secondary {
+  border: 1px solid $color-border;
+  background: #fff;
+}

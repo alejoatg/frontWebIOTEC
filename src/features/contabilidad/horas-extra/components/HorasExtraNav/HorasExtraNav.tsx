@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeReviewNav } from "@/features/dashboard/constants/nav";
+import { canSeeOvertimeReviewNav, isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
 import styles from "./HorasExtraNav.module.scss";
 
 const LINKS = [
@@ -11,6 +11,11 @@ const LINKS = [
   { href: "/dashboard/contabilidad/horas-extra/cargar", label: "Cargar Excel" },
   { href: "/dashboard/contabilidad/horas-extra/digitar", label: "Digitar" },
   { href: "/dashboard/contabilidad/horas-extra/mis-registros", label: "Mis registros" },
+  {
+    href: "/dashboard/contabilidad/horas-extra/grupo",
+    label: "Registros del grupo",
+    analystOnly: true,
+  },
   {
     href: "/dashboard/contabilidad/horas-extra/registros",
     label: "Registros",
@@ -54,9 +59,14 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 export default function HorasExtraNav() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const analyst = isOvertimeAnalyst(user?.role);
   const showReview = canSeeOvertimeReviewNav(user?.role);
 
-  const links = LINKS.filter((l) => !("reviewOnly" in l && l.reviewOnly) || showReview);
+  const links = LINKS.filter((l) => {
+    if ("analystOnly" in l && l.analystOnly) return analyst;
+    if (analyst) return false;
+    return !("reviewOnly" in l && l.reviewOnly) || showReview;
+  });
 
   return (
     <nav className={styles.nav} aria-label="Tiempo suplementario">

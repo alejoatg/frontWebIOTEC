@@ -1,7 +1,16 @@
 /**
  * Roles disponibles en el sistema.
  */
-export type UserRole = "ADMIN" | "CORDINADOR" | "SUPERVISOR" | "COLABORADOR";
+export type UserRole =
+  | "ADMIN"
+  | "CORDINADOR"
+  | "SUPERVISOR"
+  | "TECNICO"
+  | "LIDER_BRIGADA"
+  | "HSE"
+  | "TALENTO_HUMANO"
+  | "CONTABILIDAD"
+  | "ANALISTA";
 
 /**
  * Usuario del listado (datos devueltos por GET /api/users).

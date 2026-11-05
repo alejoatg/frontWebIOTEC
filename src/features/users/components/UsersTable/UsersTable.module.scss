@@ -117,6 +117,32 @@
   color: #6b21a8;
 }
 
+.roleSelect {
+  min-width: 10rem;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: #fff;
+  font-size: $font-size-xs;
+}
+
+.cellActions {
+  white-space: nowrap;
+}
+
+.groupBtn {
+  border: 1px solid $color-border;
+  background: #fff;
+  border-radius: $radius-md;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-xs;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-neutral-50;
+  }
+}
+
 .roleCOLABORADOR {
   background: $color-neutral-100;
   color: $color-neutral-700;

@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   canReviewOvertime,
   canVoidAnyOvertime,
+  isOvertimeAnalyst,
 } from "@/features/dashboard/constants/nav";
 import {
   approveEntry,
@@ -56,6 +57,7 @@ export default function EntryActions({
   const router = useRouter();
   const { user } = useAuth();
   const canReview = canReviewOvertime(user?.role);
+  const analyst = isOvertimeAnalyst(user?.role);
   const canVoid = allowVoid || canVoidAnyOvertime(user?.role);
   const [approveOpen, setApproveOpen] = useState(false);
   const [approveNote, setApproveNote] = useState("");
@@ -109,28 +111,32 @@ export default function EntryActions({
             </Button>
           </Link>
         )}
-        <Link
-          href={dayPrintPageUrl(employeeId, workDate)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button type="button" variant="ghost" size="sm">
-            Imprimir día
+        {!analyst && (
+          <Link
+            href={dayPrintPageUrl(employeeId, workDate)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button type="button" variant="ghost" size="sm">
+              Imprimir día
+            </Button>
+          </Link>
+        )}
+        {!analyst && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              downloadAuthenticatedFile(
+                pdfMonthUrl(employeeId, periodYear, periodMonth),
+                `TS-mes-${employeeDocumentNumber}.pdf`,
+              )
+            }
+          >
+            PDF mes
           </Button>
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            downloadAuthenticatedFile(
-              pdfMonthUrl(employeeId, periodYear, periodMonth),
-              `TS-mes-${employeeDocumentNumber}.pdf`,
-            )
-          }
-        >
-          PDF mes
-        </Button>
+        )}
         {canReview && status === "PENDING" && (
           <>
             <Button type="button" size="sm" onClick={() => setApproveOpen(true)}>

@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { updateUserRole } from "../api";
 import { useUsers } from "../hooks/useUsers";
-import UsersTable from "./UsersTable";
+import type { UserListItem, UserRole } from "../types";
+import AnalystGroupModal from "./AnalystGroupModal/AnalystGroupModal";
+import UsersTable, { ROLE_OPTIONS } from "./UsersTable";
 import styles from "./UsersListContainer.module.scss";
 
 export default function UsersListContainer() {
   const { users, loading, error, refetch } = useUsers();
+  const [savingRoleId, setSavingRoleId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [groupUser, setGroupUser] = useState<UserListItem | null>(null);
 
   if (loading) {
     return (
@@ -28,6 +35,28 @@ export default function UsersListContainer() {
     );
   }
 
+  async function handleRoleChange(user: UserListItem, role: UserRole) {
+    if (role === user.role) return;
+    const label = ROLE_OPTIONS.find((item) => item.value === role)?.label ?? role;
+    if (!window.confirm(`Cambiar el rol de ${user.name} a ${label}?`)) return;
+    setSavingRoleId(user.id);
+    setActionError(null);
+    try {
+      await updateUserRole(user.id, role);
+      await refetch();
+      if (role === "ANALISTA") setGroupUser({ ...user, role });
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "No se pudo cambiar el rol");
+    } finally {
+      setSavingRoleId(null);
+    }
+  }
+
+  const digitizers = users.filter(
+    (user) =>
+      user.isActive && (user.role === "SUPERVISOR" || user.role === "CORDINADOR"),
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -46,7 +75,20 @@ export default function UsersListContainer() {
           <RefreshCw size={18} />
         </button>
       </div>
-      <UsersTable users={users} />
+      {actionError && <p className={styles.actionError}>{actionError}</p>}
+      <UsersTable
+        users={users}
+        savingRoleId={savingRoleId}
+        onRoleChange={handleRoleChange}
+        onEditGroup={setGroupUser}
+      />
+      {groupUser && (
+        <AnalystGroupModal
+          analyst={groupUser}
+          digitizers={digitizers}
+          onClose={() => setGroupUser(null)}
+        />
+      )}
     </div>
   );
 }

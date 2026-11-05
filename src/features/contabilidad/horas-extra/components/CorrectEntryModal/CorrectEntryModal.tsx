@@ -13,7 +13,9 @@ import {
   computeAmounts,
   HOURS_COHERENCE_TOLERANCE,
   sumCategoryHours,
+  validatorComparableHours,
 } from "../../lib/overtimeCalculator";
+import { isSundayOrHoliday } from "../../lib/colombiaHolidays";
 import { toDateInputValue } from "../../lib/dateFormat";
 import styles from "./CorrectEntryModal.module.scss";
 
@@ -134,6 +136,10 @@ export default function CorrectEntryModal({
     const end = normalizeTime(form.endTime) ?? entry.endTime ?? "";
     const startEnd = start && end ? calcStartEndHours(start, end) : null;
     const categoriesTotal = sumCategoryHours(hours);
+    const comparable = validatorComparableHours(
+      hours,
+      isSundayOrHoliday(form.workDate || toDateInputValue(entry.workDate)),
+    );
     const amounts = computeAmounts(
       hours,
       Number(entry.salarySnapshot ?? 0),
@@ -141,7 +147,7 @@ export default function CorrectEntryModal({
       entry.hourlyDivisorSnapshot ?? 220,
     );
     const coherenceWarning =
-      startEnd != null && Math.abs(startEnd - categoriesTotal) > HOURS_COHERENCE_TOLERANCE
+      startEnd != null && Math.abs(startEnd - comparable) > HOURS_COHERENCE_TOLERANCE
         ? `Horario (${startEnd} h) no coincide con horas por categoría (${categoriesTotal} h).`
         : null;
 

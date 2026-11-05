@@ -1,9 +1,24 @@
 import Image from "next/image";
-import type { UserListItem } from "../../types";
+import type { UserListItem, UserRole } from "../../types";
 import styles from "./UsersTable.module.scss";
+
+export const ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
+  { value: "ADMIN", label: "Administrador" },
+  { value: "CORDINADOR", label: "Coordinador" },
+  { value: "SUPERVISOR", label: "Supervisor" },
+  { value: "ANALISTA", label: "Analista" },
+  { value: "CONTABILIDAD", label: "Contabilidad" },
+  { value: "TALENTO_HUMANO", label: "Talento humano" },
+  { value: "TECNICO", label: "Técnico" },
+  { value: "LIDER_BRIGADA", label: "Líder de brigada" },
+  { value: "HSE", label: "HSE" },
+];
 
 export interface UsersTableProps {
   users: UserListItem[];
+  savingRoleId: string | null;
+  onRoleChange: (user: UserListItem, role: UserRole) => void;
+  onEditGroup: (user: UserListItem) => void;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -16,6 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
   TALENTO_HUMANO: "Talento humano",
   COLABORADOR: "Colaborador",
   CONTABILIDAD: "Contabilidad",
+  ANALISTA: "Analista",
 };
 
 function formatDate(dateString: string | null): string {
@@ -28,7 +44,12 @@ function formatDate(dateString: string | null): string {
   });
 }
 
-export default function UsersTable({ users }: UsersTableProps) {
+export default function UsersTable({
+  users,
+  savingRoleId,
+  onRoleChange,
+  onEditGroup,
+}: UsersTableProps) {
   if (users.length === 0) {
     return (
       <div className={styles.empty}>
@@ -44,6 +65,7 @@ export default function UsersTable({ users }: UsersTableProps) {
           <tr>
             <th className={styles.thUser}>Usuario</th>
             <th className={styles.thRole}>Rol</th>
+            <th className={styles.thActions}>Grupo</th>
             <th className={styles.thStatus}>Estado</th>
             <th className={styles.thLastLogin}>Último acceso</th>
             <th className={styles.thCreated}>Registrado</th>
@@ -74,9 +96,31 @@ export default function UsersTable({ users }: UsersTableProps) {
                 </div>
               </td>
               <td className={styles.cellRole}>
-                <span className={`${styles.roleBadge} ${styles[`role${user.role}`]}`}>
-                  {ROLE_LABELS[user.role] ?? user.role}
-                </span>
+                <select
+                  className={styles.roleSelect}
+                  value={ROLE_OPTIONS.some((r) => r.value === user.role) ? user.role : ""}
+                  disabled={savingRoleId === user.id}
+                  aria-label={`Rol de ${user.name}`}
+                  onChange={(e) => onRoleChange(user, e.target.value as UserRole)}
+                >
+                  {!ROLE_OPTIONS.some((r) => r.value === user.role) && (
+                    <option value="">{ROLE_LABELS[user.role] ?? user.role}</option>
+                  )}
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td className={styles.cellActions}>
+                {user.role === "ANALISTA" ? (
+                  <button type="button" className={styles.groupBtn} onClick={() => onEditGroup(user)}>
+                    Digitadores
+                  </button>
+                ) : (
+                  "—"
+                )}
               </td>
               <td className={styles.cellStatus}>
                 <span

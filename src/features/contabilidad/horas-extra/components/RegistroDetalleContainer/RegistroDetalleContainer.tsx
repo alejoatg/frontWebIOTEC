@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
 import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
 import { dateOnlyMonth, dateOnlyYear, formatDateOnly } from "../../lib/dateFormat";
 import { DETAIL_SECTIONS_NO_MONEY } from "../../lib/entrySpreadsheet";
@@ -125,6 +126,10 @@ interface RegistroDetalleContainerProps {
 export default function RegistroDetalleContainer({ entryId }: RegistroDetalleContainerProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const analyst = isOvertimeAnalyst(user?.role);
+  const listHref = analyst
+    ? "/dashboard/contabilidad/horas-extra/grupo"
+    : "/dashboard/contabilidad/horas-extra/registros";
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,8 +172,8 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <Link href="/dashboard/contabilidad/horas-extra/registros" className={styles.backLink}>
-            ← Registros
+          <Link href={listHref} className={styles.backLink}>
+            ← {analyst ? "Registros del grupo" : "Registros"}
           </Link>
           <h2 className={styles.title}>{entry.entryCode}</h2>
           <p className={styles.subtitle}>
@@ -202,7 +207,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           periodYear={periodYear}
           periodMonth={periodMonth}
           onActionComplete={load}
-          allowVoid={entry.submittedBy?.id === user?.id}
+          allowVoid={analyst || entry.submittedBy?.id === user?.id}
           layout="stacked"
           redirectOnCorrect
         />
@@ -303,11 +308,13 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
       )}
 
       <div className={styles.footer}>
-        <Link href="/dashboard/contabilidad/horas-extra/registros/planilla">
-          <Button type="button" variant="outline" size="sm">
-            Vista planilla
-          </Button>
-        </Link>
+        {!analyst && (
+          <Link href="/dashboard/contabilidad/horas-extra/registros/planilla">
+            <Button type="button" variant="outline" size="sm">
+              Vista planilla
+            </Button>
+          </Link>
+        )}
         <Button type="button" variant="ghost" size="sm" onClick={load}>
           Actualizar
         </Button>

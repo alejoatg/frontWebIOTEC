@@ -124,7 +124,7 @@ export default function CategoriasTsHelpModal({
 
         <div className={styles.body}>
           <section className={styles.rules}>
-            <h3 className={styles.rulesTitle}>Reglas de autollenado</h3>
+            <h3 className={styles.rulesTitle}>Reglas de autoliquidación</h3>
             <ul>
               <li>
                 <strong>Diurno:</strong> 6:00 a 19:00 · <strong>Nocturno:</strong> 19:00 a 6:00
@@ -143,7 +143,12 @@ export default function CategoriasTsHelpModal({
                 calculan solas: complételas manualmente si corresponde.
               </li>
               <li>
-                Puede corregir cualquier celda; use <strong>Autollenar</strong> en la fila para
+                En <strong>domingo o festivo</strong>, <strong>RD</strong> y <strong>RN</strong>{" "}
+                pueden cubrir las mismas horas, en la misma fila o en dos filas. El validador
+                cuenta ese tramo una sola vez.
+              </li>
+              <li>
+                Puede corregir cualquier celda; use <strong>Autoliquidar</strong> en la fila para
                 volver a calcular desde Fecha + Inicio + Fin.
               </li>
             </ul>

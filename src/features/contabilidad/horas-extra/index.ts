@@ -1,4 +1,6 @@
 export { default as HorasExtraNav } from "./components/HorasExtraNav/HorasExtraNav";
+export { default as HorasExtraGate } from "./components/HorasExtraGate/HorasExtraGate";
+export { default as GrupoRegistrosContainer } from "./components/GrupoRegistrosContainer/GrupoRegistrosContainer";
 export { default as ResumenContainer } from "./components/ResumenContainer/ResumenContainer";
 export { default as CargaContainer } from "./components/CargaContainer/CargaContainer";
 export { default as DigitarContainer } from "./components/DigitarContainer/DigitarContainer";

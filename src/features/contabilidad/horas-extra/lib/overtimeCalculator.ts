@@ -57,6 +57,37 @@ export function sumCategoryHours(hours: CategoryHours): number {
   return CATEGORY_CODES.reduce((acc, code) => acc + (hours[code] ?? 0), 0);
 }
 
+/** En domingo o festivo, el tramo compartido de RD y RN se cuenta una sola vez. */
+export function validatorComparableHours(
+  hours: CategoryHours,
+  festive: boolean,
+): number {
+  const total = sumCategoryHours(hours);
+  if (!festive) return total;
+  const overlap = Math.min(Math.max(hours.RD ?? 0, 0), Math.max(hours.RN ?? 0, 0));
+  return Math.round((total - overlap) * 10000) / 10000;
+}
+
+export type RdRnRole = "RD" | "RN" | "BOTH" | "NONE";
+
+export function rdRnRole(hours: { RD?: number; RN?: number }): RdRnRole {
+  const rd = (hours.RD ?? 0) > 0;
+  const rn = (hours.RN ?? 0) > 0;
+  if (rd && rn) return "BOTH";
+  if (rd) return "RD";
+  if (rn) return "RN";
+  return "NONE";
+}
+
+export function isFestiveRdRnSplit(
+  roleA: RdRnRole,
+  roleB: RdRnRole,
+  festive: boolean,
+): boolean {
+  if (!festive) return false;
+  return (roleA === "RD" && roleB === "RN") || (roleA === "RN" && roleB === "RD");
+}
+
 export function calcStartEndHours(startTime: string, endTime: string): number | null {
   const parse = (hhmm: string) => {
     const s = hhmm.replace(/\D/g, "").padStart(4, "0");

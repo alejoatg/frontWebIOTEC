@@ -198,6 +198,60 @@ export function myEntriesExportExcelUrl(params: {
   return `${BASE}/entries/mine/export?${q}`;
 }
 
+export interface AnalystDigitizer {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+}
+
+export async function fetchMyAnalystDigitizers() {
+  return request<AnalystDigitizer[]>("/analyst/digitizers");
+}
+
+export async function fetchGroupEntries(params: {
+  year: number;
+  month: number;
+  status?: string;
+  digitizerId?: string;
+  documentNumber?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  includeSuperseded?: boolean;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+    page: String(params.page ?? 1),
+    pageSize: String(params.pageSize ?? 50),
+  });
+  if (params.status) q.set("status", params.status);
+  if (params.digitizerId) q.set("digitizerId", params.digitizerId);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.search) q.set("search", params.search);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  return request<EntriesPage>(`/entries/group?${q}`);
+}
+
+export function groupEntriesExportExcelUrl(params: {
+  year: number;
+  month: number;
+  status?: string;
+  digitizerId?: string;
+  search?: string;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.status) q.set("status", params.status);
+  if (params.digitizerId) q.set("digitizerId", params.digitizerId);
+  if (params.search) q.set("search", params.search);
+  return `${BASE}/entries/group/export?${q}`;
+}
+
 export async function fetchEntry(id: string) {
   return request<OvertimeEntryRow>(`/entries/${id}`);
 }

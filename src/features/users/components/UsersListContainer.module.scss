@@ -6,6 +6,12 @@
   gap: $spacing-4;
 }
 
+.actionError {
+  margin: 0;
+  color: #b91c1c;
+  font-size: $font-size-sm;
+}
+
 .header {
   display: flex;
   align-items: center;

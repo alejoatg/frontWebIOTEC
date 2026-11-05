@@ -170,12 +170,6 @@ export default function TmrContainer() {
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.hint}>
-        Suba el consolidado con las hojas Datos y BRIGADAS UTEN. Analizar solo concilia el
-        listado (TMR, rangos, sobreasignación y exclusión). El análisis mensual y el mapa
-        se generan después, cada uno con su botón, para no saturar la misma carga.
-      </p>
-
       <div className={styles.row}>
         <div className={styles.field}>
           <label htmlFor="tmr-file">Consolidado TMR</label>

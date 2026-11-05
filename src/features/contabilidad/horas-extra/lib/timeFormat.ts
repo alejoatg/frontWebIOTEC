@@ -15,6 +15,7 @@ export function formatClockTime(value: string | null | undefined): string {
   const mm = padded.slice(2, 4);
   const h = Number(hh);
   const m = Number(mm);
+  if (h === 24 && m === 0) return "24:00";
   if (!Number.isFinite(h) || !Number.isFinite(m) || h > 23 || m > 59) {
     return trimmed;
   }
@@ -25,12 +26,18 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** Opciones de digitación: hora en punto o media hora. */
-export const HALF_HOUR_OPTIONS: string[] = Array.from({ length: 48 }, (_, i) => {
-  const h = Math.floor(i / 2);
-  const m = i % 2 === 0 ? 0 : 30;
-  return `${pad2(h)}:${pad2(m)}`;
-});
+/**
+ * Opciones de digitación: hora en punto o media hora, más 24:00.
+ * 24:00 cierra el día (00:00 a 24:00 = 24 h; 23:00 a 24:00 = 1 h).
+ */
+export const HALF_HOUR_OPTIONS: string[] = [
+  ...Array.from({ length: 48 }, (_, i) => {
+    const h = Math.floor(i / 2);
+    const m = i % 2 === 0 ? 0 : 30;
+    return `${pad2(h)}:${pad2(m)}`;
+  }),
+  "24:00",
+];
 
 export function isHalfHourClock(value: string | null | undefined): boolean {
   const clock = formatClockTime(value);

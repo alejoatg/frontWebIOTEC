@@ -17,7 +17,7 @@ export const DASHBOARD_NAV_ITEMS = [
     path: "/dashboard/contabilidad/horas-extra",
     label: "Tiempo suplementario",
     icon: "Clock",
-    roles: ["CONTABILIDAD", "ADMIN", "SUPERVISOR", "CORDINADOR"],
+    roles: ["CONTABILIDAD", "ADMIN", "SUPERVISOR", "CORDINADOR", "ANALISTA"],
   },
   {
     path: "/dashboard/talento-humano",
@@ -69,10 +69,15 @@ export function canManageOvertimeParams(role: string | undefined) {
 
 /**
  * Vistas de revisión/gestión contable en la cinta de horas extra.
- * Digitadores (SUPERVISOR, CORDINADOR) no las ven: usan Digitar, Cargar y Mis registros.
+ * Digitadores usan Digitar, Cargar y Mis registros.
+ * El analista solo ve los registros de su grupo.
  */
 export function canSeeOvertimeReviewNav(role: string | undefined) {
-  return role !== "SUPERVISOR" && role !== "CORDINADOR";
+  return role !== "SUPERVISOR" && role !== "CORDINADOR" && role !== "ANALISTA";
+}
+
+export function isOvertimeAnalyst(role: string | undefined) {
+  return role === "ANALISTA";
 }
 
 /**

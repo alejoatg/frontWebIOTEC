@@ -1,4 +1,4 @@
-import { HorasExtraNav } from "@/features/contabilidad/horas-extra";
+import { HorasExtraGate, HorasExtraNav } from "@/features/contabilidad/horas-extra";
 
 export default function HorasExtraLayout({
   children,
@@ -6,9 +6,9 @@ export default function HorasExtraLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <HorasExtraGate>
       <HorasExtraNav />
       {children}
-    </>
+    </HorasExtraGate>
   );
 }

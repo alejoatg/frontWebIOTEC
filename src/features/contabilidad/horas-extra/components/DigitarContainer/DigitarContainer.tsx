@@ -20,8 +20,12 @@ import {
 import {
   calcStartEndHours,
   HOURS_COHERENCE_TOLERANCE,
+  isFestiveRdRnSplit,
+  rdRnRole,
   sumCategoryHours,
+  validatorComparableHours,
 } from "../../lib/overtimeCalculator";
+import { isSundayOrHoliday } from "../../lib/colombiaHolidays";
 import { formatClockTime, isHalfHourClock, toHalfHourClock } from "../../lib/timeFormat";
 import {
   suggestSupplementalCategoryHours,
@@ -263,9 +267,10 @@ function rowPreview(row: DigitarRow) {
     DISPONIBILIDAD: num(row.hoursDisponibilidad),
   };
   const categoriesTotal = sumCategoryHours(hours);
+  const comparable = validatorComparableHours(hours, isSundayOrHoliday(row.workDate));
   const startEnd = calcStartEndHours(row.startTime, row.endTime);
   const delta =
-    startEnd == null ? null : Math.round((startEnd - categoriesTotal) * 10000) / 10000;
+    startEnd == null ? null : Math.round((startEnd - comparable) * 10000) / 10000;
   const mismatch = delta != null && Math.abs(delta) > HOURS_COHERENCE_TOLERANCE;
   const ok = delta != null && !mismatch;
   return { categoriesTotal, startEnd, delta, mismatch, ok };
@@ -330,7 +335,7 @@ function collectRegisterErrors(
     const preview = rowPreview(row);
     if (preview.mismatch && preview.delta != null) {
       errors.push(
-        `${label}: validador ${preview.delta} (debe ser 0). Ajuste las horas por categoría o use Autollenar.`,
+        `${label}: validador ${preview.delta} (debe ser 0). Ajuste las horas por categoría o use Autoliquidar.`,
       );
       return;
     }
@@ -339,23 +344,38 @@ function collectRegisterErrors(
     }
   });
 
-  const seen = new Set<string>();
+  const seen = new Map<string, { role: ReturnType<typeof rdRnRole>; paired: boolean }>();
   rows.forEach((row, index) => {
     const doc = row.documentNumber.replace(/\D/g, "");
     const start = (formatClockTime(row.startTime) || row.startTime || "").replace(/\D/g, "");
     const end = (formatClockTime(row.endTime) || row.endTime || "").replace(/\D/g, "");
     if (!doc || !row.workDate || !start || !end) return;
     const key = `${doc}|${row.workDate}|${start}|${end}`;
-    if (seen.has(key)) {
-      errors.push(
-        `${rowLabel(row, index)}: fila duplicada (misma cédula, fecha y horario) en este lote. Remueva o modifique una de las filas.`,
-      );
+    const role = rdRnRole({ RD: num(row.hoursRd), RN: num(row.hoursRn) });
+    const previous = seen.get(key);
+    if (previous) {
+      const split = isFestiveRdRnSplit(previous.role, role, isSundayOrHoliday(row.workDate));
+      if (split && !previous.paired) {
+        previous.paired = true;
+      } else {
+        errors.push(
+          `${rowLabel(row, index)}: fila duplicada (misma cédula, fecha y horario) en este lote. Remueva o modifique una de las filas.`,
+        );
+      }
     } else {
-      seen.add(key);
+      seen.set(key, { role, paired: false });
     }
   });
 
-  const ranges: Array<{ index: number; doc: string; start: number; end: number; label: string }> = [];
+  const ranges: Array<{
+    index: number;
+    doc: string;
+    start: number;
+    end: number;
+    label: string;
+    role: ReturnType<typeof rdRnRole>;
+    festive: boolean;
+  }> = [];
   rows.forEach((row, index) => {
     const doc = row.documentNumber.replace(/\D/g, "");
     const range = scheduleRange(row.workDate, row.startTime, row.endTime);
@@ -368,6 +388,8 @@ function collectRegisterErrors(
       start: range.start,
       end: range.end,
       label: `${rowLabel(row, index)} (${startLabel}–${endLabel})`,
+      role: rdRnRole({ RD: num(row.hoursRd), RN: num(row.hoursRn) }),
+      festive: isSundayOrHoliday(row.workDate),
     });
   });
   for (let i = 0; i < ranges.length; i++) {
@@ -377,6 +399,7 @@ function collectRegisterErrors(
       if (a.doc !== b.doc) continue;
       if (!(a.start < b.end && b.start < a.end)) continue;
       if (a.start === b.start && a.end === b.end) continue;
+      if (isFestiveRdRnSplit(a.role, b.role, a.festive && b.festive)) continue;
       errors.push(
         `${a.label} se cruza con ${b.label}. Una misma hora no puede quedar en dos filas del mismo trabajador.`,
       );
@@ -1100,7 +1123,7 @@ export default function DigitarContainer() {
                   <td className={styles.stickyActions}>
                     <div className={styles.rowActions}>
                       <button type="button" onClick={() => autofillRow(row.localId)}>
-                        Autollenar
+                        Autoliquidar
                       </button>
                       <button type="button" onClick={() => duplicateRow(row.localId)}>
                         Duplicar
@@ -1248,7 +1271,8 @@ export default function DigitarContainer() {
         {viewableOwners.length > 0 &&
           " Si tienes permiso, puedes consultar en solo lectura el borrador de otro usuario desde el selector superior."}{" "}
         Puedes buscar por cédula o por nombre (se cruzan con Parámetros). Las horas
-        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30). Al indicar{" "}
+        de inicio y fin solo aceptan en punto o media hora (18:00, 18:30) o 24:00 como hora
+        final (00:00 a 24:00 = 24 h). Al indicar{" "}
         <strong>Fecha + Inicio + Fin</strong>, se proponen TSD/TSN/HEDD/HEND según horario diurno
         (6:00–19:00) y festivo; RD, RN y Disponibilidad se digitan manualmente. Use{" "}
         <button type="button" className={styles.inlineHelp} onClick={() => openCategoryHelp()}>

@@ -83,6 +83,7 @@ export default function MisRegistrosContainer() {
     <div>
       <p className={styles.hint}>
         Consulta los registros de tiempo suplementario que usted digitó o cargó.
+        El Excel trae todos los datos digitados y el estado, como la planilla.
         Solo puede anular los que estén pendientes de revisión y el periodo esté
         abierto.
       </p>

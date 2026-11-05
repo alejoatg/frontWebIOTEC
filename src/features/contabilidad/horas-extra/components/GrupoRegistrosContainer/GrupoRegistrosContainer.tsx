@@ -94,8 +94,9 @@ export default function GrupoRegistrosContainer() {
     <div>
       <p className={styles.hint}>
         Ve los registros que digitaron los supervisores y coordinadores de su
-        grupo. Puede descargarlos y anular los que estén pendientes, con el
-        periodo abierto. Los aprobados, rechazados o ya anulados no se anulan.
+        grupo. El Excel trae todos los datos digitados y el estado. Puede anular
+        los que estén pendientes, con el periodo abierto. Los aprobados,
+        rechazados o ya anulados no se anulan.
       </p>
 
       <PeriodSelector

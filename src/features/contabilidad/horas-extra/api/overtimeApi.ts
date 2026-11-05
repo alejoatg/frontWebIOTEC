@@ -146,6 +146,34 @@ export async function fetchEntries(params: {
   return request<EntriesPage>(`/entries?${q}`);
 }
 
+/** Excel de la vista planilla (Contabilidad y Admin), con los filtros en pantalla. */
+export function planillaExportExcelUrl(params: {
+  year: number;
+  month: number;
+  status?: string;
+  batchId?: string;
+  documentNumber?: string;
+  workDateFrom?: string;
+  workDateTo?: string;
+  zoneName?: string;
+  fileName?: string;
+  includeSuperseded?: boolean;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.status) q.set("status", params.status);
+  if (params.batchId) q.set("batchId", params.batchId);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
+  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
+  if (params.zoneName) q.set("zoneName", params.zoneName);
+  if (params.fileName) q.set("fileName", params.fileName);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  return `${BASE}/entries/planilla/export?${q}`;
+}
+
 /** Registros digitados por el usuario autenticado. */
 export async function fetchMyEntries(params: {
   year: number;

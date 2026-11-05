@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
+import { canReviewOvertime, canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
+  downloadAuthenticatedFile,
   fetchBatches,
   fetchEntries,
+  planillaExportExcelUrl,
   rejectEntry,
   type OvertimeBatch,
   type OvertimeEntryRow,
@@ -76,6 +78,7 @@ function statusClass(status: string) {
 export default function RegistrosPlanillaContainer() {
   const { user } = useAuth();
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
+  const canDownload = canReviewOvertime(user?.role);
   const columns = useMemo(
     () =>
       canSeeMoney
@@ -99,6 +102,7 @@ export default function RegistrosPlanillaContainer() {
   const [correctId, setCorrectId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState("");
+  const [exporting, setExporting] = useState(false);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topSpacerRef = useRef<HTMLDivElement>(null);
   const gridWrapRef = useRef<HTMLDivElement>(null);
@@ -346,6 +350,41 @@ export default function RegistrosPlanillaContainer() {
           <Button type="button" variant="outline" size="sm" onClick={load}>
             Actualizar
           </Button>
+          {canDownload && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                setError(null);
+                try {
+                  await downloadAuthenticatedFile(
+                    planillaExportExcelUrl({
+                      year,
+                      month,
+                      status: status || undefined,
+                      batchId: appliedFilters.batchId || undefined,
+                      documentNumber: appliedFilters.documentNumber || undefined,
+                      workDateFrom: appliedFilters.workDateFrom || undefined,
+                      workDateTo: appliedFilters.workDateTo || undefined,
+                      zoneName: appliedFilters.zoneName || undefined,
+                      fileName: appliedFilters.fileName || undefined,
+                      includeSuperseded: status === "SUPERSEDED",
+                    }),
+                    `planilla-${year}-${String(month).padStart(2, "0")}.xlsx`,
+                  );
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Error al exportar");
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              {exporting ? "Generando Excel…" : "Descargar Excel"}
+            </Button>
+          )}
         </div>
       </div>
 

@@ -127,9 +127,6 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
   const router = useRouter();
   const { user } = useAuth();
   const analyst = isOvertimeAnalyst(user?.role);
-  const listHref = analyst
-    ? "/dashboard/contabilidad/horas-extra/grupo"
-    : "/dashboard/contabilidad/horas-extra/registros";
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -162,6 +159,14 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
   if (error) return <div className={shared.error}>{error}</div>;
   if (!entry) return null;
 
+  const ownEntry = Boolean(user?.id && entry.submittedBy?.id === user.id);
+  const listHref = !analyst
+    ? "/dashboard/contabilidad/horas-extra/registros"
+    : ownEntry
+      ? "/dashboard/contabilidad/horas-extra/mis-registros"
+      : "/dashboard/contabilidad/horas-extra/grupo";
+  const backLabel = !analyst ? "Registros" : ownEntry ? "Mis registros" : "Registros del grupo";
+
   const periodYear = entry.period?.year ?? dateOnlyYear(entry.workDate);
   const periodMonth = entry.period?.month ?? dateOnlyMonth(entry.workDate);
   const messages = Array.isArray(entry.validationMessages)
@@ -173,7 +178,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
       <div className={styles.header}>
         <div>
           <Link href={listHref} className={styles.backLink}>
-            ← {analyst ? "Registros del grupo" : "Registros"}
+            ← {backLabel}
           </Link>
           <h2 className={styles.title}>{entry.entryCode}</h2>
           <p className={styles.subtitle}>

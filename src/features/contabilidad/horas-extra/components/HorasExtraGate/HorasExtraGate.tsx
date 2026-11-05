@@ -7,8 +7,16 @@ import { isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
 
 const GROUP_HOME = "/dashboard/contabilidad/horas-extra/grupo";
 
+const ANALYST_PAGES = [
+  "/dashboard/contabilidad/horas-extra/digitar",
+  "/dashboard/contabilidad/horas-extra/mis-registros",
+  GROUP_HOME,
+];
+
 function analystMayOpen(pathname: string) {
-  if (pathname === GROUP_HOME || pathname.startsWith(`${GROUP_HOME}/`)) return true;
+  if (ANALYST_PAGES.some((page) => pathname === page || pathname.startsWith(`${page}/`))) {
+    return true;
+  }
   return /^\/dashboard\/contabilidad\/horas-extra\/registros\/[^/]+$/.test(pathname);
 }
 

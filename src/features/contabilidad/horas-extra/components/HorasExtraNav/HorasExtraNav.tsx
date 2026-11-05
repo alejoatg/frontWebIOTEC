@@ -6,6 +6,12 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeReviewNav, isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
 import styles from "./HorasExtraNav.module.scss";
 
+const ANALYST_HREFS = new Set([
+  "/dashboard/contabilidad/horas-extra/digitar",
+  "/dashboard/contabilidad/horas-extra/mis-registros",
+  "/dashboard/contabilidad/horas-extra/grupo",
+]);
+
 const LINKS = [
   { href: "/dashboard/contabilidad/horas-extra", label: "Resumen", exact: true },
   { href: "/dashboard/contabilidad/horas-extra/cargar", label: "Cargar Excel" },
@@ -63,8 +69,8 @@ export default function HorasExtraNav() {
   const showReview = canSeeOvertimeReviewNav(user?.role);
 
   const links = LINKS.filter((l) => {
-    if ("analystOnly" in l && l.analystOnly) return analyst;
-    if (analyst) return false;
+    if (analyst) return ANALYST_HREFS.has(l.href);
+    if ("analystOnly" in l && l.analystOnly) return false;
     return !("reviewOnly" in l && l.reviewOnly) || showReview;
   });
 

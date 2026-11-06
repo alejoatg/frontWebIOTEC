@@ -10,6 +10,7 @@ const GROUP_HOME = "/dashboard/contabilidad/horas-extra/grupo";
 const ANALYST_PAGES = [
   "/dashboard/contabilidad/horas-extra/digitar",
   "/dashboard/contabilidad/horas-extra/mis-registros",
+  "/dashboard/contabilidad/horas-extra/pdf",
   GROUP_HOME,
 ];
 

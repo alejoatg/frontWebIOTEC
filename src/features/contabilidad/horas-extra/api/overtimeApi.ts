@@ -448,6 +448,22 @@ export async function fetchPdfPlantillas(params: {
   return request<PdfPlantilla[]>(`/pdf-plantillas?${q}`);
 }
 
+export async function generatePdfBatch(year: number, month: number) {
+  return request<{
+    created: number;
+    emailed: number;
+    workersWithoutEmail: string[];
+    message: string;
+  }>(`/pdf-plantillas/generate-batch`, {
+    method: "POST",
+    body: JSON.stringify({ year, month }),
+  });
+}
+
+export function pdfPeriodZipUrl(year: number, month: number) {
+  return `${BASE}/pdf-plantillas/period-zip?year=${year}&month=${month}`;
+}
+
 export async function createPdfPlantilla(body: {
   year: number;
   month: number;

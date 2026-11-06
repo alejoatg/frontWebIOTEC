@@ -10,6 +10,7 @@ const ANALYST_HREFS = new Set([
   "/dashboard/contabilidad/horas-extra/digitar",
   "/dashboard/contabilidad/horas-extra/mis-registros",
   "/dashboard/contabilidad/horas-extra/grupo",
+  "/dashboard/contabilidad/horas-extra/pdf",
 ]);
 
 const LINKS = [

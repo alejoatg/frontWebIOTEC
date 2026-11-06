@@ -6,9 +6,12 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   createPdfPlantilla,
+  downloadAuthenticatedFile,
   fetchPdfPlantillaEligible,
   fetchPdfPlantillaEmployees,
   fetchPdfPlantillas,
+  generatePdfBatch,
+  pdfPeriodZipUrl,
   pdfPlantillaPrintPageUrl,
   type OvertimeEntryRow,
   type PdfPlantilla,
@@ -35,6 +38,9 @@ function fmtDate(iso: string | null | undefined) {
 export default function PdfPlantillasContainer() {
   const { user } = useAuth();
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
+  const canBulkPdf =
+    user?.role === "ANALISTA" || user?.role === "SUPERVISOR" || user?.role === "CORDINADOR";
+  const showIndividual = user?.role !== "ANALISTA";
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -52,6 +58,8 @@ export default function PdfPlantillasContainer() {
   const [loadingEligible, setLoadingEligible] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingBatch, setGeneratingBatch] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -159,6 +167,44 @@ export default function PdfPlantillasContainer() {
     }
   }
 
+  async function handleGenerateBatch() {
+    setGeneratingBatch(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const result = await generatePdfBatch(year, month);
+      const missing = result.workersWithoutEmail.length
+        ? ` Sin correo del trabajador: ${result.workersWithoutEmail.join(", ")}.`
+        : "";
+      setSuccess(
+        result.created === 0
+          ? result.message
+          : `${result.message}. Correos enviados: ${result.emailed}.${missing}`,
+      );
+      await loadHistory();
+      if (showIndividual) await loadEmployees();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar los PDF");
+    } finally {
+      setGeneratingBatch(false);
+    }
+  }
+
+  async function handleDownloadZip() {
+    setDownloadingZip(true);
+    setError(null);
+    try {
+      await downloadAuthenticatedFile(
+        pdfPeriodZipUrl(year, month),
+        `pdfs-${year}-${String(month).padStart(2, "0")}.zip`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al descargar los PDF");
+    } finally {
+      setDownloadingZip(false);
+    }
+  }
+
   function handleRedownload(p: PdfPlantilla) {
     setError(null);
     window.open(pdfPlantillaPrintPageUrl(p.id, true), "_blank", "noopener,noreferrer");
@@ -175,6 +221,35 @@ export default function PdfPlantillasContainer() {
         }}
       />
 
+      {canBulkPdf && (
+        <div className={local.filtersPanel}>
+          <p className={styles.hint}>
+            {user?.role === "ANALISTA"
+              ? "Genera un PDF por trabajador con las horas aprobadas de los supervisores y coordinadores de su grupo. Si un trabajador tiene horas de varios, quedan en el mismo PDF."
+              : "Genera un PDF por trabajador con las horas aprobadas que usted digitó."}{" "}
+            Cada PDF se envía al trabajador, a quien digitó y al analista del grupo.
+          </p>
+          <div className={local.filterActions}>
+            <Button
+              type="button"
+              onClick={handleGenerateBatch}
+              disabled={generatingBatch || downloadingZip}
+            >
+              {generatingBatch ? "Generando PDFs…" : "Generar PDFs"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadZip}
+              disabled={generatingBatch || downloadingZip}
+            >
+              {downloadingZip ? "Preparando ZIP…" : "Descargar PDFs del periodo"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {showIndividual && (
       <div className={local.filtersPanel}>
         <div className={local.filtersGrid}>
           <label className={local.filterField}>
@@ -236,10 +311,12 @@ export default function PdfPlantillasContainer() {
           </Button>
         </div>
       </div>
+      )}
 
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}
 
+      {showIndividual && (
       <section className={local.section}>
         <h3 className={local.sectionTitle}>
           Registros a incluir
@@ -286,6 +363,7 @@ export default function PdfPlantillasContainer() {
           </table>
         </div>
       </section>
+      )}
 
       <section className={local.section}>
         <h3 className={local.sectionTitle}>Planillas PDF generadas</h3>

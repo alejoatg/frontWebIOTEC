@@ -9,6 +9,7 @@ import {
   downloadAuthenticatedFile,
   fetchBatches,
   fetchEntries,
+  fetchPlanillaFacets,
   planillaExportExcelUrl,
   rejectEntry,
   type OvertimeBatch,
@@ -37,6 +38,8 @@ interface Filters {
   batchId: string;
   fileName: string;
   zoneName: string;
+  processName: string;
+  submittedById: string;
 }
 
 const EMPTY_FILTERS: Filters = {
@@ -46,6 +49,8 @@ const EMPTY_FILTERS: Filters = {
   batchId: "",
   fileName: "",
   zoneName: "",
+  processName: "",
+  submittedById: "",
 };
 
 function columnClass(col: SpreadsheetColumn, extra?: string) {
@@ -93,6 +98,8 @@ export default function RegistrosPlanillaContainer() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<Filters>(EMPTY_FILTERS);
   const [batches, setBatches] = useState<OvertimeBatch[]>([]);
+  const [processes, setProcesses] = useState<string[]>([]);
+  const [digitizers, setDigitizers] = useState<Array<{ id: string; name: string }>>([]);
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<OvertimeEntryRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -129,6 +136,8 @@ export default function RegistrosPlanillaContainer() {
         workDateFrom: appliedFilters.workDateFrom || undefined,
         workDateTo: appliedFilters.workDateTo || undefined,
         zoneName: appliedFilters.zoneName || undefined,
+        processName: appliedFilters.processName || undefined,
+        submittedById: appliedFilters.submittedById || undefined,
         fileName: appliedFilters.fileName || undefined,
         includeSuperseded: status === "SUPERSEDED",
         page,
@@ -147,6 +156,18 @@ export default function RegistrosPlanillaContainer() {
   useEffect(() => {
     loadBatches();
   }, [loadBatches]);
+
+  useEffect(() => {
+    fetchPlanillaFacets(year, month)
+      .then((data) => {
+        setProcesses(data.processes);
+        setDigitizers(data.digitizers);
+      })
+      .catch(() => {
+        setProcesses([]);
+        setDigitizers([]);
+      });
+  }, [year, month]);
 
   useEffect(() => {
     load();
@@ -257,7 +278,35 @@ export default function RegistrosPlanillaContainer() {
       <div className={styles.filtersPanel}>
         <div className={styles.filtersGrid}>
           <label className={styles.filterField}>
-            <span>Fecha desde</span>
+            <span>Proceso</span>
+            <select
+              value={filters.processName}
+              onChange={(e) => setFilters((f) => ({ ...f, processName: e.target.value }))}
+            >
+              <option value="">Todos</option>
+              {processes.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.filterField}>
+            <span>Quien digita</span>
+            <select
+              value={filters.submittedById}
+              onChange={(e) => setFilters((f) => ({ ...f, submittedById: e.target.value }))}
+            >
+              <option value="">Todos</option>
+              {digitizers.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.filterField}>
+            <span>Desde</span>
             <input
               type="date"
               value={filters.workDateFrom}
@@ -265,7 +314,7 @@ export default function RegistrosPlanillaContainer() {
             />
           </label>
           <label className={styles.filterField}>
-            <span>Fecha hasta</span>
+            <span>Hasta</span>
             <input
               type="date"
               value={filters.workDateTo}
@@ -277,7 +326,7 @@ export default function RegistrosPlanillaContainer() {
             <EmployeeFilterField
               value={filters.documentNumber}
               onChange={(v) => setFilters((f) => ({ ...f, documentNumber: v }))}
-              placeholder="Buscar por cédula o nombre"
+              placeholder="Cédula o nombre"
             />
           </div>
           <label className={styles.filterField}>
@@ -370,6 +419,8 @@ export default function RegistrosPlanillaContainer() {
                       workDateFrom: appliedFilters.workDateFrom || undefined,
                       workDateTo: appliedFilters.workDateTo || undefined,
                       zoneName: appliedFilters.zoneName || undefined,
+                      processName: appliedFilters.processName || undefined,
+                      submittedById: appliedFilters.submittedById || undefined,
                       fileName: appliedFilters.fileName || undefined,
                       includeSuperseded: status === "SUPERSEDED",
                     }),

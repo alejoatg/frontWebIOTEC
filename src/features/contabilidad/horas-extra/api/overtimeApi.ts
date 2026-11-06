@@ -124,6 +124,8 @@ export async function fetchEntries(params: {
   workDateFrom?: string;
   workDateTo?: string;
   zoneName?: string;
+  processName?: string;
+  submittedById?: string;
   fileName?: string;
   page?: number;
   pageSize?: number;
@@ -141,9 +143,17 @@ export async function fetchEntries(params: {
   if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
   if (params.workDateTo) q.set("workDateTo", params.workDateTo);
   if (params.zoneName) q.set("zoneName", params.zoneName);
+  if (params.processName) q.set("processName", params.processName);
+  if (params.submittedById) q.set("submittedById", params.submittedById);
   if (params.fileName) q.set("fileName", params.fileName);
   if (params.includeSuperseded) q.set("includeSuperseded", "true");
   return request<EntriesPage>(`/entries?${q}`);
+}
+
+export async function fetchPlanillaFacets(year: number, month: number) {
+  return request<{ processes: string[]; digitizers: Array<{ id: string; name: string }> }>(
+    `/entries/planilla/facets?year=${year}&month=${month}`,
+  );
 }
 
 /** Excel de la vista planilla (Contabilidad y Admin), con los filtros en pantalla. */
@@ -156,6 +166,8 @@ export function planillaExportExcelUrl(params: {
   workDateFrom?: string;
   workDateTo?: string;
   zoneName?: string;
+  processName?: string;
+  submittedById?: string;
   fileName?: string;
   includeSuperseded?: boolean;
 }) {
@@ -169,6 +181,8 @@ export function planillaExportExcelUrl(params: {
   if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
   if (params.workDateTo) q.set("workDateTo", params.workDateTo);
   if (params.zoneName) q.set("zoneName", params.zoneName);
+  if (params.processName) q.set("processName", params.processName);
+  if (params.submittedById) q.set("submittedById", params.submittedById);
   if (params.fileName) q.set("fileName", params.fileName);
   if (params.includeSuperseded) q.set("includeSuperseded", "true");
   return `${BASE}/entries/planilla/export?${q}`;

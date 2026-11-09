@@ -30,6 +30,20 @@ function jornadaClock(value: unknown): string {
   return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+function momentoIgei(value: unknown): string {
+  if (value === "durante_ejecucion") return "Durante ejecución";
+  if (value === "posterior_ejecucion") return "Posterior a la ejecución";
+  return value ? String(value) : "—";
+}
+
+function mapIgeiSupervisionRow(row: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...row,
+    momento: momentoIgei(row.momento),
+    tieneNc: row.tieneNc === true || row.tieneNc === "true" ? "Sí" : "No",
+  };
+}
+
 function mapJornadaRow(row: Record<string, unknown>): Record<string, unknown> {
   const { actividades: rawActividades, novedades: rawNovedades, ...rest } = row;
   const actividades = Array.isArray(rawActividades) ? rawActividades as Record<string, unknown>[] : [];
@@ -989,6 +1003,89 @@ export const FORM_REPORTS: FormReportConfig[] = [
       if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
       if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
       appendOptional(params, filter, ["brigada", "proceso"]);
+      return params;
+    },
+  },
+  {
+    id: "igei-001-02-supervision-terreno",
+    slug: "igei-supervision-terreno",
+    title: "Supervisión de personal en terreno",
+    subtitle: "IGEI-001-02 v01 — Formato único de supervisión en terreno (IOTEC Forms)",
+    icon: "ClipboardCheck",
+    color: "#1e40af",
+    apiBasePath: "/api/igei-supervision-terreno",
+    excelFileName: "igei-supervision-terreno",
+    detailTitle: (r) =>
+      `${String(r.afiliadoNombre ?? "Afiliado")} · ${String(r.fechaEjecucion ?? "—")}`,
+    mapListRow: mapIgeiSupervisionRow,
+    mapDetailRecord: mapIgeiSupervisionRow,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "zona", label: "Zona", placeholder: "Zona operativa" },
+      { type: "text", key: "proceso", label: "Proceso", placeholder: "Proceso" },
+      { type: "text", key: "municipio", label: "Municipio", placeholder: "Municipio" },
+      { type: "text", key: "afiliado", label: "Afiliado", placeholder: "Nombre o cédula" },
+    ],
+    listColumns: [
+      { key: "fechaEjecucion", label: "Fecha de ejecución", format: "shortDate" },
+      { key: "fecha", label: "Fecha de diligenciamiento", format: "shortDate" },
+      { key: "afiliadoNombre", label: "Afiliado" },
+      { key: "afiliadoCodigo", label: "Cédula" },
+      { key: "proceso", label: "Proceso" },
+      { key: "zona", label: "Zona" },
+      { key: "municipio", label: "Municipio" },
+      { key: "momento", label: "Momento" },
+      { key: "tieneNc", label: "Tiene NC" },
+      { key: "submittedBy", label: "Supervisor", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Datos de la supervisión",
+        keys: [
+          "fechaEjecucion", "fecha", "zona", "municipio", "municipioOtro", "proceso",
+          "supervisorNombre", "momento", "sector",
+        ],
+      },
+      {
+        title: "Trabajador inspeccionado",
+        keys: [
+          "afiliadoNombre", "afiliadoCodigo", "cantActividadesAsignadas", "tipoActividadAsignada",
+          "cantActividadesEjecutadas", "tipoActividadEjecutada", "horaInicio", "horaFin",
+          "conformeEjecucion", "codigoNcEjecucion", "conformeActuacion", "codigoNcActuacion",
+          "conformeDocumental", "codigoNcDocumental", "conformeAmbiental", "codigoNcAmbiental",
+          "observacionesAfiliado",
+        ],
+      },
+      {
+        title: "Supervisión en terreno",
+        keys: [
+          "usoAdecuadoEpp", "atsTrabajoAltura", "usoAdecuadoHerramienta", "cumplimientoProcedimientos",
+          "riesgosIdentificados", "requisitosTecnicos", "documentacionCompleta", "observacionesGenerales",
+        ],
+      },
+      {
+        title: "Seguimiento y cierre",
+        keys: [
+          "requiereSeguimiento", "temaSeguimiento", "responsableSeguimiento", "accionesCorrectivas", "tieneNc",
+        ],
+      },
+    ],
+    evidenceFields: [
+      { label: "Fotografías", key: "fotosUrls", multiple: true },
+      { label: "Firma afiliado", key: "firmaAfiliadoUrl" },
+      { label: "Firma supervisor", key: "firmaSupervisorUrl" },
+    ],
+    locationField: {
+      latKey: "ubicacionInspeccionLat",
+      lngKey: "ubicacionInspeccionLng",
+      label: "Ubicación de la inspección",
+    },
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, ["zona", "proceso", "municipio", "afiliado"]);
       return params;
     },
   },

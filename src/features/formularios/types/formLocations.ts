@@ -2,7 +2,8 @@ export type FormLocationFormId =
   | "atu-formato-unico"
   | "pghs-005-03-inspeccion-terreno"
   | "inspeccion-preoperacional-vehiculos"
-  | "inspeccion-preoperacional-motocicletas";
+  | "inspeccion-preoperacional-motocicletas"
+  | "igei-001-02-supervision-terreno";
 
 export interface FormLocationPoint {
   id: string;
@@ -37,6 +38,7 @@ export const MAP_FORM_OPTIONS: Array<{
   { id: "pghs-005-03-inspeccion-terreno", label: "PGHS", color: "#059669" },
   { id: "inspeccion-preoperacional-vehiculos", label: "Vehículos", color: "#2563eb" },
   { id: "inspeccion-preoperacional-motocicletas", label: "Motos", color: "#dc2626" },
+  { id: "igei-001-02-supervision-terreno", label: "Supervisión", color: "#1e40af" },
 ];
 
 /** Centro por defecto: Popayán, Cauca. */

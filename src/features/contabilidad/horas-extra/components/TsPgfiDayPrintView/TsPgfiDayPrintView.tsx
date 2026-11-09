@@ -148,13 +148,7 @@ export default function TsPgfiDayPrintView({ data, onClose }: TsPgfiDayPrintView
                 <br />
                 NOCTURNO
               </th>
-              <th rowSpan={2}>
-                RD -
-                <br />
-                RECARGO
-                <br />
-                DOMINICAL
-              </th>
+              <th rowSpan={2}>RD REC. DOM.</th>
               <th rowSpan={2}>
                 RECARGO
                 <br />

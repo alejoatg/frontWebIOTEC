@@ -77,15 +77,8 @@ const PRINT_CSS = `
   text-transform: uppercase;
   line-height: 1.15;
 }
-#${PORTAL_ID} thead .ts-cols th.num { text-align: right; white-space: normal; }
+#${PORTAL_ID} thead .ts-cols th.num { text-align: right; }
 #${PORTAL_ID} thead .ts-cols th.cen { text-align: center; }
-#${PORTAL_ID} thead .ts-cols th.ts-rd {
-  width: 3.5rem;
-  max-width: 3.5rem;
-  font-size: 6.5px;
-  line-height: 1.05;
-  white-space: normal;
-}
 
 #${PORTAL_ID} td.cell {
   border: none;
@@ -296,13 +289,7 @@ export default function TsPgfiPlantillaPrint({ data }: Props) {
               <th className="num">TS Noct.</th>
               <th className="num">TS Dom. D</th>
               <th className="num">TS Dom. N</th>
-              <th className="num ts-rd">
-                RD -
-                <br />
-                Recargo
-                <br />
-                dominical
-              </th>
+              <th className="num">RD Rec. dom.</th>
               <th className="num">Rec. noct.</th>
               <th>Lugar comisión</th>
             </tr>

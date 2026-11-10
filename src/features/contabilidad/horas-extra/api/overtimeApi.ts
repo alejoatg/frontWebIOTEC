@@ -850,6 +850,7 @@ export interface ClosePeriodResult {
 }
 
 export interface CorrectEntryPayload {
+  documentNumber?: string;
   workDate?: string;
   startTime?: string;
   endTime?: string;
@@ -860,8 +861,19 @@ export interface CorrectEntryPayload {
   hoursHedd?: number;
   hoursHend?: number;
   hoursDisponibilidad?: number;
+  jobPositionName?: string;
+  processName?: string;
+  zoneName?: string;
+  baseMunicipality?: string;
   commissionMunicipality?: string;
+  brigadeCode?: string;
+  systemName?: string;
+  itinerary?: string;
+  caseRef?: string;
+  workRef?: string;
+  ticketRef?: string;
   consigna?: string;
+  attachmentRef?: string;
   operationalNote?: string;
   accountingNote: string;
 }

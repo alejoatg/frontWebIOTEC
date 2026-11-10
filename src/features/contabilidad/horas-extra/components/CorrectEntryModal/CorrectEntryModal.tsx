@@ -27,6 +27,7 @@ interface CorrectEntryModalProps {
 }
 
 interface FormState {
+  documentNumber: string;
   workDate: string;
   startTime: string;
   endTime: string;
@@ -37,14 +38,46 @@ interface FormState {
   hoursHedd: string;
   hoursHend: string;
   hoursDisponibilidad: string;
+  jobPositionName: string;
+  processName: string;
+  zoneName: string;
+  baseMunicipality: string;
   commissionMunicipality: string;
+  brigadeCode: string;
+  systemName: string;
+  itinerary: string;
+  caseRef: string;
+  workRef: string;
+  ticketRef: string;
   consigna: string;
+  attachmentRef: string;
   operationalNote: string;
   accountingNote: string;
 }
 
+const REFERENCE_FIELDS: Array<[keyof FormState, string]> = [
+  ["itinerary", "Itinerario"],
+  ["caseRef", "Caso"],
+  ["consigna", "Consigna"],
+  ["workRef", "Orden de trabajo"],
+  ["ticketRef", "Ticket"],
+  ["attachmentRef", "Archivo"],
+  ["systemName", "Sistema"],
+];
+
+const TEXT_FIELDS: Array<[keyof FormState, string]> = [
+  ["documentNumber", "Cédula"],
+  ["jobPositionName", "Cargo"],
+  ["processName", "Proceso"],
+  ["zoneName", "Zona"],
+  ["baseMunicipality", "Municipio sede"],
+  ["commissionMunicipality", "Municipio donde causó"],
+  ["brigadeCode", "Brigada"],
+];
+
 function toForm(entry: OvertimeEntryRow): FormState {
   return {
+    documentNumber: entry.employeeDocumentNumber ?? "",
     workDate: toDateInputValue(entry.workDate),
     startTime: entry.startTime ?? "",
     endTime: entry.endTime ?? "",
@@ -55,8 +88,19 @@ function toForm(entry: OvertimeEntryRow): FormState {
     hoursHedd: String(entry.hoursHedd ?? 0),
     hoursHend: String(entry.hoursHend ?? 0),
     hoursDisponibilidad: String(entry.hoursDisponibilidad ?? 0),
+    jobPositionName: entry.jobPositionName ?? "",
+    processName: entry.processName ?? "",
+    zoneName: entry.zoneName ?? "",
+    baseMunicipality: entry.baseMunicipality ?? "",
     commissionMunicipality: entry.commissionMunicipality ?? "",
+    brigadeCode: entry.brigadeCode ?? "",
+    systemName: entry.systemName ?? "",
+    itinerary: entry.itinerary ?? "",
+    caseRef: entry.caseRef ?? "",
+    workRef: entry.workRef ?? "",
+    ticketRef: entry.ticketRef ?? "",
     consigna: entry.consigna ?? "",
+    attachmentRef: entry.attachmentRef ?? "",
     operationalNote: entry.operationalNote ?? "",
     accountingNote: "",
   };
@@ -77,6 +121,7 @@ function parseNum(value: string): number | undefined {
 
 function buildPayload(form: FormState): CorrectEntryPayload {
   return {
+    documentNumber: form.documentNumber.replace(/\D/g, "") || undefined,
     workDate: form.workDate || undefined,
     startTime: normalizeTime(form.startTime),
     endTime: normalizeTime(form.endTime),
@@ -87,9 +132,20 @@ function buildPayload(form: FormState): CorrectEntryPayload {
     hoursHedd: parseNum(form.hoursHedd),
     hoursHend: parseNum(form.hoursHend),
     hoursDisponibilidad: parseNum(form.hoursDisponibilidad),
-    commissionMunicipality: form.commissionMunicipality.trim() || undefined,
-    consigna: form.consigna.trim() || undefined,
-    operationalNote: form.operationalNote.trim() || undefined,
+    jobPositionName: form.jobPositionName.trim(),
+    processName: form.processName.trim(),
+    zoneName: form.zoneName.trim(),
+    baseMunicipality: form.baseMunicipality.trim(),
+    commissionMunicipality: form.commissionMunicipality.trim(),
+    brigadeCode: form.brigadeCode.trim(),
+    systemName: form.systemName.trim(),
+    itinerary: form.itinerary.trim(),
+    caseRef: form.caseRef.trim(),
+    workRef: form.workRef.trim(),
+    ticketRef: form.ticketRef.trim(),
+    consigna: form.consigna.trim(),
+    attachmentRef: form.attachmentRef.trim(),
+    operationalNote: form.operationalNote.trim(),
     accountingNote: form.accountingNote.trim(),
   };
 }
@@ -270,24 +326,34 @@ export default function CorrectEntryModal({
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Operativo</h3>
+                <h3 className={styles.sectionTitle}>Itinerario, orden y referencias</h3>
                 <div className={styles.grid2}>
-                  <div className={styles.field}>
-                    <label htmlFor="corr-commission">Municipio comisión</label>
-                    <input
-                      id="corr-commission"
-                      value={form.commissionMunicipality}
-                      onChange={(e) => update("commissionMunicipality", e.target.value)}
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label htmlFor="corr-consigna">Consigna / incidencia</label>
-                    <input
-                      id="corr-consigna"
-                      value={form.consigna}
-                      onChange={(e) => update("consigna", e.target.value)}
-                    />
-                  </div>
+                  {REFERENCE_FIELDS.map(([key, label]) => (
+                    <div key={key} className={styles.field}>
+                      <label htmlFor={`corr-${key}`}>{label}</label>
+                      <input
+                        id={`corr-${key}`}
+                        value={form[key]}
+                        onChange={(e) => update(key, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>Datos del registro</h3>
+                <div className={styles.grid2}>
+                  {TEXT_FIELDS.map(([key, label]) => (
+                    <div key={key} className={styles.field}>
+                      <label htmlFor={`corr-${key}`}>{label}</label>
+                      <input
+                        id={`corr-${key}`}
+                        value={form[key]}
+                        onChange={(e) => update(key, e.target.value)}
+                      />
+                    </div>
+                  ))}
                 </div>
                 <div className={styles.field} style={{ marginTop: "0.65rem" }}>
                   <label htmlFor="corr-operational">Observación operativa</label>
@@ -334,8 +400,9 @@ export default function CorrectEntryModal({
               )}
 
               <p className={styles.hint}>
-                Solo se envían los campos que modifique. Los montos se recalculan con el salario y
-                factor del registro original.
+                Puede modificar cualquier dato del registro. Si cambia la cédula, el trabajador
+                debe existir y estar activo. Los montos se recalculan con el salario del registro,
+                o con el del nuevo trabajador si cambia la cédula. Un campo vacío se borra.
               </p>
             </>
           )}

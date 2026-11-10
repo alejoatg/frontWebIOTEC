@@ -29,6 +29,8 @@ export interface EntryActionsProps {
   entryCode: string;
   workDate: string;
   status: string;
+  /** Quien digitó el registro. Permite corregir el propio si está pendiente. */
+  submittedById?: string;
   periodYear: number;
   periodMonth: number;
   onActionComplete?: () => void;
@@ -46,6 +48,7 @@ export default function EntryActions({
   entryCode,
   workDate,
   status,
+  submittedById,
   periodYear,
   periodMonth,
   onActionComplete,
@@ -66,7 +69,9 @@ export default function EntryActions({
   const [correctOpen, setCorrectOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
 
-  const canCorrect = canReview && (status === "PENDING" || status === "APPROVED");
+  const ownsPending = status === "PENDING" && !!submittedById && submittedById === user?.id;
+  const canCorrect =
+    ownsPending || (canReview && (status === "PENDING" || status === "APPROVED"));
 
   async function handleApprove() {
     try {

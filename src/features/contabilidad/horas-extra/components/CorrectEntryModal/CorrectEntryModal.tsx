@@ -17,6 +17,8 @@ import {
 } from "../../lib/overtimeCalculator";
 import { isSundayOrHoliday } from "../../lib/colombiaHolidays";
 import { toDateInputValue } from "../../lib/dateFormat";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { canReviewOvertime } from "@/features/dashboard/constants/nav";
 import styles from "./CorrectEntryModal.module.scss";
 
 interface CorrectEntryModalProps {
@@ -156,6 +158,8 @@ export default function CorrectEntryModal({
   onClose,
   onSuccess,
 }: CorrectEntryModalProps) {
+  const { user } = useAuth();
+  const keepsPending = !canReviewOvertime(user?.role);
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -217,7 +221,7 @@ export default function CorrectEntryModal({
   async function handleSubmit() {
     if (!form || !entry) return;
     if (!form.accountingNote.trim()) {
-      setError("Indique la justificación de la corrección.");
+      setError("Indique la observación del cambio.");
       return;
     }
     setSubmitting(true);
@@ -245,13 +249,8 @@ export default function CorrectEntryModal({
           {entry && (
             <p className={styles.subtitle}>
               {entry.entryCode} — {entry.employeeFullName}. Se creará un nuevo registro{" "}
-              <strong>aprobado</strong> y el actual quedará como <strong>corregido</strong>.
-              {entry.status === "APPROVED" && (
-                <>
-                  {" "}
-                  Este registro ya estaba aprobado: la justificación es obligatoria.
-                </>
-              )}
+              <strong>{keepsPending ? "pendiente" : "aprobado"}</strong> y el actual quedará
+              como <strong>corregido</strong>. La observación del cambio se guarda en los dos.
             </p>
           )}
         </div>
@@ -369,13 +368,13 @@ export default function CorrectEntryModal({
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>Contabilidad</h3>
                 <div className={styles.field}>
-                  <label htmlFor="corr-accounting">Justificación de la corrección *</label>
+                  <label htmlFor="corr-accounting">Observación del cambio *</label>
                   <textarea
                     id="corr-accounting"
                     rows={3}
                     value={form.accountingNote}
                     onChange={(e) => update("accountingNote", e.target.value)}
-                    placeholder="Obligatoria. Ej.: ajuste de horas TSD por error de digitación…"
+                    placeholder="Obligatoria. Queda en este registro y en el anterior."
                   />
                 </div>
               </section>

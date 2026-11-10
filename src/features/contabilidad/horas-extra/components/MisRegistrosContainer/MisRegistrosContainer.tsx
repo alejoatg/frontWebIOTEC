@@ -16,6 +16,7 @@ import {
 } from "../../lib/overtimeStatus";
 import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
+import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "../../styles/shared.module.scss";
@@ -54,6 +55,7 @@ export default function MisRegistrosContainer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voidTarget, setVoidTarget] = useState<OvertimeEntryRow | null>(null);
+  const [correctId, setCorrectId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
@@ -213,14 +215,24 @@ export default function MisRegistrosContainer() {
                             </Button>
                           </Link>
                           {e.status === "PENDING" && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setVoidTarget(e)}
-                            >
-                              Anular
-                            </Button>
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCorrectId(e.id)}
+                              >
+                                Corregir
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setVoidTarget(e)}
+                              >
+                                Anular
+                              </Button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -258,6 +270,15 @@ export default function MisRegistrosContainer() {
         </>
       )}
 
+      <CorrectEntryModal
+        entryId={correctId ?? ""}
+        open={!!correctId}
+        onClose={() => setCorrectId(null)}
+        onSuccess={() => {
+          setCorrectId(null);
+          void load();
+        }}
+      />
       <VoidEntryModal
         open={!!voidTarget}
         entryId={voidTarget?.id ?? null}

@@ -209,6 +209,7 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           entryCode={entry.entryCode}
           workDate={entry.workDate}
           status={entry.status}
+          submittedById={entry.submittedBy?.id}
           periodYear={periodYear}
           periodMonth={periodMonth}
           onActionComplete={load}

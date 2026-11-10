@@ -143,6 +143,7 @@ export default function RegistrosContainer() {
                           entryCode={e.entryCode}
                           workDate={e.workDate}
                           status={e.status}
+                          submittedById={e.submittedBy?.id}
                           periodYear={year}
                           periodMonth={month}
                           onActionComplete={load}

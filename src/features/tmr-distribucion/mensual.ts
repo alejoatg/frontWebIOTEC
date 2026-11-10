@@ -168,8 +168,8 @@ export function buildCrewMonths(rows: TmrRow[], month: string): CrewMonth[] {
         rOver: list.filter((row) => row.rango2Uten === "R>8 H").length,
         cumple: list.filter((row) => row.exclusion === "Cumple TMR").length,
         noCumple: list.filter((row) => row.exclusion === "No cumple el TMR").length,
-        cpl: list.filter((row) => row.exclusion.includes("CPL")).length,
-        fhl: list.filter((row) => row.exclusion.includes("FHL")).length,
+        cpl: list.filter((row) => row.exclusion === "Pendiente de logística especial").length,
+        fhl: list.filter((row) => row.exclusion === "Fuera del horario laboral").length,
         sobre: list.filter((row) => row.sobreAsignacion).length,
         porDia,
         despLargos: list

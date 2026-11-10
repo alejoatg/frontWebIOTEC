@@ -144,6 +144,14 @@
   z-index: 1;
 }
 
+.clickRow {
+  cursor: pointer;
+}
+
+.clickRow:hover {
+  background: #f0fdfa;
+}
+
 .table select,
 .table input {
   min-width: 9rem;

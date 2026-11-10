@@ -17,13 +17,13 @@ import {
   downloadTmrExcel,
   previewTmr,
   TMR_EXCLUSIONS,
-  type TmrExclusion,
   type TmrOverride,
   type TmrPreview,
   type TmrRow,
 } from "./api";
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
+import TmrOrdenDetalle from "./TmrOrdenDetalle";
 import styles from "./TmrContainer.module.scss";
 
 const TmrMensual = dynamic(() => import("./TmrMensual"), {
@@ -77,6 +77,8 @@ export default function TmrContainer() {
   const [mapaOn, setMapaOn] = useState(false);
   const [mensualBusy, setMensualBusy] = useState(false);
   const [mapaBusy, setMapaBusy] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openRow = openId ? rows.find((row) => row.id === openId) ?? null : null;
 
   const summary = preview?.summary;
   const municipios = useMemo(
@@ -144,6 +146,7 @@ export default function TmrContainer() {
       setMapaOn(false);
       setMensualBusy(false);
       setMapaBusy(false);
+      setOpenId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al analizar");
     } finally {
@@ -186,6 +189,7 @@ export default function TmrContainer() {
               setMapaOn(false);
               setMensualBusy(false);
               setMapaBusy(false);
+              setOpenId(null);
             }}
           />
         </div>
@@ -272,11 +276,11 @@ export default function TmrContainer() {
             </div>
             <div className={styles.stat}>
               <strong>{summary.cpl}</strong>
-              CPL
+              Logística especial
             </div>
             <div className={styles.stat}>
               <strong>{summary.fhl}</strong>
-              FHL
+              Fuera de horario
             </div>
             <div className={styles.stat}>
               <strong>{summary.sobreasignacion}</strong>
@@ -293,7 +297,7 @@ export default function TmrContainer() {
               <h3>Exclusión automática</h3>
               <Pie
                 data={{
-                  labels: ["Cumple", "No cumple", "CPL", "FHL", "Sobreasignación"],
+                  labels: ["Cumple", "No cumple", "Logística especial", "Fuera de horario", "Sobreasignación"],
                   datasets: [
                     {
                       data: [
@@ -403,7 +407,8 @@ export default function TmrContainer() {
           </div>
 
           <p className={styles.hint}>
-            {filtered.length} filas. Página {pageSafe + 1} de {pages}.
+            {filtered.length} filas. Página {pageSafe + 1} de {pages}. Pulse una fila para ver el
+            detalle, la línea de tiempo y guardar observación o nota.
           </p>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -420,13 +425,16 @@ export default function TmrContainer() {
                   <th>Rango</th>
                   <th>Sobre</th>
                   <th>Exclusión</th>
-                  <th>Observación</th>
-                  <th>Nota CEO</th>
+                  <th>Notas</th>
                 </tr>
               </thead>
               <tbody>
                 {slice.map((row) => (
-                  <tr key={row.id}>
+                  <tr
+                    key={row.id}
+                    className={styles.clickRow}
+                    onClick={() => setOpenId(row.id)}
+                  >
                     <td>{row.caseSerial}</td>
                     <td>{row.jobSerial}</td>
                     <td>{row.crew}</td>
@@ -438,31 +446,13 @@ export default function TmrContainer() {
                     <td>{row.rango2Uten || "—"}</td>
                     <td>{row.sobreAsignacion ? "Sí" : ""}</td>
                     <td>
-                      <select
-                        value={row.exclusion}
-                        onChange={(e) => patch(row.id, { exclusion: e.target.value as TmrExclusion })}
-                      >
-                        {TMR_EXCLUSIONS.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
+                      {row.exclusion || "—"}
                       {row.exclusion !== row.exclusionAuto ? (
                         <div className={styles.muted}>auto: {row.exclusionAuto || "—"}</div>
                       ) : null}
                     </td>
                     <td>
-                      <input
-                        value={row.observacion}
-                        onChange={(e) => patch(row.id, { observacion: e.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        value={row.notaCeo}
-                        onChange={(e) => patch(row.id, { notaCeo: e.target.value })}
-                      />
+                      {row.observacion || row.notaCeo ? "Sí" : ""}
                     </td>
                   </tr>
                 ))}
@@ -492,7 +482,9 @@ export default function TmrContainer() {
         </>
       ) : null}
 
-      {summary && section === "jornada" ? <TmrJornada rows={rows} /> : null}
+      {summary && section === "jornada" ? (
+        <TmrJornada rows={rows} onOpen={(row) => setOpenId(row.id)} />
+      ) : null}
       {summary && section === "reincidencias" ? <TmrReincidencias rows={rows} /> : null}
       {summary && section === "mensual" ? (
         mensualOn ? (
@@ -524,6 +516,14 @@ export default function TmrContainer() {
             }}
           />
         )
+      ) : null}
+
+      {openRow ? (
+        <TmrOrdenDetalle
+          row={openRow}
+          onClose={() => setOpenId(null)}
+          onSave={(next) => patch(openRow.id, next)}
+        />
       ) : null}
     </div>
   );

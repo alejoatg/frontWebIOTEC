@@ -13,8 +13,9 @@
 
 .pickers {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 16rem minmax(0, 1fr);
   gap: 1rem;
+  align-items: start;
 }
 
 .list {
@@ -70,6 +71,125 @@
   white-space: nowrap;
 }
 
+.calWrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.calBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calBar h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.calBar select,
+.calBar span {
+  font: inherit;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+}
+
+.calBar span {
+  border: 0;
+  padding: 0;
+  color: #475569;
+}
+
+.calHead,
+.cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.calHead span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.cal button,
+.empty {
+  min-height: 4.2rem;
+  border-radius: 8px;
+}
+
+.cal button {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.3rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.cal strong {
+  font-size: 0.78rem;
+}
+
+.cal small {
+  font-size: 0.7rem;
+  color: inherit;
+}
+
+.idle {
+  color: #94a3b8;
+}
+
+.ok {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.watch {
+  background: #fffbeb;
+  border-color: #fbbf24;
+  color: #b45309;
+}
+
+.alert {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+.dayOn {
+  outline: 2px solid #0f766e;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+}
+
+.legend span {
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid currentColor;
+}
+
 .summary {
   display: flex;
   flex-wrap: wrap;
@@ -108,6 +228,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.clickCard {
+  cursor: pointer;
+}
+
+.clickCard:hover {
+  border-color: #99f6e4;
+  background: #f0fdfa;
 }
 
 .card header {
@@ -174,7 +303,7 @@
 .spans {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
@@ -221,11 +350,22 @@
   color: #475569;
 }
 
+.reason {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 900px) {
   .pickers,
   .times,
   .spans {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 

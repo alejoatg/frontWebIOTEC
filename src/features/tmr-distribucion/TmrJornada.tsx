@@ -11,8 +11,23 @@ import {
   Wrench,
 } from "lucide-react";
 import type { TmrRow } from "./api";
-import { crewsWithDays, formatClock, formatSpan, formatTs, jornadaRows, jornadaTotals } from "./jornada";
+import {
+  crewDayStats,
+  crewMonths,
+  crewsWithDays,
+  formatClock,
+  formatSpan,
+  formatTs,
+  jornadaRows,
+  jornadaTotals,
+  possibleExclusionReason,
+  TMR_ALERT_H,
+  TMR_WATCH_H,
+} from "./jornada";
+import { calendarCells, monthLabel } from "./mensual";
 import styles from "./TmrJornada.module.scss";
+
+const WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const TIMES = [
   { key: "startTime", label: "Start", icon: Flag },
@@ -24,27 +39,44 @@ const TIMES = [
 
 interface Props {
   rows: TmrRow[];
+  onOpen?: (row: TmrRow) => void;
 }
 
-export default function TmrJornada({ rows }: Props) {
+export default function TmrJornada({ rows, onOpen }: Props) {
   const crews = useMemo(() => crewsWithDays(rows), [rows]);
   const [crew, setCrew] = useState(crews[0]?.crew ?? "");
   const selectedCrew = crews.find((item) => item.crew === crew) ?? crews[0];
+  const months = useMemo(
+    () => (selectedCrew ? crewMonths(rows, selectedCrew.crew) : []),
+    [rows, selectedCrew],
+  );
+  const [month, setMonth] = useState(months[0] ?? "");
+  const monthSafe = months.includes(month) ? month : (months[0] ?? "");
+  const stats = useMemo(
+    () => (selectedCrew && monthSafe ? crewDayStats(rows, selectedCrew.crew, monthSafe) : {}),
+    [rows, selectedCrew, monthSafe],
+  );
+  const cells = useMemo(() => (monthSafe ? calendarCells(monthSafe) : []), [monthSafe]);
   const [day, setDay] = useState(selectedCrew?.days[0]?.key ?? "");
-  const daySafe = selectedCrew?.days.some((item) => item.key === day)
-    ? day
-    : (selectedCrew?.days[0]?.key ?? "");
+  const workDays = Object.keys(stats).sort();
+  const daySafe =
+    day && monthSafe && day.startsWith(`${monthSafe}-`)
+      ? day
+      : (workDays[0] ?? "");
   const items = useMemo(
     () => (selectedCrew && daySafe ? jornadaRows(rows, selectedCrew.crew, daySafe) : []),
     [rows, selectedCrew, daySafe],
   );
   const totals = jornadaTotals(items);
+  const dayStat = stats[daySafe];
 
   return (
     <div className={styles.wrap}>
       <p className={styles.hint}>
-        Elija brigada y día de ejecución (En-Route; si no hay, Start). La bitácora ordena las
-        actividades de esa jornada.
+        El calendario muestra el mes de la brigada: actividades por día, TMR UTEN medio y
+        semáforo (verde ≤ {TMR_WATCH_H} h, ámbar si hay TMR altos, rojo si el promedio supera{" "}
+        {TMR_ALERT_H} h o hay 2 o más R{">"}8). Pulse un día y luego una actividad para el
+        detalle.
       </p>
       <div className={styles.pickers}>
         <div className={styles.list}>
@@ -57,6 +89,8 @@ export default function TmrJornada({ rows }: Props) {
                   className={item.crew === selectedCrew?.crew ? styles.on : undefined}
                   onClick={() => {
                     setCrew(item.crew);
+                    const nextMonths = crewMonths(rows, item.crew);
+                    setMonth(nextMonths[0] ?? "");
                     setDay(item.days[0]?.key ?? "");
                   }}
                 >
@@ -69,24 +103,67 @@ export default function TmrJornada({ rows }: Props) {
             ))}
           </ul>
         </div>
-        <div className={styles.list}>
-          <h3>Días</h3>
-          <ul>
-            {(selectedCrew?.days ?? []).map((item) => (
-              <li key={item.key}>
-                <button
-                  type="button"
-                  className={item.key === daySafe ? styles.on : undefined}
-                  onClick={() => setDay(item.key)}
-                >
-                  <strong>{item.label}</strong>
-                  <span>
-                    {item.count} actividad{item.count === 1 ? "" : "es"}
-                  </span>
-                </button>
-              </li>
+        <div className={styles.calWrap}>
+          <div className={styles.calBar}>
+            <h3>Calendario de la brigada</h3>
+            {months.length > 1 ? (
+              <select
+                value={monthSafe}
+                onChange={(e) => {
+                  setMonth(e.target.value);
+                  setDay("");
+                }}
+              >
+                {months.map((item) => (
+                  <option key={item} value={item}>
+                    {monthLabel(item)}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span>{monthSafe ? monthLabel(monthSafe) : ""}</span>
+            )}
+          </div>
+          <div className={styles.calHead}>
+            {WEEK.map((d) => (
+              <span key={d}>{d}</span>
             ))}
-          </ul>
+          </div>
+          <div className={styles.cal}>
+            {cells.map((cell, index) => {
+              if (!cell) return <div key={`e-${index}`} className={styles.empty} />;
+              const stat = stats[cell.key];
+              const tone =
+                stat?.tone === "alert"
+                  ? styles.alert
+                  : stat?.tone === "watch"
+                    ? styles.watch
+                    : stat?.tone === "ok"
+                      ? styles.ok
+                      : styles.idle;
+              return (
+                <button
+                  key={cell.key}
+                  type="button"
+                  className={`${tone} ${daySafe === cell.key ? styles.dayOn : ""}`}
+                  onClick={() => setDay(cell.key)}
+                >
+                  <span>{cell.day}</span>
+                  {stat ? (
+                    <>
+                      <strong>{stat.count} act.</strong>
+                      <small>{stat.tmrMedio != null ? `${stat.tmrMedio.toFixed(1)} h` : "—"}</small>
+                    </>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <div className={styles.legend}>
+            <span className={styles.ok}>TMR medio ≤ {TMR_WATCH_H} h</span>
+            <span className={styles.watch}>TMR alto o promedio &gt; {TMR_WATCH_H} h</span>
+            <span className={styles.alert}>Promedio &gt; {TMR_ALERT_H} h o 2+ R{">"}8</span>
+          </div>
         </div>
       </div>
 
@@ -109,11 +186,25 @@ export default function TmrJornada({ rows }: Props) {
               <strong>{totals.sobre}</strong>
               Con sobreasignación
             </div>
+            <div>
+              <strong>{dayStat ? `${dayStat.count}` : "0"}</strong>
+              Actividades en el día
+            </div>
+            <div>
+              <strong>{dayStat?.tmrMedio != null ? `${dayStat.tmrMedio.toFixed(1)} h` : "—"}</strong>
+              TMR UTEN medio del día
+            </div>
           </div>
 
           <ol className={styles.bitacora}>
-            {items.map((row, index) => (
-              <li key={row.id} className={styles.card}>
+            {items.map((row, index) => {
+              const exclusionReason = possibleExclusionReason(row);
+              return (
+              <li
+                key={row.id}
+                className={onOpen ? `${styles.card} ${styles.clickCard}` : styles.card}
+                onClick={onOpen ? () => onOpen(row) : undefined}
+              >
                 <header>
                   <span className={styles.seq}>{index + 1}</span>
                   <div>
@@ -157,10 +248,20 @@ export default function TmrJornada({ rows }: Props) {
                     <dd>{formatSpan(row.tmrSer)}</dd>
                   </div>
                   <div>
+                    <dt>TMR CEO</dt>
+                    <dd>{formatSpan(row.tmrDuracion)}</dd>
+                  </div>
+                  <div>
                     <dt>TMR UTEN</dt>
                     <dd>{formatSpan(row.tmrDuracionUten)}</dd>
                   </div>
                 </dl>
+                {exclusionReason ? (
+                  <p className={styles.reason}>
+                    <strong>Posible exclusión. </strong>
+                    {exclusionReason}
+                  </p>
+                ) : null}
 
                 <div className={styles.detail}>
                   <p>
@@ -185,7 +286,8 @@ export default function TmrJornada({ rows }: Props) {
                   ) : null}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ol>
         </>
       ) : (

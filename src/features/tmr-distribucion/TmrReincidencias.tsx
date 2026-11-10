@@ -39,7 +39,7 @@ export default function TmrReincidencias({ rows }: Props) {
       } else if (tipo && item.tipo !== tipo) return false;
       if (item.eventos < minEventos) return false;
       if (!q) return true;
-      return `${item.circuitCode} ${item.location} ${item.causes.map((c) => c.name).join(" ")}`
+      return `${item.circuitCode} ${item.location} ${item.municipalities.map((c) => c.name).join(" ")} ${item.causes.map((c) => c.name).join(" ")}`
         .toLowerCase()
         .includes(q);
     });
@@ -67,7 +67,7 @@ export default function TmrReincidencias({ rows }: Props) {
         </div>
         <div>
           <strong>{resumen.relacionados}</strong>
-          Solo relacionados
+          Relacionados
         </div>
         <div>
           <strong>{resumen.elementos}</strong>
@@ -103,7 +103,7 @@ export default function TmrReincidencias({ rows }: Props) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Circuito, location, causa…"
+            placeholder="Circuito, location, municipio, causa…"
           />
         </label>
       </div>
@@ -115,6 +115,7 @@ export default function TmrReincidencias({ rows }: Props) {
             <tr>
               <th>Circuito</th>
               <th>Location</th>
+              <th>Municipio</th>
               <th>Veces</th>
               <th>Días</th>
               <th>Jobs</th>
@@ -155,6 +156,7 @@ function FragmentRow({
       <tr className={open ? styles.rowOn : undefined} onClick={onToggle}>
         <td>{item.circuitCode}</td>
         <td>{item.location}</td>
+        <td>{top(item.municipalities)}</td>
         <td>{item.eventos}</td>
         <td>{item.dias}</td>
         <td>{item.jobs}</td>
@@ -168,7 +170,7 @@ function FragmentRow({
       </tr>
       {open ? (
         <tr className={styles.detail}>
-          <td colSpan={10}>
+          <td colSpan={11}>
             <p>
               {item.jobs} jobs · {item.casos} casos · {item.tickets || "—"} tickets · se fue{" "}
               {item.eventos} vez{item.eventos === 1 ? "" : "es"} en {item.dias} día
@@ -178,8 +180,10 @@ function FragmentRow({
               {item.rows.map((row) => (
                 <li key={row.id}>
                   <strong>{formatTs(row.startTime)}</strong>
+                  <span>brigada {row.crew || "—"}</span>
                   <span>caso {row.caseSerial || "—"}</span>
                   <span>ticket {row.ticketSerial || "—"}</span>
+                  <span>{row.municipality || "sin municipio"}</span>
                   <span>{row.workType || "sin work type"}</span>
                   <span>{row.cause || "sin cause"}</span>
                   {row.deviceCause ? <span>dispositivo: {row.deviceCause}</span> : null}

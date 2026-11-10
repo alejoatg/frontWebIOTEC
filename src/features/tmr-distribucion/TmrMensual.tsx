@@ -309,11 +309,11 @@ function Kpis({ item }: { item: CrewMonth }) {
       </div>
       <div>
         <strong>{item.cpl}</strong>
-        CPL
+        Logística especial
       </div>
       <div>
         <strong>{item.fhl}</strong>
-        FHL
+        Fuera de horario
       </div>
       <div>
         <strong>{item.sobre}</strong>

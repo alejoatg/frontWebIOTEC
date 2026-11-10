@@ -90,6 +90,112 @@ export function jornadaRows(rows: TmrRow[], crew: string, day: string): TmrRow[]
     });
 }
 
+export const TMR_WATCH_H = 5;
+export const TMR_ALERT_H = 8;
+
+function wallMinutesIso(iso: string | null): number | null {
+  const d = wallDate(iso);
+  if (!d) return null;
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+export function tmrIncumplido(row: TmrRow): boolean {
+  return (
+    (row.tmrDuracion != null && row.tmrDuracion > TMR_ALERT_H) ||
+    (row.tmrDuracionUten != null && row.tmrDuracionUten > TMR_ALERT_H) ||
+    row.rango2Uten === "R>8 H" ||
+    row.exclusion === "No cumple el TMR" ||
+    row.exclusionAuto === "No cumple el TMR"
+  );
+}
+
+/** Motivo probable de exclusión cuando el TMR CEO o UTEN supera 8 h. */
+export function possibleExclusionReason(row: TmrRow): string | null {
+  if (!tmrIncumplido(row)) return null;
+  const startMin = wallMinutesIso(row.startTime);
+  const enRouteMin = wallMinutesIso(row.enRouteAt);
+  const beforeOpen = startMin != null && startMin < 7 * 60;
+  const enRouteInJornada =
+    enRouteMin != null && (row.nextDayEnRoute || enRouteMin >= 7 * 60);
+  const corte = row.lateOk ? "21:00" : "16:00";
+
+  if (row.afterCutoff && row.nextDayEnRoute) {
+    return `Fuera del horario laboral: Start después de ${corte} y En ruta al día siguiente. El TMR CEO cuenta la espera; UTEN usa el Start validado.`;
+  }
+  if (beforeOpen && enRouteInJornada) {
+    return "Fuera del horario laboral: Start antes de las 7:00 y En ruta ya en jornada. El TMR CEO se infla con la espera de madrugada.";
+  }
+  if (row.nextDayEnRoute) {
+    return "Pendiente de logística especial: En ruta es otro día. El TMR CEO incluye la espera nocturna.";
+  }
+  if (row.sobreAsignacion) {
+    return "Sobreasignación: otra orden de la misma brigada en 30 min y el TMR supera 8 h.";
+  }
+  return "TMR incumplido (más de 8 h) sin causal automático de horario, madrugada ni logística. Revisar desplazamiento, servicio o asignación.";
+}
+
+export type DayTone = "idle" | "ok" | "watch" | "alert";
+
+export interface JornadaDayStat {
+  key: string;
+  count: number;
+  tmrMedio: number | null;
+  rOver: number;
+  tone: DayTone;
+}
+
+export function monthKeyFromDay(day: string): string {
+  return day.slice(0, 7);
+}
+
+export function crewMonths(rows: TmrRow[], crew: string): string[] {
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.crew !== crew) continue;
+    const day = executionDayKey(row);
+    if (day) set.add(monthKeyFromDay(day));
+  }
+  return [...set].sort();
+}
+
+function mean(values: Array<number | null | undefined>): number | null {
+  const nums = values.filter((v): v is number => v != null && Number.isFinite(v));
+  if (!nums.length) return null;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+export function dayTone(count: number, tmrMedio: number | null, rOver: number): DayTone {
+  if (!count) return "idle";
+  if ((tmrMedio != null && tmrMedio > TMR_ALERT_H) || rOver >= 2) return "alert";
+  if (rOver > 0 || (tmrMedio != null && tmrMedio > TMR_WATCH_H)) return "watch";
+  return "ok";
+}
+
+export function crewDayStats(rows: TmrRow[], crew: string, month: string): Record<string, JornadaDayStat> {
+  const byDay = new Map<string, TmrRow[]>();
+  for (const row of rows) {
+    if (row.crew !== crew) continue;
+    const day = executionDayKey(row);
+    if (!day || monthKeyFromDay(day) !== month) continue;
+    const list = byDay.get(day);
+    if (list) list.push(row);
+    else byDay.set(day, [row]);
+  }
+  const out: Record<string, JornadaDayStat> = {};
+  for (const [key, list] of byDay) {
+    const tmrMedio = mean(list.map((row) => row.tmrDuracionUten));
+    const rOver = list.filter((row) => row.rango2Uten === "R>8 H").length;
+    out[key] = {
+      key,
+      count: list.length,
+      tmrMedio,
+      rOver,
+      tone: dayTone(list.length, tmrMedio, rOver),
+    };
+  }
+  return out;
+}
+
 export function jornadaTotals(items: TmrRow[]) {
   const first = items[0];
   const last = items[items.length - 1];

@@ -5,8 +5,8 @@ const BASE = `${API_URL}/api/tmr-distribucion`;
 export const TMR_EXCLUSIONS = [
   "Cumple TMR",
   "No cumple el TMR",
-  "Casos Pendiente de logística especial (CPL)",
-  "fuera del Horario laboral (FHL)",
+  "Pendiente de logística especial",
+  "Fuera del horario laboral",
   "Sobreasignación",
 ] as const;
 
@@ -32,11 +32,16 @@ export interface TmrRow {
   createdAt: string | null;
   startTime: string | null;
   assignedAt: string | null;
+  acknowledgedAt: string | null;
+  arrivedShopAt: string | null;
   enRouteAt: string | null;
   arrivedSiteAt: string | null;
   completedAt: string | null;
   startValidado: string | null;
+  startValidadoFuente: "start" | "enRoute" | "";
   dia: string;
+  tmrGen: number | null;
+  tmrAsig: number | null;
   tmrAlist: number | null;
   tmrDesp: number | null;
   tmrSer: number | null;
@@ -45,10 +50,14 @@ export interface TmrRow {
   rangoUten: string;
   rango2Uten: string;
   sobreAsignacion: boolean;
+  afterCutoff: boolean;
+  nextDayEnRoute: boolean;
+  lateOk: boolean;
   exclusion: TmrExclusion | "";
   exclusionAuto: TmrExclusion | "";
   observacion: string;
   notaCeo: string;
+  jobComment: string;
 }
 
 export interface TmrSummary {

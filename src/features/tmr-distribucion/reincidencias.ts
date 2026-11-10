@@ -17,6 +17,7 @@ export interface RecidivaGrupo {
   causes: { name: string; count: number }[];
   deviceCauses: { name: string; count: number }[];
   weatherCauses: { name: string; count: number }[];
+  municipalities: { name: string; count: number }[];
   rows: TmrRow[];
 }
 
@@ -83,6 +84,7 @@ export function buildReincidencias(rows: TmrRow[]): RecidivaGrupo[] {
         causes: tally(list.map((row) => row.cause)),
         deviceCauses: tally(list.map((row) => row.deviceCause)),
         weatherCauses: tally(list.map((row) => row.weatherCause)),
+        municipalities: tally(list.map((row) => row.municipality)),
         rows: [...list].sort((a, b) => (a.startTime ?? "").localeCompare(b.startTime ?? "")),
       };
     })

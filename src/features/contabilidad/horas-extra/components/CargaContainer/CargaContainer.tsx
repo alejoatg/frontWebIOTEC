@@ -138,8 +138,8 @@ export default function CargaContainer() {
       <p className={styles.hint}>
         La plantilla se genera al momento con el listado de trabajadores del catálogo
         contable y listas desplegables (Sistema, Municipio, Proceso donde causa),
-        iguales a Digitar. La fila 2 es un ejemplo de guía y no se importa al
-        registrar.
+        iguales a Digitar. Diligencie desde la primera fila de datos. Si el archivo
+        todavía trae la fila de ejemplo antigua, esa fila no se registra.
       </p>
 
       {message && (

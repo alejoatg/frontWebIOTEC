@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -61,10 +61,9 @@ function pct(part: number, total: number): string {
 }
 
 export default function TmrContainer() {
-  const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<TmrPreview | null>(null);
   const [rows, setRows] = useState<TmrRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -130,40 +129,43 @@ export default function TmrContainer() {
     return map;
   }, [preview, rows]);
 
-  async function handlePreview() {
-    if (!file) {
-      setError("Seleccione el consolidado TMR (.xlsx)");
-      return;
-    }
+  useEffect(() => {
+    let cancel = false;
     setLoading(true);
     setError(null);
-    try {
-      const result = await previewTmr(file);
-      setPreview(result);
-      setRows(result.rows);
-      setPage(0);
-      setMensualOn(false);
-      setMapaOn(false);
-      setMensualBusy(false);
-      setMapaBusy(false);
-      setOpenId(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al analizar");
-    } finally {
-      setLoading(false);
-    }
-  }
+    previewTmr()
+      .then((result) => {
+        if (cancel) return;
+        setPreview(result);
+        setRows(result.rows);
+        setPage(0);
+        setMensualOn(false);
+        setMapaOn(false);
+        setMensualBusy(false);
+        setMapaBusy(false);
+        setOpenId(null);
+      })
+      .catch((e) => {
+        if (!cancel) setError(e instanceof Error ? e.message : "Error al analizar");
+      })
+      .finally(() => {
+        if (!cancel) setLoading(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   function patch(id: string, next: Partial<TmrRow>) {
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...next } : row)));
   }
 
   async function handleDownload() {
-    if (!file) return;
+    if (!preview) return;
     setDownloading(true);
     setError(null);
     try {
-      await downloadTmrExcel(file, edited);
+      await downloadTmrExcel(edited);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al descargar");
     } finally {
@@ -174,33 +176,16 @@ export default function TmrContainer() {
   return (
     <div className={styles.wrap}>
       <div className={styles.row}>
-        <div className={styles.field}>
-          <label htmlFor="tmr-file">Consolidado TMR</label>
-          <input
-            id="tmr-file"
-            type="file"
-            accept=".xlsx"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] ?? null);
-              setPreview(null);
-              setRows([]);
-              setSection("listado");
-              setMensualOn(false);
-              setMapaOn(false);
-              setMensualBusy(false);
-              setMapaBusy(false);
-              setOpenId(null);
-            }}
-          />
-        </div>
-        <Button type="button" onClick={handlePreview} disabled={loading || !file}>
-          {loading ? "Analizando…" : "Analizar"}
-        </Button>
+        <p className={styles.hint}>
+          {loading
+            ? "Cargando consolidado de septiembre 2026…"
+            : "Prueba con el consolidado de septiembre 2026."}
+        </p>
         <Button
           type="button"
           variant="secondary"
           onClick={handleDownload}
-          disabled={!file || !preview || downloading}
+          disabled={!preview || downloading}
         >
           {downloading ? "Descargando…" : "Descargar Excel conciliado"}
         </Button>
@@ -244,10 +229,10 @@ export default function TmrContainer() {
             Mapa de calor
           </button>
         </div>
-      {!summary ? (
+      {!summary && !loading ? (
         <p className={styles.hint}>
-          Suba el consolidado y pulse Analizar. Después podrá entrar a jornada,
-          reincidencias. Mensual y mapa se piden aparte, con su botón.
+          No se pudo cargar el consolidado de septiembre. Mensual y mapa se piden
+          aparte, con su botón.
         </p>
       ) : null}
 

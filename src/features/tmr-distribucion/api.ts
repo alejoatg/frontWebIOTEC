@@ -105,26 +105,21 @@ async function errorMessage(res: Response): Promise<string> {
   return Array.isArray(msg) ? msg.join(", ") : String(msg);
 }
 
-export async function previewTmr(file: File): Promise<TmrPreview> {
-  const fd = new FormData();
-  fd.append("file", file);
+export async function previewTmr(): Promise<TmrPreview> {
   const res = await fetch(`${BASE}/preview`, {
-    method: "POST",
+    method: "GET",
     credentials: "include",
-    body: fd,
   });
   if (!res.ok) throw new Error(await errorMessage(res));
   return res.json() as Promise<TmrPreview>;
 }
 
-export async function downloadTmrExcel(file: File, overrides: Record<string, TmrOverride>): Promise<void> {
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("overrides", JSON.stringify(overrides));
+export async function downloadTmrExcel(overrides: Record<string, TmrOverride>): Promise<void> {
   const res = await fetch(`${BASE}/excel`, {
     method: "POST",
     credentials: "include",
-    body: fd,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ overrides }),
   });
   if (!res.ok) throw new Error(await errorMessage(res));
   const blob = await res.blob();

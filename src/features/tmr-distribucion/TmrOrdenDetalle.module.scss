@@ -12,6 +12,18 @@
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.28);
 }
 
+.dialogWide {
+  width: min(1180px, 98vw);
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
+  min-height: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
 .dialog::backdrop {
   background: rgba(15, 23, 42, 0.45);
 }
@@ -249,4 +261,14 @@
 .footer {
   border-top: 1px solid #e2e8f0;
   justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dialogWide {
+    width: min(920px, 96vw);
+  }
 }

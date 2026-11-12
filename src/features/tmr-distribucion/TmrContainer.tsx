@@ -532,6 +532,7 @@ export default function TmrContainer() {
       {openRow ? (
         <TmrOrdenDetalle
           row={openRow}
+          rows={rows}
           onClose={() => setOpenId(null)}
           onOpenRelated={(id) => setOpenId(id)}
           onSave={(next) => patch(openRow.id, next)}

@@ -1,0 +1,160 @@
+.side {
+  border-left: 1px solid #e2e8f0;
+  background: #f8fafc;
+  overflow: auto;
+  padding: 0.9rem 1rem 1.2rem;
+  min-width: 0;
+}
+
+.head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.head p {
+  margin: 0.25rem 0 0.85rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.day + .day {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.day h4 {
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.marker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.marker strong {
+  color: #0f172a;
+}
+
+.marker small {
+  color: #64748b;
+}
+
+.order,
+.current {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.current {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+
+.order:hover,
+.current:hover {
+  border-color: #0f766e;
+}
+
+.orderTitle {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.meta {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.times {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin: 0 0 0.35rem;
+}
+
+.times div {
+  margin: 0;
+}
+
+.times dt {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.times dd {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.spans {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.excl {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9a3412;
+}
+
+.obs,
+.obsMuted {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.obs {
+  color: #334155;
+}
+
+.obsMuted {
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .side {
+    border-left: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .times {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -47,6 +47,7 @@ export interface TmrRow {
   enRouteAt: string | null;
   arrivedSiteAt: string | null;
   completedAt: string | null;
+  closedAt: string | null;
   startValidado: string | null;
   startValidadoFuente: "start" | "enRoute" | "";
   dia: string;

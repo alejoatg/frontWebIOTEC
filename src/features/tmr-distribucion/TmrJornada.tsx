@@ -175,8 +175,18 @@ export default function TmrJornada({ rows, onOpen }: Props) {
               Actividades
             </div>
             <div>
+              <strong>{formatClock(totals.inicio)}</strong>
+              Inicio jornada (primer desplazamiento)
+              <small>{formatTs(totals.inicio)}</small>
+            </div>
+            <div>
+              <strong>{formatClock(totals.fin)}</strong>
+              Fin jornada (último cierre)
+              <small>{formatTs(totals.fin)}</small>
+            </div>
+            <div>
               <strong>{formatSpan(totals.trabajo)}</strong>
-              Jornada (primera ruta → último cierre)
+              Jornada (primer desplazamiento → último cierre)
             </div>
             <div>
               <strong>{formatSpan(totals.tmrUten)}</strong>

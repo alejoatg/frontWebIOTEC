@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components";
 import { TMR_EXCLUSIONS, type TmrExclusion, type TmrRow } from "./api";
-import { formatClock, formatSpan, formatTs, possibleExclusionReason } from "./jornada";
+import { formatClock, formatSpan, formatTs, muestraJornadaNoCumple, possibleExclusionReason } from "./jornada";
+import TmrJornadaContexto from "./TmrJornadaContexto";
 import styles from "./TmrOrdenDetalle.module.scss";
 
 const TIMELINE = [
@@ -28,12 +29,13 @@ const TIMELINE = [
 
 interface Props {
   row: TmrRow;
+  rows?: TmrRow[];
   onClose: () => void;
   onOpenRelated?: (id: string) => void;
   onSave: (next: Pick<TmrRow, "exclusion" | "observacion" | "notaCeo">) => void;
 }
 
-export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }: Props) {
+export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated, onSave }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [exclusion, setExclusion] = useState<TmrExclusion | "">(row.exclusion);
   const [observacion, setObservacion] = useState(row.observacion);
@@ -42,6 +44,7 @@ export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }:
   const dirty =
     exclusion !== row.exclusion || observacion !== row.observacion || notaCeo !== row.notaCeo;
   const exclusionReason = possibleExclusionReason(row);
+  const showJornada = muestraJornadaNoCumple(row);
 
   useEffect(() => {
     setExclusion(row.exclusion);
@@ -72,7 +75,11 @@ export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }:
   }
 
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose}>
+    <dialog
+      ref={dialogRef}
+      className={showJornada ? `${styles.dialog} ${styles.dialogWide}` : styles.dialog}
+      onClose={onClose}
+    >
       <div className={styles.content}>
         <header className={styles.header}>
           <div>
@@ -88,7 +95,8 @@ export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }:
           </button>
         </header>
 
-        <div className={styles.body}>
+        <div className={showJornada ? styles.shell : undefined}>
+          <div className={styles.body}>
           <section>
             <h4>Identificación</h4>
             <dl className={styles.grid}>
@@ -290,6 +298,10 @@ export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }:
             </label>
             {saved && !dirty ? <p className={styles.saved}>Guardado en esta sesión.</p> : null}
           </section>
+        </div>
+          {showJornada ? (
+            <TmrJornadaContexto row={row} rows={rows} onOpenOrder={onOpenRelated} />
+          ) : null}
         </div>
 
         <footer className={styles.footer}>

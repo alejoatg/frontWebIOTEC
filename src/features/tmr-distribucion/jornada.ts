@@ -209,12 +209,115 @@ export function crewDayStats(rows: TmrRow[], crew: string, month: string): Recor
   return out;
 }
 
+export function nextDayKey(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  if (!y || !m || !d) return day;
+  const date = new Date(Date.UTC(y, m - 1, d + 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+export function daysSpannedByOrder(row: TmrRow): string[] {
+  const start = dayKeyFromIso(row.startTime);
+  const end =
+    dayKeyFromIso(row.completedAt) || dayKeyFromIso(row.enRouteAt) || dayKeyFromIso(row.arrivedSiteAt) || start;
+  if (!start) return end ? [end] : [];
+  if (!end || end === start) return [start];
+  const days: string[] = [];
+  let cur = start;
+  while (cur <= end && days.length < 4) {
+    days.push(cur);
+    cur = nextDayKey(cur);
+  }
+  return days;
+}
+
+const DAY_STAMPS = [
+  "startTime",
+  "assignedAt",
+  "acknowledgedAt",
+  "arrivedShopAt",
+  "enRouteAt",
+  "arrivedSiteAt",
+  "completedAt",
+  "closedAt",
+] as const;
+
+function earliestIso(values: Array<string | null | undefined>): string | null {
+  const dates = values
+    .map((iso) => (iso ? wallDate(iso) : null))
+    .filter((d): d is Date => Boolean(d))
+    .sort((a, b) => a.getTime() - b.getTime());
+  return dates[0] ? dates[0].toISOString() : null;
+}
+
+function latestIso(values: Array<string | null | undefined>): string | null {
+  const dates = values
+    .map((iso) => (iso ? wallDate(iso) : null))
+    .filter((d): d is Date => Boolean(d))
+    .sort((a, b) => b.getTime() - a.getTime());
+  return dates[0] ? dates[0].toISOString() : null;
+}
+
+export function orderTouchesDay(row: TmrRow, day: string): boolean {
+  if (executionDayKey(row) === day) return true;
+  return DAY_STAMPS.some((key) => dayKeyFromIso(row[key]) === day);
+}
+
+export interface JornadaDiaResumen {
+  key: string;
+  label: string;
+  inicio: string | null;
+  fin: string | null;
+  ordenes: TmrRow[];
+}
+
+export function jornadaBounds(ordenes: TmrRow[], day?: string): { inicio: string | null; fin: string | null } {
+  const onDay = (iso: string | null | undefined) => !day || dayKeyFromIso(iso ?? null) === day;
+  const desp = ordenes.map((row) => (onDay(row.enRouteAt) ? row.enRouteAt : null));
+  const inicios = desp.some(Boolean) ? desp : ordenes.map((row) => (onDay(row.startTime) ? row.startTime : null));
+  const cierres = ordenes.map((row) => {
+    if (onDay(row.closedAt)) return row.closedAt;
+    if (onDay(row.completedAt)) return row.completedAt;
+    return null;
+  });
+  return {
+    inicio: earliestIso(inicios),
+    fin: latestIso(cierres),
+  };
+}
+
+export function jornadaContexto(rows: TmrRow[], order: TmrRow): JornadaDiaResumen[] {
+  if (!order.crew) return [];
+  return daysSpannedByOrder(order).map((key) => {
+    const ordenes = rows
+      .filter((row) => row.crew === order.crew && orderTouchesDay(row, key))
+      .sort((a, b) => {
+        const ta = wallDate(a.startTime || a.enRouteAt)?.getTime() ?? 0;
+        const tb = wallDate(b.startTime || b.enRouteAt)?.getTime() ?? 0;
+        return ta - tb;
+      });
+    const { inicio, fin } = jornadaBounds(ordenes, key);
+    return {
+      key,
+      label: formatDayLabel(key),
+      inicio,
+      fin,
+      ordenes,
+    };
+  });
+}
+
+export function muestraJornadaNoCumple(row: TmrRow): boolean {
+  return row.exclusion === "No cumple el TMR" || row.exclusionAuto === "No cumple el TMR";
+}
+
 export function jornadaTotals(items: TmrRow[]) {
-  const first = items[0];
-  const last = items[items.length - 1];
+  const { inicio, fin } = jornadaBounds(items);
   return {
     count: items.length,
-    trabajo: hoursBetween(first?.enRouteAt || first?.startTime || null, last?.completedAt || null),
+    inicio,
+    fin,
+    trabajo: hoursBetween(inicio, fin),
     tmrUten: items.reduce((sum, row) => sum + (row.tmrDuracionUten ?? 0), 0),
     sobre: items.filter((row) => row.sobreAsignacion).length,
   };

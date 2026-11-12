@@ -5,18 +5,21 @@ import Link from "next/link";
 import { Button } from "@/components";
 import {
   downloadAuthenticatedFile,
+  fetchMineFacets,
   fetchMyEntries,
   myEntriesExportExcelUrl,
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
 import { hoursFromEntry } from "../../lib/hourTypesDisplay";
-import {
-  OVERTIME_STATUS_OPTIONS,
-  overtimeStatusLabel,
-} from "../../lib/overtimeStatus";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
+import OvertimeListFilters, {
+  EMPTY_OVERTIME_LIST_FILTERS,
+  overtimeListFilterQuery,
+  type OvertimeListFilterValues,
+} from "../OvertimeListFilters/OvertimeListFilters";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "../../styles/shared.module.scss";
@@ -49,9 +52,18 @@ export default function MisRegistrosContainer() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [status, setStatus] = useState("");
+  const [filters, setFilters] = useState<OvertimeListFilterValues>(EMPTY_OVERTIME_LIST_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<OvertimeListFilterValues>(
+    EMPTY_OVERTIME_LIST_FILTERS,
+  );
+  const [processes, setProcesses] = useState<string[]>([]);
+  const [batches, setBatches] = useState<
+    Array<{ id: string; batchCode: string; originalFilename: string | null }>
+  >([]);
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<OvertimeEntryRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voidTarget, setVoidTarget] = useState<OvertimeEntryRow | null>(null);
@@ -65,21 +77,46 @@ export default function MisRegistrosContainer() {
       const data = await fetchMyEntries({
         year,
         month,
-        status: status || undefined,
+        ...overtimeListFilterQuery(appliedFilters, status),
         page,
       });
       setItems(data.items);
       setTotalPages(data.totalPages);
+      setTotal(data.total);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar");
     } finally {
       setLoading(false);
     }
-  }, [year, month, status, page]);
+  }, [year, month, status, appliedFilters, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    fetchMineFacets(year, month)
+      .then((data) => {
+        setProcesses(data.processes ?? []);
+        setBatches(data.batches ?? []);
+      })
+      .catch(() => {
+        setProcesses([]);
+        setBatches([]);
+      });
+  }, [year, month]);
+
+  function applyFilters() {
+    setAppliedFilters(filters);
+    setPage(1);
+  }
+
+  function clearFilters() {
+    setFilters(EMPTY_OVERTIME_LIST_FILTERS);
+    setAppliedFilters(EMPTY_OVERTIME_LIST_FILTERS);
+    setStatus("");
+    setPage(1);
+  }
 
   return (
     <div>
@@ -97,56 +134,54 @@ export default function MisRegistrosContainer() {
           setYear(y);
           setMonth(m);
           setPage(1);
+          setFilters(EMPTY_OVERTIME_LIST_FILTERS);
+          setAppliedFilters(EMPTY_OVERTIME_LIST_FILTERS);
         }}
       />
 
-      <div className={styles.toolbar}>
-        <label>
-          Estado{" "}
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
+      <OvertimeListFilters
+        filters={filters}
+        onChange={setFilters}
+        status={status}
+        onStatusChange={(next) => {
+          setStatus(next);
+          setPage(1);
+        }}
+        processes={processes}
+        batches={batches}
+        onApply={applyFilters}
+        onClear={clearFilters}
+        onRefresh={load}
+        total={total}
+        extraActions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exporting || loading}
+            onClick={async () => {
+              setExporting(true);
+              setError(null);
+              try {
+                await downloadAuthenticatedFile(
+                  myEntriesExportExcelUrl({
+                    year,
+                    month,
+                    ...overtimeListFilterQuery(appliedFilters, status),
+                  }),
+                  `mis-registros-${year}-${String(month).padStart(2, "0")}.xlsx`,
+                );
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Error al exportar");
+              } finally {
+                setExporting(false);
+              }
             }}
           >
-            {OVERTIME_STATUS_OPTIONS.map((s) => (
-              <option key={s || "all"} value={s}>
-                {overtimeStatusLabel(s)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button type="button" variant="outline" size="sm" onClick={load}>
-          Actualizar
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={exporting || loading}
-          onClick={async () => {
-            setExporting(true);
-            setError(null);
-            try {
-              await downloadAuthenticatedFile(
-                myEntriesExportExcelUrl({
-                  year,
-                  month,
-                  status: status || undefined,
-                }),
-                `mis-registros-${year}-${String(month).padStart(2, "0")}.xlsx`,
-              );
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Error al exportar");
-            } finally {
-              setExporting(false);
-            }
-          }}
-        >
-          {exporting ? "Generando Excel…" : "Exportar Excel"}
-        </Button>
-      </div>
+            {exporting ? "Generando Excel…" : "Exportar Excel"}
+          </Button>
+        }
+      />
 
       {loading && <div className={styles.loading}>Cargando mis registros…</div>}
       {error && <div className={styles.error}>{error}</div>}

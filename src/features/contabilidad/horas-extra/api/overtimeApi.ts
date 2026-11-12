@@ -151,7 +151,7 @@ export async function fetchEntries(params: {
 }
 
 export async function fetchPlanillaFacets(year: number, month: number) {
-  return request<{ processes: string[]; digitizers: Array<{ id: string; name: string }> }>(
+  return request<OvertimeListFacets>(
     `/entries/planilla/facets?year=${year}&month=${month}`,
   );
 }
@@ -188,55 +188,67 @@ export function planillaExportExcelUrl(params: {
   return `${BASE}/entries/planilla/export?${q}`;
 }
 
-/** Registros digitados por el usuario autenticado. */
-export async function fetchMyEntries(params: {
+export interface OvertimeListQuery {
   year: number;
   month: number;
   status?: string;
   documentNumber?: string;
   workDateFrom?: string;
   workDateTo?: string;
+  batchId?: string;
+  zoneName?: string;
+  processName?: string;
+  fileName?: string;
   search?: string;
-  page?: number;
-  pageSize?: number;
   includeSuperseded?: boolean;
-}) {
+}
+
+function appendOvertimeListQuery(q: URLSearchParams, params: OvertimeListQuery) {
+  if (params.status) q.set("status", params.status);
+  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
+  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
+  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
+  if (params.batchId) q.set("batchId", params.batchId);
+  if (params.zoneName) q.set("zoneName", params.zoneName);
+  if (params.processName) q.set("processName", params.processName);
+  if (params.fileName) q.set("fileName", params.fileName);
+  if (params.search) q.set("search", params.search);
+  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+}
+
+export interface OvertimeListFacets {
+  processes: string[];
+  digitizers: Array<{ id: string; name: string }>;
+  batches: Array<{ id: string; batchCode: string; originalFilename: string | null }>;
+}
+
+/** Registros digitados por el usuario autenticado. */
+export async function fetchMyEntries(
+  params: OvertimeListQuery & { page?: number; pageSize?: number },
+) {
   const q = new URLSearchParams({
     year: String(params.year),
     month: String(params.month),
     page: String(params.page ?? 1),
     pageSize: String(params.pageSize ?? 50),
   });
-  if (params.status) q.set("status", params.status);
-  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
-  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
-  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
-  if (params.search) q.set("search", params.search);
-  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  appendOvertimeListQuery(q, params);
   return request<EntriesPage>(`/entries/mine?${q}`);
 }
 
+export async function fetchMineFacets(year: number, month: number) {
+  return request<OvertimeListFacets>(
+    `/entries/mine/facets?year=${year}&month=${month}`,
+  );
+}
+
 /** Excel de mis registros según filtros en pantalla (sin paginación). */
-export function myEntriesExportExcelUrl(params: {
-  year: number;
-  month: number;
-  status?: string;
-  documentNumber?: string;
-  workDateFrom?: string;
-  workDateTo?: string;
-  search?: string;
-  includeSuperseded?: boolean;
-}) {
+export function myEntriesExportExcelUrl(params: OvertimeListQuery) {
   const q = new URLSearchParams({
     year: String(params.year),
     month: String(params.month),
   });
-  if (params.status) q.set("status", params.status);
-  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
-  if (params.workDateFrom) q.set("workDateFrom", params.workDateFrom);
-  if (params.workDateTo) q.set("workDateTo", params.workDateTo);
-  if (params.search) q.set("search", params.search);
-  if (params.includeSuperseded) q.set("includeSuperseded", "true");
+  appendOvertimeListQuery(q, params);
   return `${BASE}/entries/mine/export?${q}`;
 }
 
@@ -252,45 +264,39 @@ export async function fetchMyAnalystDigitizers() {
   return request<AnalystDigitizer[]>("/analyst/digitizers");
 }
 
-export async function fetchGroupEntries(params: {
-  year: number;
-  month: number;
-  status?: string;
-  digitizerId?: string;
-  documentNumber?: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-  includeSuperseded?: boolean;
-}) {
+export async function fetchGroupEntries(
+  params: OvertimeListQuery & {
+    digitizerId?: string;
+    page?: number;
+    pageSize?: number;
+  },
+) {
   const q = new URLSearchParams({
     year: String(params.year),
     month: String(params.month),
     page: String(params.page ?? 1),
     pageSize: String(params.pageSize ?? 50),
   });
-  if (params.status) q.set("status", params.status);
+  appendOvertimeListQuery(q, params);
   if (params.digitizerId) q.set("digitizerId", params.digitizerId);
-  if (params.documentNumber) q.set("documentNumber", params.documentNumber);
-  if (params.search) q.set("search", params.search);
-  if (params.includeSuperseded) q.set("includeSuperseded", "true");
   return request<EntriesPage>(`/entries/group?${q}`);
 }
 
-export function groupEntriesExportExcelUrl(params: {
-  year: number;
-  month: number;
-  status?: string;
-  digitizerId?: string;
-  search?: string;
-}) {
+export async function fetchGroupFacets(year: number, month: number, digitizerId?: string) {
+  const q = new URLSearchParams({ year: String(year), month: String(month) });
+  if (digitizerId) q.set("digitizerId", digitizerId);
+  return request<OvertimeListFacets>(`/entries/group/facets?${q}`);
+}
+
+export function groupEntriesExportExcelUrl(
+  params: OvertimeListQuery & { digitizerId?: string },
+) {
   const q = new URLSearchParams({
     year: String(params.year),
     month: String(params.month),
   });
-  if (params.status) q.set("status", params.status);
+  appendOvertimeListQuery(q, params);
   if (params.digitizerId) q.set("digitizerId", params.digitizerId);
-  if (params.search) q.set("search", params.search);
   return `${BASE}/entries/group/export?${q}`;
 }
 

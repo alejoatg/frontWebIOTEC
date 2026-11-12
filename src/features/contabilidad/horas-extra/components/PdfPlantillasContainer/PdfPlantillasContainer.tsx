@@ -225,8 +225,8 @@ export default function PdfPlantillasContainer() {
         <div className={local.filtersPanel}>
           <p className={styles.hint}>
             {user?.role === "ANALISTA"
-              ? "Genera un PDF por trabajador con las horas aprobadas de los supervisores y coordinadores de su grupo. Si un trabajador tiene horas de varios, quedan en el mismo PDF."
-              : "Genera un PDF por trabajador con las horas aprobadas que usted digitó."}{" "}
+              ? "Genera un PDF por trabajador con todos sus registros aprobados que aún no están en un PDF, aunque los hayan digitado supervisores distintos."
+              : "Genera un PDF por cada trabajador al que usted digitó tiempo. Ese PDF incluye todos sus registros aprobados que aún no están en un PDF, aunque otro supervisor haya digitado parte."}{" "}
             Cada PDF se envía al trabajador, a quien digitó y al analista del grupo.
           </p>
           <div className={local.filterActions}>

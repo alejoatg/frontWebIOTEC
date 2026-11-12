@@ -110,8 +110,7 @@ type OptionalTextFieldKey =
 
 type OptionalColumn =
   | { kind: "text"; key: OptionalTextFieldKey }
-  | { kind: "sistema-ts"; key: "systemName"; placeholder: string }
-  | { kind: "proceso-causacion"; key: "attachmentRef"; placeholder: string };
+  | { kind: "sistema-ts"; key: "systemName"; placeholder: string };
 
 const OPTIONAL_COLUMNS: OptionalColumn[] = [
   { kind: "text", key: "baseMunicipality" },
@@ -126,11 +125,6 @@ const OPTIONAL_COLUMNS: OptionalColumn[] = [
   { kind: "text", key: "consigna" },
   { kind: "text", key: "workRef" },
   { kind: "text", key: "ticketRef" },
-  {
-    kind: "proceso-causacion",
-    key: "attachmentRef",
-    placeholder: "Seleccionar",
-  },
   { kind: "text", key: "operationalNote" },
 ];
 
@@ -330,6 +324,10 @@ function collectRegisterErrors(
       errors.push(
         `${label}: las horas solo pueden ser en punto o media hora (ej. 18:00, 18:30).`,
       );
+      return;
+    }
+    if (!row.attachmentRef.trim()) {
+      errors.push(`${label}: falta el proceso donde causa.`);
       return;
     }
     const preview = rowPreview(row);
@@ -1106,6 +1104,7 @@ export default function DigitarContainer() {
               <th>Validador</th>
               <th>Proceso</th>
               <th>Zona</th>
+              <th>Proceso donde causa *</th>
               <th className={styles.wideTh}>MUNICIPIO DONDE CAUSÓ EL TIEMPO SUPLEMENTARIO</th>
               {OPTIONAL_COLUMNS.map((col) => (
                 <th key={col.key}>{OPTIONAL_FIELD_LABELS[col.key]}</th>
@@ -1217,6 +1216,14 @@ export default function DigitarContainer() {
                   <td className={styles.ro}>{row.processName || "—"}</td>
                   <td className={styles.ro}>{row.zoneName || "—"}</td>
                   <td>
+                    <CatalogSelectField
+                      value={row.attachmentRef}
+                      options={PROCESO_CAUSACION_SELECT_OPTIONS}
+                      placeholder="Seleccionar"
+                      onChange={(v) => updateRow(row.localId, { attachmentRef: v })}
+                    />
+                  </td>
+                  <td>
                     <CatalogSuggestField
                       value={row.commissionMunicipality}
                       options={[...MUNICIPIO_PODAS_OPTIONS]}
@@ -1235,15 +1242,6 @@ export default function DigitarContainer() {
                           placeholder={col.placeholder}
                           onChange={(v) =>
                             updateRow(row.localId, { systemName: v })
-                          }
-                        />
-                      ) : col.kind === "proceso-causacion" ? (
-                        <CatalogSelectField
-                          value={row.attachmentRef}
-                          options={PROCESO_CAUSACION_SELECT_OPTIONS}
-                          placeholder={col.placeholder}
-                          onChange={(v) =>
-                            updateRow(row.localId, { attachmentRef: v })
                           }
                         />
                       ) : (

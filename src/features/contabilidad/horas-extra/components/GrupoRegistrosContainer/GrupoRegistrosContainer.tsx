@@ -6,18 +6,21 @@ import { Button } from "@/components";
 import {
   downloadAuthenticatedFile,
   fetchGroupEntries,
+  fetchGroupFacets,
   fetchMyAnalystDigitizers,
   groupEntriesExportExcelUrl,
   type AnalystDigitizer,
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
 import { hoursFromEntry } from "../../lib/hourTypesDisplay";
-import {
-  OVERTIME_STATUS_OPTIONS,
-  overtimeStatusLabel,
-} from "../../lib/overtimeStatus";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
+import OvertimeListFilters, {
+  EMPTY_OVERTIME_LIST_FILTERS,
+  overtimeListFilterQuery,
+  type OvertimeListFilterValues,
+} from "../OvertimeListFilters/OvertimeListFilters";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "../../styles/shared.module.scss";
@@ -50,11 +53,19 @@ export default function GrupoRegistrosContainer() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [status, setStatus] = useState("");
-  const [digitizerId, setDigitizerId] = useState("");
+  const [filters, setFilters] = useState<OvertimeListFilterValues>(EMPTY_OVERTIME_LIST_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<OvertimeListFilterValues>(
+    EMPTY_OVERTIME_LIST_FILTERS,
+  );
   const [digitizers, setDigitizers] = useState<AnalystDigitizer[]>([]);
+  const [processes, setProcesses] = useState<string[]>([]);
+  const [batches, setBatches] = useState<
+    Array<{ id: string; batchCode: string; originalFilename: string | null }>
+  >([]);
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<OvertimeEntryRow[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voidTarget, setVoidTarget] = useState<OvertimeEntryRow | null>(null);
@@ -73,22 +84,47 @@ export default function GrupoRegistrosContainer() {
       const data = await fetchGroupEntries({
         year,
         month,
-        status: status || undefined,
-        digitizerId: digitizerId || undefined,
+        ...overtimeListFilterQuery(appliedFilters, status),
+        digitizerId: appliedFilters.submittedById || undefined,
         page,
       });
       setItems(data.items);
       setTotalPages(data.totalPages);
+      setTotal(data.total);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar");
     } finally {
       setLoading(false);
     }
-  }, [year, month, status, digitizerId, page]);
+  }, [year, month, status, appliedFilters, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    fetchGroupFacets(year, month)
+      .then((data) => {
+        setProcesses(data.processes ?? []);
+        setBatches(data.batches ?? []);
+      })
+      .catch(() => {
+        setProcesses([]);
+        setBatches([]);
+      });
+  }, [year, month]);
+
+  function applyFilters() {
+    setAppliedFilters(filters);
+    setPage(1);
+  }
+
+  function clearFilters() {
+    setFilters(EMPTY_OVERTIME_LIST_FILTERS);
+    setAppliedFilters(EMPTY_OVERTIME_LIST_FILTERS);
+    setStatus("");
+    setPage(1);
+  }
 
   return (
     <div>
@@ -107,74 +143,57 @@ export default function GrupoRegistrosContainer() {
           setYear(y);
           setMonth(m);
           setPage(1);
+          setFilters(EMPTY_OVERTIME_LIST_FILTERS);
+          setAppliedFilters(EMPTY_OVERTIME_LIST_FILTERS);
         }}
       />
 
-      <div className={styles.toolbar}>
-        <label>
-          Digitador{" "}
-          <select
-            value={digitizerId}
-            onChange={(e) => {
-              setDigitizerId(e.target.value);
-              setPage(1);
+      <OvertimeListFilters
+        filters={filters}
+        onChange={setFilters}
+        status={status}
+        onStatusChange={(next) => {
+          setStatus(next);
+          setPage(1);
+        }}
+        processes={processes}
+        batches={batches}
+        digitizers={digitizers}
+        showDigitizer
+        onApply={applyFilters}
+        onClear={clearFilters}
+        onRefresh={load}
+        total={total}
+        extraActions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exporting || loading}
+            onClick={async () => {
+              setExporting(true);
+              setError(null);
+              try {
+                await downloadAuthenticatedFile(
+                  groupEntriesExportExcelUrl({
+                    year,
+                    month,
+                    ...overtimeListFilterQuery(appliedFilters, status),
+                    digitizerId: appliedFilters.submittedById || undefined,
+                  }),
+                  `registros-grupo-${year}-${String(month).padStart(2, "0")}.xlsx`,
+                );
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Error al exportar");
+              } finally {
+                setExporting(false);
+              }
             }}
           >
-            <option value="">Todos</option>
-            {digitizers.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Estado{" "}
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-          >
-            {OVERTIME_STATUS_OPTIONS.map((s) => (
-              <option key={s || "all"} value={s}>
-                {overtimeStatusLabel(s)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button type="button" variant="outline" size="sm" onClick={load}>
-          Actualizar
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={exporting || loading}
-          onClick={async () => {
-            setExporting(true);
-            setError(null);
-            try {
-              await downloadAuthenticatedFile(
-                groupEntriesExportExcelUrl({
-                  year,
-                  month,
-                  status: status || undefined,
-                  digitizerId: digitizerId || undefined,
-                }),
-                `registros-grupo-${year}-${String(month).padStart(2, "0")}.xlsx`,
-              );
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Error al exportar");
-            } finally {
-              setExporting(false);
-            }
-          }}
-        >
-          {exporting ? "Generando Excel…" : "Exportar Excel"}
-        </Button>
-      </div>
+            {exporting ? "Generando Excel…" : "Exportar Excel"}
+          </Button>
+        }
+      />
 
       {digitizers.length === 0 && !loading && (
         <div className={styles.hint}>

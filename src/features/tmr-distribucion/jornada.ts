@@ -1,4 +1,4 @@
-import type { TmrRow } from "./api";
+import type { TmrRow, TmrSobreRelacion } from "./api";
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
@@ -51,6 +51,13 @@ export function formatSpan(hours: number | null): string {
   const h = Math.floor(abs);
   const min = Math.round((abs - h) * 60);
   return min ? `${h} h ${min} min` : `${h} h`;
+}
+
+export function formatSobreRelacion(rel: TmrSobreRelacion | null | undefined): string {
+  if (!rel) return "";
+  const start = formatClock(rel.startTime);
+  const tmr = formatSpan(rel.tmrDuracion);
+  return `job ${rel.jobSerial}${rel.caseSerial ? ` caso ${rel.caseSerial}` : ""}, Start ${start} (+${rel.minutosDespues} min), TMR ${tmr}`;
 }
 
 export function hoursBetween(start: string | null, end: string | null): number | null {
@@ -127,14 +134,15 @@ export function possibleExclusionReason(row: TmrRow): string | null {
   }
   const sobre = row.sobreAsignacion || row.causas?.includes("Sobreasignación");
   const cpl = row.nextDayEnRoute || row.causas?.includes("Pendiente de logística especial");
+  const rel = formatSobreRelacion(row.sobreRelacion);
   if (sobre && cpl) {
-    return "Sobreasignación (principal): otra orden de la misma brigada en 30 min y el TMR supera 8 h. También aplica logística especial: En ruta es otro día.";
+    return `Sobreasignación (principal)${rel ? `: ${rel}` : ": otra orden de la misma brigada en 30 min"} y el TMR supera 8 h. También aplica logística especial: En ruta es otro día.`;
   }
   if (cpl) {
     return "Pendiente de logística especial: En ruta es otro día. El TMR CEO incluye la espera nocturna.";
   }
   if (sobre) {
-    return "Sobreasignación: otra orden de la misma brigada en 30 min y el TMR supera 8 h.";
+    return `Sobreasignación${rel ? `: ${rel}` : ": otra orden de la misma brigada en 30 min"} y el TMR supera 8 h.`;
   }
   return "TMR incumplido (más de 8 h) sin causal automático de horario, madrugada ni logística. Revisar desplazamiento, servicio o asignación.";
 }

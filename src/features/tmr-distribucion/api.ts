@@ -12,6 +12,16 @@ export const TMR_EXCLUSIONS = [
 
 export type TmrExclusion = (typeof TMR_EXCLUSIONS)[number];
 
+export interface TmrSobreRelacion {
+  id: string;
+  jobSerial: string;
+  caseSerial: string;
+  municipality: string;
+  startTime: string | null;
+  minutosDespues: number;
+  tmrDuracion: number | null;
+}
+
 export interface TmrRow {
   id: string;
   caseSerial: string;
@@ -50,6 +60,7 @@ export interface TmrRow {
   rangoUten: string;
   rango2Uten: string;
   sobreAsignacion: boolean;
+  sobreRelacion: TmrSobreRelacion | null;
   afterCutoff: boolean;
   nextDayEnRoute: boolean;
   lateOk: boolean;

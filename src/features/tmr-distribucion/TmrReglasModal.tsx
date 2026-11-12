@@ -29,7 +29,7 @@ const PRIORITY = [
       "Y el TMR frío (Start → Completado) es mayor a 8 horas.",
     ],
     effect:
-      "El Start validado pasa a En-Route. Si también hay En-Route al día siguiente, se registran las dos causas: Sobreasignación (principal) y Pendiente de logística especial.",
+      "El Start validado pasa a En-Route. Se anota el job relacionado, los minutos entre Start y el TMR de ambas órdenes. Si también hay En-Route al día siguiente, se registran las dos causas.",
   },
   {
     n: "3",

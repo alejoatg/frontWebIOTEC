@@ -29,10 +29,11 @@ const TIMELINE = [
 interface Props {
   row: TmrRow;
   onClose: () => void;
+  onOpenRelated?: (id: string) => void;
   onSave: (next: Pick<TmrRow, "exclusion" | "observacion" | "notaCeo">) => void;
 }
 
-export default function TmrOrdenDetalle({ row, onClose, onSave }: Props) {
+export default function TmrOrdenDetalle({ row, onClose, onOpenRelated, onSave }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [exclusion, setExclusion] = useState<TmrExclusion | "">(row.exclusion);
   const [observacion, setObservacion] = useState(row.observacion);
@@ -189,6 +190,30 @@ export default function TmrOrdenDetalle({ row, onClose, onSave }: Props) {
                 <strong>Posible exclusión. </strong>
                 {exclusionReason}
               </p>
+            ) : null}
+            {row.sobreRelacion ? (
+              <div className={styles.related}>
+                <h4>Orden relacionada (30 min)</h4>
+                <p>
+                  Job {row.sobreRelacion.jobSerial}
+                  {row.sobreRelacion.caseSerial ? ` · caso ${row.sobreRelacion.caseSerial}` : ""}
+                  {row.sobreRelacion.municipality ? ` · ${row.sobreRelacion.municipality}` : ""}
+                </p>
+                <p>
+                  Start {formatTs(row.sobreRelacion.startTime)} (+{row.sobreRelacion.minutosDespues}{" "}
+                  min). TMR de esta orden {formatSpan(row.tmrDuracion)}; la otra{" "}
+                  {formatSpan(row.sobreRelacion.tmrDuracion)}.
+                </p>
+                {onOpenRelated ? (
+                  <button
+                    type="button"
+                    className={styles.relatedLink}
+                    onClick={() => onOpenRelated(row.sobreRelacion!.id)}
+                  >
+                    Ver esa orden
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </section>
 

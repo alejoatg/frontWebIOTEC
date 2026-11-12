@@ -441,7 +441,14 @@ export default function TmrContainer() {
                     <td>{hours(row.tmrDuracion)}</td>
                     <td>{hours(row.tmrDuracionUten)}</td>
                     <td>{row.rango2Uten || "—"}</td>
-                    <td>{row.sobreAsignacion ? "Sí" : ""}</td>
+                    <td>
+                      {row.sobreAsignacion ? "Sí" : ""}
+                      {row.sobreRelacion ? (
+                        <div className={styles.muted}>
+                          job {row.sobreRelacion.jobSerial} +{row.sobreRelacion.minutosDespues} min
+                        </div>
+                      ) : null}
+                    </td>
                     <td>
                       {row.exclusion || "—"}
                       {row.exclusion !== row.exclusionAuto ? (
@@ -526,6 +533,7 @@ export default function TmrContainer() {
         <TmrOrdenDetalle
           row={openRow}
           onClose={() => setOpenId(null)}
+          onOpenRelated={(id) => setOpenId(id)}
           onSave={(next) => patch(openRow.id, next)}
         />
       ) : null}

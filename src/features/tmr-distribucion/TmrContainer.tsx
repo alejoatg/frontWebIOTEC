@@ -24,6 +24,7 @@ import {
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
 import TmrOrdenDetalle from "./TmrOrdenDetalle";
+import TmrReglasModal from "./TmrReglasModal";
 import styles from "./TmrContainer.module.scss";
 
 const TmrMensual = dynamic(() => import("./TmrMensual"), {
@@ -77,6 +78,7 @@ export default function TmrContainer() {
   const [mensualBusy, setMensualBusy] = useState(false);
   const [mapaBusy, setMapaBusy] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [reglasOpen, setReglasOpen] = useState(false);
   const openRow = openId ? rows.find((row) => row.id === openId) ?? null : null;
 
   const summary = preview?.summary;
@@ -181,14 +183,19 @@ export default function TmrContainer() {
             ? "Cargando consolidado de septiembre 2026…"
             : "Prueba con el consolidado de septiembre 2026."}
         </p>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleDownload}
-          disabled={!preview || downloading}
-        >
-          {downloading ? "Descargando…" : "Descargar Excel conciliado"}
-        </Button>
+        <div className={styles.actions}>
+          <Button type="button" variant="outline" onClick={() => setReglasOpen(true)}>
+            Reglas de validación
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleDownload}
+            disabled={!preview || downloading}
+          >
+            {downloading ? "Descargando…" : "Descargar Excel conciliado"}
+          </Button>
+        </div>
       </div>
       {error ? <p className={styles.error}>{error}</p> : null}
 
@@ -279,7 +286,12 @@ export default function TmrContainer() {
 
           <div className={styles.charts}>
             <div className={styles.chart}>
-              <h3>Exclusión automática</h3>
+              <div className={styles.chartHead}>
+                <h3>Exclusión automática</h3>
+                <button type="button" className={styles.chartLink} onClick={() => setReglasOpen(true)}>
+                  Ver reglas
+                </button>
+              </div>
               <Pie
                 data={{
                   labels: ["Cumple", "No cumple", "Logística especial", "Fuera de horario", "Sobreasignación"],
@@ -510,6 +522,7 @@ export default function TmrContainer() {
           onSave={(next) => patch(openRow.id, next)}
         />
       ) : null}
+      {reglasOpen ? <TmrReglasModal onClose={() => setReglasOpen(false)} /> : null}
     </div>
   );
 }

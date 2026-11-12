@@ -41,6 +41,14 @@
   flex-wrap: wrap;
   gap: 1rem;
   align-items: flex-end;
+  justify-content: space-between;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .field {
@@ -103,10 +111,39 @@
   min-height: 16rem;
 }
 
-.chart h3 {
+.chartHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart h3,
+.chartHead h3 {
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
   color: #334155;
+}
+
+.chartHead h3 {
+  margin: 0;
+}
+
+.chartLink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.78rem;
+  color: #0f766e;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chartLink:hover {
+  color: #115e59;
 }
 
 .filters {

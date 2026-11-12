@@ -311,6 +311,17 @@ export function muestraJornadaNoCumple(row: TmrRow): boolean {
   return row.exclusion === "No cumple el TMR" || row.exclusionAuto === "No cumple el TMR";
 }
 
+export function muestraJornadaLogistica(row: TmrRow): boolean {
+  return (
+    row.exclusion === "Pendiente de logística especial" ||
+    row.exclusionAuto === "Pendiente de logística especial"
+  );
+}
+
+export function muestraJornadaContexto(row: TmrRow): boolean {
+  return muestraJornadaNoCumple(row) || muestraJornadaLogistica(row);
+}
+
 export function jornadaTotals(items: TmrRow[]) {
   const { inicio, fin } = jornadaBounds(items);
   return {

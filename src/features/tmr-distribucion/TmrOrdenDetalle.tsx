@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components";
 import { TMR_EXCLUSIONS, type TmrExclusion, type TmrRow } from "./api";
-import { formatClock, formatSpan, formatTs, muestraJornadaNoCumple, possibleExclusionReason } from "./jornada";
+import { formatClock, formatSpan, formatTs, muestraJornadaContexto, possibleExclusionReason } from "./jornada";
 import TmrJornadaContexto from "./TmrJornadaContexto";
 import styles from "./TmrOrdenDetalle.module.scss";
 
@@ -44,7 +44,7 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
   const dirty =
     exclusion !== row.exclusion || observacion !== row.observacion || notaCeo !== row.notaCeo;
   const exclusionReason = possibleExclusionReason(row);
-  const showJornada = muestraJornadaNoCumple(row);
+  const showJornada = muestraJornadaContexto(row);
 
   useEffect(() => {
     setExclusion(row.exclusion);

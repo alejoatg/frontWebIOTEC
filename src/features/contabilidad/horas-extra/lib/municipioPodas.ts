@@ -20,6 +20,7 @@ export const MUNICIPIO_PODAS_OPTIONS = [
   { key: "Morales", value: "Morales" },
   { key: "Piendamo", value: "Piendamo" },
   { key: "Popayan", value: "Popayan" },
+  { key: "Purace", value: "Purace" },
   { key: "Rosas", value: "Rosas" },
   { key: "Paispamba", value: "Paispamba" },
   { key: "Timbio", value: "Timbio" },

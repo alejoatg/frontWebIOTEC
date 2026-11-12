@@ -447,6 +447,13 @@ export default function TmrContainer() {
                       {row.exclusion !== row.exclusionAuto ? (
                         <div className={styles.muted}>auto: {row.exclusionAuto || "—"}</div>
                       ) : null}
+                      {(row.causas ?? [])
+                        .filter((causa) => causa && causa !== row.exclusion)
+                        .map((causa) => (
+                          <div key={causa} className={styles.muted}>
+                            también: {causa}
+                          </div>
+                        ))}
                     </td>
                     <td>
                       {row.observacion || row.notaCeo ? "Sí" : ""}

@@ -200,6 +200,10 @@ export default function TmrOrdenDetalle({ row, onClose, onSave }: Props) {
               <li>En ruta al día siguiente: {row.nextDayEnRoute ? "sí" : "no"}</li>
               <li>Municipio con corte 21:00: {row.lateOk ? "sí" : "no"}</li>
               <li>Exclusión automática: {row.exclusionAuto || "—"}</li>
+              <li>
+                Causas registradas:{" "}
+                {(row.causas ?? []).length ? (row.causas ?? []).join(" · ") : "—"}
+              </li>
             </ul>
           </section>
 

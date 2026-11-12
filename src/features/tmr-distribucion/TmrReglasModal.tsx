@@ -20,26 +20,27 @@ const PRIORITY = [
   },
   {
     n: "2",
-    tone: "cpl",
-    title: "Pendiente de logística especial",
-    fields: ["Start Time", "Job En-Route Time"],
-    when: "Si no aplica fuera de horario.",
-    items: [
-      "En-Route es otro día calendario respecto de Start. No exige corte de 16:00 ni de 21:00.",
-    ],
-    effect: "El Start validado pasa a En-Route. El TMR CEO incluye la espera nocturna; el TMR UTEN cuenta desde que salieron.",
-  },
-  {
-    n: "3",
     tone: "sobre",
     title: "Sobreasignación",
     fields: ["Crew", "Start Time", "Job Completed Time", "Job En-Route Time"],
-    when: "Si no aplica 1 ni 2.",
+    when: "Si no aplica fuera de horario. Gana a logística especial porque es más fácil de justificar.",
     items: [
       "La misma brigada tiene al menos otra orden cuyo Start cae en los 30 minutos posteriores a esta.",
       "Y el TMR frío (Start → Completado) es mayor a 8 horas.",
     ],
-    effect: "El Start validado pasa a En-Route. La marca de sobreasignación puede verse en la tabla aunque la exclusión sea otra, si ganó una regla de mayor prioridad.",
+    effect:
+      "El Start validado pasa a En-Route. Si también hay En-Route al día siguiente, se registran las dos causas: Sobreasignación (principal) y Pendiente de logística especial.",
+  },
+  {
+    n: "3",
+    tone: "cpl",
+    title: "Pendiente de logística especial",
+    fields: ["Start Time", "Job En-Route Time"],
+    when: "Si no aplica fuera de horario ni sobreasignación.",
+    items: [
+      "En-Route es otro día calendario respecto de Start. No exige corte de 16:00 ni de 21:00.",
+    ],
+    effect: "El Start validado pasa a En-Route. El TMR CEO incluye la espera nocturna; el TMR UTEN cuenta desde que salieron.",
   },
   {
     n: "4",
@@ -147,8 +148,9 @@ export default function TmrReglasModal({ onClose }: Props) {
           <section>
             <h4>Orden de prioridad</h4>
             <p className={styles.lead}>
-              La primera regla que se cumple gana. No se combinan: una orden queda con una sola
-              exclusión automática. El analista puede cambiarla en el detalle de la orden.
+              La exclusión principal es una sola, en este orden. Si coinciden sobreasignación y
+              logística especial, gana sobreasignación y se registran las dos causas. El analista
+              puede cambiar la exclusión en el detalle de la orden.
             </p>
             <ol className={styles.priority}>
               {PRIORITY.map((rule) => (

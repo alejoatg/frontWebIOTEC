@@ -55,6 +55,7 @@ export interface TmrRow {
   lateOk: boolean;
   exclusion: TmrExclusion | "";
   exclusionAuto: TmrExclusion | "";
+  causas: TmrExclusion[];
   observacion: string;
   notaCeo: string;
   jobComment: string;

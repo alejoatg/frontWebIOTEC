@@ -125,10 +125,15 @@ export function possibleExclusionReason(row: TmrRow): string | null {
   if (beforeOpen && enRouteInJornada) {
     return "Fuera del horario laboral: Start antes de las 7:00 y En ruta ya en jornada. El TMR CEO se infla con la espera de madrugada.";
   }
-  if (row.nextDayEnRoute) {
+  const sobre = row.sobreAsignacion || row.causas?.includes("Sobreasignación");
+  const cpl = row.nextDayEnRoute || row.causas?.includes("Pendiente de logística especial");
+  if (sobre && cpl) {
+    return "Sobreasignación (principal): otra orden de la misma brigada en 30 min y el TMR supera 8 h. También aplica logística especial: En ruta es otro día.";
+  }
+  if (cpl) {
     return "Pendiente de logística especial: En ruta es otro día. El TMR CEO incluye la espera nocturna.";
   }
-  if (row.sobreAsignacion) {
+  if (sobre) {
     return "Sobreasignación: otra orden de la misma brigada en 30 min y el TMR supera 8 h.";
   }
   return "TMR incumplido (más de 8 h) sin causal automático de horario, madrugada ni logística. Revisar desplazamiento, servicio o asignación.";

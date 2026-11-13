@@ -6,6 +6,7 @@ import type { FormReportListResponse } from "../../../config/formReportTypes";
 import {
   formatBrigada,
   formatCellValue,
+  fechaDiligenciamientoDisplay,
   formatDateTime,
   formatShortDate,
   formatTipoInspeccion,
@@ -25,7 +26,11 @@ function formatColumnValue(
   row: Record<string, unknown>,
   col: FormReportConfig["listColumns"][number],
 ): string {
-  const raw = col.accessor ? col.accessor(row) : row[col.key];
+  const raw = col.accessor
+    ? col.accessor(row)
+    : col.key === "fecha"
+      ? fechaDiligenciamientoDisplay(row)
+      : row[col.key];
   if (raw === undefined || raw === null || raw === "") return "—";
   switch (col.format) {
     case "datetime":

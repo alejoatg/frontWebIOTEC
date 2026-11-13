@@ -1,17 +1,50 @@
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const BOGOTA = "America/Bogota";
+
+/**
+ * Día calendario YYYY-MM-DD.
+ * Un valor solo-fecha se respeta tal cual (no se interpreta como UTC).
+ * Un instante ISO se convierte a hora de Colombia.
+ */
+export function bogotaCalendarDate(value: unknown): string | undefined {
+  if (value == null || value === "") return undefined;
+  const raw = String(value).trim();
+  if (DATE_ONLY.test(raw)) return raw;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleDateString("en-CA", { timeZone: BOGOTA });
+}
+
 export function formatDateTime(s: string | null | undefined): string {
   if (!s) return "—";
-  return new Date(s).toLocaleDateString("es-CO", {
+  const date = new Date(s);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: BOGOTA,
   });
+}
+
+/**
+ * Fecha de diligenciamiento para reportes.
+ * `fecha` se guardó con el día UTC (`startedAt` recortado). El día real es el de Colombia.
+ */
+export function fechaDiligenciamientoDisplay(row: Record<string, unknown>): string | undefined {
+  return bogotaCalendarDate(row.startedAt) ?? (typeof row.fecha === "string" ? row.fecha : undefined);
 }
 
 export function formatShortDate(s: string | null | undefined): string {
   if (!s) return "—";
-  return new Date(s).toLocaleDateString("es-CO", {
+  const calendar = bogotaCalendarDate(s);
+  if (!calendar) return "—";
+  const match = calendar.match(DATE_ONLY);
+  if (!match) return calendar;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return date.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",
     year: "numeric",

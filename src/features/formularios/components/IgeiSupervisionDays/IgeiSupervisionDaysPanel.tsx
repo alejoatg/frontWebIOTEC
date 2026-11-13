@@ -9,6 +9,7 @@ import DateRangeFilter, {
   useDefaultMonthRange,
 } from "../shared/DateRangeFilter";
 import { validateDateRange } from "../../lib/dateRange";
+import { formatShortDate } from "../../lib/formatters";
 import styles from "./IgeiSupervisionDaysPanel.module.scss";
 
 type DayRow = {
@@ -25,14 +26,6 @@ type DayRow = {
   revisadoAt: string | null;
   revisadoPor: { id: string; name: string } | null;
 };
-
-function formatShortDate(value: string): string {
-  return new Date(`${value}T12:00:00`).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default function IgeiSupervisionDaysPanel() {
   const { user } = useAuth();

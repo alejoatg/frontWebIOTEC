@@ -1,24 +1,13 @@
 "use client";
 
 import type { PreoperacionalMoto, PaginatedResponse } from "../../types";
+import { formatDateTime } from "../../lib/formatters";
 import styles from "./PreoperacionalesMotosTable.module.scss";
 
 export interface PreoperacionalesMotosTableProps {
   data: PaginatedResponse<PreoperacionalMoto> | null;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function getStatusBadge(value: string | null): { text: string; variant: string } {
@@ -90,7 +79,7 @@ export default function PreoperacionalesMotosTable({
               return (
                 <tr key={row._URI} className={styles.row}>
                   <td className={styles.cellDate}>
-                    {formatDate(row.FECHA_REGISTRO)}
+                    {formatDateTime(row.FECHA_REGISTRO)}
                   </td>
                   <td className={styles.cellPlaca}>
                     <span className={styles.placaBadge}>{row.PLACA || "—"}</span>

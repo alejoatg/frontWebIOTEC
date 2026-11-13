@@ -1,5 +1,5 @@
 import type { FormReportConfig } from "../config/formReportTypes";
-import { humanizeFieldKey } from "./formatters";
+import { fechaDiligenciamientoDisplay, humanizeFieldKey } from "./formatters";
 import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
 
 export interface ExportColumn {
@@ -199,6 +199,11 @@ export function flattenRecordForExport(
 
   for (const [key, value] of Object.entries(row)) {
     if (SKIP_KEYS.has(key)) continue;
+    if (key === "fecha") {
+      const shown = fechaDiligenciamientoDisplay(row);
+      cells[key] = { text: shown ?? "" };
+      continue;
+    }
     cells[key] = formatValue(key, value);
   }
 

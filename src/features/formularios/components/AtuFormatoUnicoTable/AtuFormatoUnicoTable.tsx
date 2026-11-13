@@ -2,33 +2,13 @@
 
 import Link from "next/link";
 import type { AtuFormatoUnicoRecord, PaginatedResponse } from "../../types";
+import { formatDateTime, formatShortDate } from "../../lib/formatters";
 import styles from "./AtuFormatoUnicoTable.module.scss";
 
 export interface AtuFormatoUnicoTableProps {
   data: PaginatedResponse<AtuFormatoUnicoRecord> | null;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
-}
-
-function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatShortDate(dateString: string | null | undefined): string {
-  if (!dateString) return "—";
-  return new Date(dateString).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 export default function AtuFormatoUnicoTable({
@@ -111,7 +91,7 @@ export default function AtuFormatoUnicoTable({
                 </td>
                 <td>{row.estadoEstructura ?? "—"}</td>
                 <td>{row.submittedBy?.name ?? "—"}</td>
-                <td className={styles.cellDate}>{formatDate(row.syncedAt)}</td>
+                <td className={styles.cellDate}>{formatDateTime(row.syncedAt)}</td>
               </tr>
             ))}
           </tbody>

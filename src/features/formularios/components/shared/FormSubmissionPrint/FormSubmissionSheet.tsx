@@ -5,6 +5,7 @@ import { MediaImage } from "@/components/MediaImage";
 import type { FormReportConfig } from "../../../config/formReportTypes";
 import { collectEvidences } from "../../../lib/collectEvidences";
 import {
+  fechaDiligenciamientoDisplay,
   formatDateTime,
   formatForReportField,
   labelForReportField,
@@ -115,7 +116,13 @@ const FormSubmissionSheet = forwardRef<HTMLElement, FormSubmissionSheetProps>(
               {section.keys.map((key) => (
                 <div key={key} className={styles.fieldRow} data-pdf-block>
                   <dt>{labelForReportField(config, key)}</dt>
-                  <dd>{formatForReportField(config, key, record[key])}</dd>
+                  <dd>
+                    {formatForReportField(
+                      config,
+                      key,
+                      key === "fecha" ? fechaDiligenciamientoDisplay(record) : record[key],
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

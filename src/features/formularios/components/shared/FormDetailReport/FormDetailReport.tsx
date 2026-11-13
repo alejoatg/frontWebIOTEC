@@ -8,6 +8,7 @@ import { exportSheetToPdf } from "../../../lib/exportPdf";
 import { FormSubmissionSheet } from "../FormSubmissionPrint";
 import DownloadReportButton from "../DownloadReportButton";
 import {
+  fechaDiligenciamientoDisplay,
   formatDateTime,
   formatForReportField,
   labelForReportField,
@@ -145,7 +146,13 @@ export default function FormDetailReport({ config, record }: FormDetailReportPro
               {section.keys.map((key) => (
                 <div key={key} className={styles.fieldRow}>
                   <dt>{labelForReportField(config, key)}</dt>
-                  <dd>{formatForReportField(config, key, record[key])}</dd>
+                  <dd>
+                    {formatForReportField(
+                      config,
+                      key,
+                      key === "fecha" ? fechaDiligenciamientoDisplay(record) : record[key],
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
+  canChangeApprovedOvertimeStatus,
   canReviewOvertime,
   canVoidAnyOvertime,
   isOvertimeAnalyst,
@@ -74,7 +75,8 @@ export default function EntryActions({
   const [voidOpen, setVoidOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const canChangeApprovedStatus =
-    canReview && status === "APPROVED" && !pdfPlantillaId;
+    canChangeApprovedOvertimeStatus(user?.role) && status === "APPROVED";
+  const statusLockedByPdf = Boolean(pdfPlantillaId);
 
   const ownsPending = status === "PENDING" && !!submittedById && submittedById === user?.id;
   const canCorrect =
@@ -170,7 +172,18 @@ export default function EntryActions({
           </Button>
         )}
         {canChangeApprovedStatus && (
-          <Button type="button" variant="outline" size="sm" onClick={() => setStatusOpen(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={statusLockedByPdf}
+            title={
+              statusLockedByPdf
+                ? "Este registro ya está en una planilla PDF"
+                : "Cambiar el estado del registro aprobado"
+            }
+            onClick={() => setStatusOpen(true)}
+          >
             Cambiar estado
           </Button>
         )}

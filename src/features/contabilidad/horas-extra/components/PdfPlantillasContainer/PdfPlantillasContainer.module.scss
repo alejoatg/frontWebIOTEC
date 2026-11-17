@@ -46,3 +46,27 @@
   font-weight: 600;
   color: #334155;
 }
+
+.historyHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.historyHeader .sectionTitle {
+  margin: 0;
+}
+
+.historySearch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.historySearch .filterField {
+  min-width: 12rem;
+}

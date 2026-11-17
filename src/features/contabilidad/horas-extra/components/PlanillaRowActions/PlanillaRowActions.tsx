@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
+  canChangeApprovedOvertimeStatus,
   canReviewOvertime,
   canVoidAnyOvertime,
 } from "@/features/dashboard/constants/nav";
@@ -33,7 +34,8 @@ export default function PlanillaRowActions({
   const [voidOpen, setVoidOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const canChangeApprovedStatus =
-    canReview && entry.status === "APPROVED" && !entry.pdfPlantillaId;
+    canChangeApprovedOvertimeStatus(user?.role) && entry.status === "APPROVED";
+  const statusLockedByPdf = Boolean(entry.pdfPlantillaId);
   const [approveOpen, setApproveOpen] = useState(false);
   const [approveNote, setApproveNote] = useState("");
 
@@ -77,7 +79,17 @@ export default function PlanillaRowActions({
         </button>
       )}
       {canChangeApprovedStatus && (
-        <button type="button" className={styles.btnWarn} onClick={() => setStatusOpen(true)}>
+        <button
+          type="button"
+          className={styles.btnWarn}
+          disabled={statusLockedByPdf}
+          title={
+            statusLockedByPdf
+              ? "Este registro ya está en una planilla PDF"
+              : "Cambiar el estado del registro aprobado"
+          }
+          onClick={() => setStatusOpen(true)}
+        >
           Cambiar estado
         </button>
       )}

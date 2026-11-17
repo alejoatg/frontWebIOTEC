@@ -58,6 +58,12 @@ export function canReviewOvertime(role: string | undefined) {
   return role === "CONTABILIDAD" || role === "ADMIN";
 }
 
+/** Cambiar un aprobado de estado: solo Admin y Contabilidad. */
+export function canChangeApprovedOvertimeStatus(role: string | undefined) {
+  const normalized = role?.trim().toUpperCase();
+  return normalized === "ADMIN" || normalized === "CONTABILIDAD";
+}
+
 /** Contabilidad/Admin pueden anular cualquier PENDING; digitadores solo los suyos (servidor). */
 export function canVoidAnyOvertime(role: string | undefined) {
   return role === "CONTABILIDAD" || role === "ADMIN";

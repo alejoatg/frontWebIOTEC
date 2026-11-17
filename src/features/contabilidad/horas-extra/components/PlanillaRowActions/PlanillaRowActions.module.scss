@@ -93,7 +93,9 @@
   gap: 0.25rem;
 }
 
-.btnOk:disabled {
+.btnOk:disabled,
+.btnWarn:disabled,
+.btnDanger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

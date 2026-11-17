@@ -55,6 +55,8 @@ export default function PdfPlantillasContainer() {
     documentNumber: string;
   } | null>(null);
   const [plantillas, setPlantillas] = useState<PdfPlantilla[]>([]);
+  const [historyCedula, setHistoryCedula] = useState("");
+  const [appliedCedula, setAppliedCedula] = useState("");
   const [loadingEligible, setLoadingEligible] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -76,14 +78,21 @@ export default function PdfPlantillasContainer() {
   const loadHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-      setPlantillas(await fetchPdfPlantillas({ year, month }));
+      const documentNumber = appliedCedula.replace(/\D/g, "");
+      setPlantillas(
+        await fetchPdfPlantillas({
+          year,
+          month,
+          documentNumber: documentNumber || undefined,
+        }),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar historial");
       setPlantillas([]);
     } finally {
       setLoadingHistory(false);
     }
-  }, [year, month]);
+  }, [year, month, appliedCedula]);
 
   useEffect(() => {
     loadEmployees();
@@ -91,13 +100,16 @@ export default function PdfPlantillasContainer() {
 
   useEffect(() => {
     loadHistory();
+  }, [loadHistory]);
+
+  useEffect(() => {
     setEmployeeId("");
     setEligible([]);
     setEligibleMeta(null);
     setDateFrom("");
     setDateTo("");
     setSuccess(null);
-  }, [loadHistory]);
+  }, [year, month]);
 
   async function handlePreview() {
     if (!employeeId) {
@@ -366,7 +378,43 @@ export default function PdfPlantillasContainer() {
       )}
 
       <section className={local.section}>
-        <h3 className={local.sectionTitle}>Planillas PDF generadas</h3>
+        <div className={local.historyHeader}>
+          <h3 className={local.sectionTitle}>Planillas PDF generadas</h3>
+          <form
+            className={local.historySearch}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setAppliedCedula(historyCedula);
+            }}
+          >
+            <label className={local.filterField}>
+              <span>Cédula</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Cédula del trabajador"
+                value={historyCedula}
+                onChange={(e) => setHistoryCedula(e.target.value)}
+              />
+            </label>
+            <Button type="submit" variant="outline" size="sm">
+              Buscar
+            </Button>
+            {appliedCedula && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setHistoryCedula("");
+                  setAppliedCedula("");
+                }}
+              >
+                Ver todas
+              </Button>
+            )}
+          </form>
+        </div>
         {loadingHistory && <div className={styles.loading}>Cargando historial…</div>}
         {!loadingHistory && (
           <div className={styles.tableWrapper}>
@@ -386,7 +434,11 @@ export default function PdfPlantillasContainer() {
               <tbody>
                 {plantillas.length === 0 ? (
                   <tr>
-                    <td colSpan={8}>Sin planillas PDF en este periodo</td>
+                    <td colSpan={8}>
+                      {appliedCedula
+                        ? "Sin planillas PDF de esa cédula en este periodo"
+                        : "Sin planillas PDF en este periodo"}
+                    </td>
                   </tr>
                 ) : (
                   plantillas.map((p) => (

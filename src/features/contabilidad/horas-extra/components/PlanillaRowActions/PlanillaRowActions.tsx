@@ -33,7 +33,7 @@ export default function PlanillaRowActions({
   const [voidOpen, setVoidOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const canChangeApprovedStatus =
-    user?.role === "CONTABILIDAD" && entry.status === "APPROVED" && !entry.pdfPlantillaId;
+    canReview && entry.status === "APPROVED" && !entry.pdfPlantillaId;
   const [approveOpen, setApproveOpen] = useState(false);
   const [approveNote, setApproveNote] = useState("");
 

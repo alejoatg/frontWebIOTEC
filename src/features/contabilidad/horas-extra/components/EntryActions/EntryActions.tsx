@@ -74,7 +74,7 @@ export default function EntryActions({
   const [voidOpen, setVoidOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const canChangeApprovedStatus =
-    user?.role === "CONTABILIDAD" && status === "APPROVED" && !pdfPlantillaId;
+    canReview && status === "APPROVED" && !pdfPlantillaId;
 
   const ownsPending = status === "PENDING" && !!submittedById && submittedById === user?.id;
   const canCorrect =

@@ -491,8 +491,23 @@ export async function generatePdfBatch(year: number, month: number) {
   });
 }
 
-export function pdfPeriodZipUrl(year: number, month: number) {
-  return `${BASE}/pdf-plantillas/period-zip?year=${year}&month=${month}`;
+export function pdfPeriodZipUrl(params: {
+  year: number;
+  month: number;
+  employeeId?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.employeeId) q.set("employeeId", params.employeeId);
+  if (params.search?.trim()) q.set("search", params.search.trim());
+  if (params.dateFrom) q.set("dateFrom", params.dateFrom);
+  if (params.dateTo) q.set("dateTo", params.dateTo);
+  return `${BASE}/pdf-plantillas/period-zip?${q}`;
 }
 
 export async function createPdfPlantilla(body: {

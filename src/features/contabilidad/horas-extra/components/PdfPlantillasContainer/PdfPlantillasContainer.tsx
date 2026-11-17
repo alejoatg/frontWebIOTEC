@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
@@ -19,6 +19,7 @@ import {
 } from "../../api/overtimeApi";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
+import suggest from "../DigitarContainer/EmployeeSuggestField.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
 import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
@@ -28,6 +29,119 @@ function fmtMoney(n: number | undefined) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
+}
+
+interface PdfWorkerOption {
+  employeeId: string;
+  documentNumber: string;
+  fullName: string;
+}
+
+function PdfWorkerSuggest({
+  workers,
+  value,
+  onChange,
+  onPick,
+}: {
+  workers: PdfWorkerOption[];
+  value: string;
+  onChange: (value: string) => void;
+  onPick: (worker: PdfWorkerOption) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const query = value.trim().toLowerCase();
+  const digits = query.replace(/\D/g, "");
+  const matches = query
+    ? workers
+        .filter(
+          (worker) =>
+            worker.fullName.toLowerCase().includes(query) ||
+            (digits.length > 0 && worker.documentNumber.includes(digits)),
+        )
+        .slice(0, 12)
+    : workers.slice(0, 12);
+
+  return (
+    <div className={suggest.wrap}>
+      <input
+        className={`${suggest.input} ${suggest.inputName}`}
+        value={value}
+        placeholder="Nombre o cédula"
+        autoComplete="off"
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+          setHighlight(0);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 160)}
+        onKeyDown={(e) => {
+          if (!open || matches.length === 0) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlight((h) => Math.min(h + 1, matches.length - 1));
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlight((h) => Math.max(h - 1, 0));
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            const worker = matches[highlight] ?? matches[0];
+            if (worker) onPick(worker);
+            setOpen(false);
+          } else if (e.key === "Escape") {
+            setOpen(false);
+          }
+        }}
+      />
+      {open && query && (
+        <ul
+          className={suggest.list}
+          role="listbox"
+          style={{ position: "absolute", top: "calc(100% + 2px)", left: 0, width: "16rem" }}
+        >
+          {matches.length === 0 ? (
+            <li className={suggest.status}>Sin coincidencias</li>
+          ) : (
+            matches.map((worker, index) => (
+              <li key={worker.employeeId}>
+                <button
+                  type="button"
+                  className={index === highlight ? suggest.optionActive : suggest.option}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onPick(worker);
+                    setOpen(false);
+                  }}
+                >
+                  <span className={suggest.doc}>{worker.documentNumber}</span>
+                  <span className={suggest.name}>{worker.fullName}</span>
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function plantillaOverlapsRange(
+  plantilla: PdfPlantilla,
+  year: number,
+  month: number,
+  filterFrom: string,
+  filterTo: string,
+) {
+  if (!filterFrom && !filterTo) return true;
+  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  const start = (plantilla.dateFrom ?? monthStart).slice(0, 10);
+  const end = (plantilla.dateTo ?? monthEnd).slice(0, 10);
+  if (filterFrom && end < filterFrom) return false;
+  if (filterTo && start > filterTo) return false;
+  return true;
 }
 
 function fmtDate(iso: string | null | undefined) {
@@ -55,8 +169,10 @@ export default function PdfPlantillasContainer() {
     documentNumber: string;
   } | null>(null);
   const [plantillas, setPlantillas] = useState<PdfPlantilla[]>([]);
-  const [historyCedula, setHistoryCedula] = useState("");
-  const [appliedCedula, setAppliedCedula] = useState("");
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [historyEmployeeId, setHistoryEmployeeId] = useState("");
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateTo, setHistoryDateTo] = useState("");
   const [loadingEligible, setLoadingEligible] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -78,21 +194,14 @@ export default function PdfPlantillasContainer() {
   const loadHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-      const documentNumber = appliedCedula.replace(/\D/g, "");
-      setPlantillas(
-        await fetchPdfPlantillas({
-          year,
-          month,
-          documentNumber: documentNumber || undefined,
-        }),
-      );
+      setPlantillas(await fetchPdfPlantillas({ year, month }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar historial");
       setPlantillas([]);
     } finally {
       setLoadingHistory(false);
     }
-  }, [year, month, appliedCedula]);
+  }, [year, month]);
 
   useEffect(() => {
     loadEmployees();
@@ -108,8 +217,40 @@ export default function PdfPlantillasContainer() {
     setEligibleMeta(null);
     setDateFrom("");
     setDateTo("");
+    setHistoryQuery("");
+    setHistoryEmployeeId("");
+    setHistoryDateFrom("");
+    setHistoryDateTo("");
     setSuccess(null);
   }, [year, month]);
+
+  const historyWorkers = useMemo(() => {
+    const byEmployee = new Map<string, PdfWorkerOption>();
+    for (const plantilla of plantillas) {
+      if (!byEmployee.has(plantilla.employeeId)) {
+        byEmployee.set(plantilla.employeeId, {
+          employeeId: plantilla.employeeId,
+          documentNumber: plantilla.employeeDocumentNumber,
+          fullName: plantilla.employeeFullName,
+        });
+      }
+    }
+    return [...byEmployee.values()].sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+  }, [plantillas]);
+
+  const visiblePlantillas = useMemo(() => {
+    const query = historyEmployeeId ? "" : historyQuery.trim().toLowerCase();
+    const digits = query.replace(/\D/g, "");
+    return plantillas.filter((plantilla) => {
+      if (historyEmployeeId && plantilla.employeeId !== historyEmployeeId) return false;
+      if (query) {
+        const nameMatch = plantilla.employeeFullName.toLowerCase().includes(query);
+        const docMatch = digits.length > 0 && plantilla.employeeDocumentNumber.includes(digits);
+        if (!nameMatch && !docMatch) return false;
+      }
+      return plantillaOverlapsRange(plantilla, year, month, historyDateFrom, historyDateTo);
+    });
+  }, [plantillas, historyEmployeeId, historyQuery, historyDateFrom, historyDateTo, year, month]);
 
   async function handlePreview() {
     if (!employeeId) {
@@ -185,13 +326,10 @@ export default function PdfPlantillasContainer() {
     setSuccess(null);
     try {
       const result = await generatePdfBatch(year, month);
-      const missing = result.workersWithoutEmail.length
-        ? ` Sin correo del trabajador: ${result.workersWithoutEmail.join(", ")}.`
-        : "";
       setSuccess(
         result.created === 0
           ? result.message
-          : `${result.message}. Correos enviados: ${result.emailed}.${missing}`,
+          : `${result.message}. Correos enviados: ${result.emailed}.`,
       );
       await loadHistory();
       if (showIndividual) await loadEmployees();
@@ -202,12 +340,19 @@ export default function PdfPlantillasContainer() {
     }
   }
 
-  async function handleDownloadZip() {
+  async function handleDownloadZip(filtered = false) {
     setDownloadingZip(true);
     setError(null);
     try {
       await downloadAuthenticatedFile(
-        pdfPeriodZipUrl(year, month),
+        pdfPeriodZipUrl({
+          year,
+          month,
+          employeeId: filtered ? historyEmployeeId || undefined : undefined,
+          search: filtered && !historyEmployeeId ? historyQuery : undefined,
+          dateFrom: filtered ? historyDateFrom || undefined : undefined,
+          dateTo: filtered ? historyDateTo || undefined : undefined,
+        }),
         `pdfs-${year}-${String(month).padStart(2, "0")}.zip`,
       );
     } catch (e) {
@@ -239,7 +384,7 @@ export default function PdfPlantillasContainer() {
             {user?.role === "ANALISTA"
               ? "Genera un PDF por trabajador con todos sus registros aprobados que aún no están en un PDF, aunque los hayan digitado supervisores distintos."
               : "Genera un PDF por cada trabajador al que usted digitó tiempo. Ese PDF incluye todos sus registros aprobados que aún no están en un PDF, aunque otro supervisor haya digitado parte."}{" "}
-            Cada PDF se envía al trabajador, a quien digitó y al analista del grupo.
+            Cada PDF se envía a quien lo genera, a quien digitó y al analista del grupo. No se envía al brigadista.
           </p>
           <div className={local.filterActions}>
             <Button
@@ -252,7 +397,7 @@ export default function PdfPlantillasContainer() {
             <Button
               type="button"
               variant="outline"
-              onClick={handleDownloadZip}
+              onClick={() => handleDownloadZip(false)}
               disabled={generatingBatch || downloadingZip}
             >
               {downloadingZip ? "Preparando ZIP…" : "Descargar PDFs del periodo"}
@@ -380,40 +525,63 @@ export default function PdfPlantillasContainer() {
       <section className={local.section}>
         <div className={local.historyHeader}>
           <h3 className={local.sectionTitle}>Planillas PDF generadas</h3>
-          <form
-            className={local.historySearch}
-            onSubmit={(e) => {
-              e.preventDefault();
-              setAppliedCedula(historyCedula);
-            }}
-          >
+          <div className={local.historySearch}>
             <label className={local.filterField}>
-              <span>Cédula</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="Cédula del trabajador"
-                value={historyCedula}
-                onChange={(e) => setHistoryCedula(e.target.value)}
+              <span>Nombre o cédula</span>
+              <PdfWorkerSuggest
+                workers={historyWorkers}
+                value={historyQuery}
+                onChange={(value) => {
+                  setHistoryQuery(value);
+                  setHistoryEmployeeId("");
+                }}
+                onPick={(worker) => {
+                  setHistoryQuery(`${worker.fullName} — ${worker.documentNumber}`);
+                  setHistoryEmployeeId(worker.employeeId);
+                }}
               />
             </label>
-            <Button type="submit" variant="outline" size="sm">
-              Buscar
-            </Button>
-            {appliedCedula && (
+            <label className={local.filterField}>
+              <span>Fecha desde</span>
+              <input
+                type="date"
+                value={historyDateFrom}
+                onChange={(e) => setHistoryDateFrom(e.target.value)}
+              />
+            </label>
+            <label className={local.filterField}>
+              <span>Fecha hasta</span>
+              <input
+                type="date"
+                value={historyDateTo}
+                onChange={(e) => setHistoryDateTo(e.target.value)}
+              />
+            </label>
+            {(historyQuery || historyDateFrom || historyDateTo) && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setHistoryCedula("");
-                  setAppliedCedula("");
+                  setHistoryQuery("");
+                  setHistoryEmployeeId("");
+                  setHistoryDateFrom("");
+                  setHistoryDateTo("");
                 }}
               >
                 Ver todas
               </Button>
             )}
-          </form>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={downloadingZip || visiblePlantillas.length === 0}
+              onClick={() => handleDownloadZip(true)}
+            >
+              {downloadingZip ? "Preparando ZIP…" : "Descargar PDFs filtrados"}
+            </Button>
+          </div>
         </div>
         {loadingHistory && <div className={styles.loading}>Cargando historial…</div>}
         {!loadingHistory && (
@@ -432,16 +600,16 @@ export default function PdfPlantillasContainer() {
                 </tr>
               </thead>
               <tbody>
-                {plantillas.length === 0 ? (
+                {visiblePlantillas.length === 0 ? (
                   <tr>
                     <td colSpan={8}>
-                      {appliedCedula
-                        ? "Sin planillas PDF de esa cédula en este periodo"
+                      {historyQuery || historyDateFrom || historyDateTo
+                        ? "Sin planillas PDF para ese filtro en este periodo"
                         : "Sin planillas PDF en este periodo"}
                     </td>
                   </tr>
                 ) : (
-                  plantillas.map((p) => (
+                  visiblePlantillas.map((p) => (
                     <tr key={p.id}>
                       <td>{p.plantillaCode}</td>
                       <td>{p.employeeFullName}</td>

@@ -312,6 +312,17 @@ export async function approveEntry(id: string, accountingNote?: string) {
   });
 }
 
+export async function changeEntryStatus(
+  id: string,
+  status: "PENDING" | "REJECTED" | "VOIDED" | "SUPERSEDED",
+  accountingNote: string,
+) {
+  return request(`/entries/${id}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status, accountingNote }),
+  });
+}
+
 export async function rejectEntry(id: string, accountingNote: string) {
   return request(`/entries/${id}/reject`, {
     method: "POST",
@@ -709,6 +720,7 @@ export interface OvertimeEntry {
   employeeId: string;
   workDate: string;
   status: string;
+  pdfPlantillaId?: string | null;
   /** Ausente cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
   amountTotal?: number;
   validationResult: string;

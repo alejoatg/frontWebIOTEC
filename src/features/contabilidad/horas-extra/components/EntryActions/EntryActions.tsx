@@ -18,6 +18,7 @@ import {
   rejectEntry,
   type OvertimeEntryRow,
 } from "../../api/overtimeApi";
+import ChangeEntryStatusModal from "../ChangeEntryStatusModal/ChangeEntryStatusModal";
 import CorrectEntryModal from "../CorrectEntryModal/CorrectEntryModal";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "../../styles/shared.module.scss";
@@ -29,6 +30,8 @@ export interface EntryActionsProps {
   entryCode: string;
   workDate: string;
   status: string;
+  /** Si tiene valor, el registro ya está en un PDF y no se puede cambiar el estado. */
+  pdfPlantillaId?: string | null;
   /** Quien digitó el registro. Permite corregir el propio si está pendiente. */
   submittedById?: string;
   periodYear: number;
@@ -48,6 +51,7 @@ export default function EntryActions({
   entryCode,
   workDate,
   status,
+  pdfPlantillaId,
   submittedById,
   periodYear,
   periodMonth,
@@ -68,6 +72,9 @@ export default function EntryActions({
   const [rejectNote, setRejectNote] = useState("");
   const [correctOpen, setCorrectOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const canChangeApprovedStatus =
+    user?.role === "CONTABILIDAD" && status === "APPROVED" && !pdfPlantillaId;
 
   const ownsPending = status === "PENDING" && !!submittedById && submittedById === user?.id;
   const canCorrect =
@@ -162,6 +169,11 @@ export default function EntryActions({
             Anular
           </Button>
         )}
+        {canChangeApprovedStatus && (
+          <Button type="button" variant="outline" size="sm" onClick={() => setStatusOpen(true)}>
+            Cambiar estado
+          </Button>
+        )}
       </div>
 
       <CorrectEntryModal
@@ -176,6 +188,14 @@ export default function EntryActions({
         entryId={entryId}
         entryCode={entryCode}
         onClose={() => setVoidOpen(false)}
+        onSuccess={() => onActionComplete?.()}
+      />
+
+      <ChangeEntryStatusModal
+        open={statusOpen}
+        entryId={entryId}
+        entryCode={entryCode}
+        onClose={() => setStatusOpen(false)}
         onSuccess={() => onActionComplete?.()}
       />
 

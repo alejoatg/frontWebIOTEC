@@ -8,6 +8,7 @@ import {
   canVoidAnyOvertime,
 } from "@/features/dashboard/constants/nav";
 import { approveEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
+import ChangeEntryStatusModal from "../ChangeEntryStatusModal/ChangeEntryStatusModal";
 import VoidEntryModal from "../VoidEntryModal/VoidEntryModal";
 import styles from "./PlanillaRowActions.module.scss";
 
@@ -30,6 +31,9 @@ export default function PlanillaRowActions({
   const isPending = entry.status === "PENDING";
   const canCorrect = canReview && (isPending || entry.status === "APPROVED");
   const [voidOpen, setVoidOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const canChangeApprovedStatus =
+    user?.role === "CONTABILIDAD" && entry.status === "APPROVED" && !entry.pdfPlantillaId;
   const [approveOpen, setApproveOpen] = useState(false);
   const [approveNote, setApproveNote] = useState("");
 
@@ -72,6 +76,11 @@ export default function PlanillaRowActions({
           Anular
         </button>
       )}
+      {canChangeApprovedStatus && (
+        <button type="button" className={styles.btnWarn} onClick={() => setStatusOpen(true)}>
+          Cambiar estado
+        </button>
+      )}
       {approveOpen && (
         <div className={styles.approveBox}>
           <label htmlFor={`approve-note-${entry.id}`}>Justificación de la aprobación (opcional)</label>
@@ -108,6 +117,13 @@ export default function PlanillaRowActions({
         entryId={entry.id}
         entryCode={entry.entryCode}
         onClose={() => setVoidOpen(false)}
+        onSuccess={onActionComplete}
+      />
+      <ChangeEntryStatusModal
+        open={statusOpen}
+        entryId={entry.id}
+        entryCode={entry.entryCode}
+        onClose={() => setStatusOpen(false)}
         onSuccess={onActionComplete}
       />
     </div>

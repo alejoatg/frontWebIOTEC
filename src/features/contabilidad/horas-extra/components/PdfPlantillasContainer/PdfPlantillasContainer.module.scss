@@ -70,3 +70,9 @@
 .historySearch .filterField {
   min-width: 16rem;
 }
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}

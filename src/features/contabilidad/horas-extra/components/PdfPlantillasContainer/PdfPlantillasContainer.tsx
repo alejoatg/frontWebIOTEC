@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
+import { canReviewOvertime, canSeeOvertimeMoney } from "@/features/dashboard/constants/nav";
 import {
   createPdfPlantilla,
+  deletePdfPlantilla,
   downloadAuthenticatedFile,
   fetchPdfPlantillaEligible,
   fetchPdfPlantillaEmployees,
@@ -20,6 +21,7 @@ import {
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 import suggest from "../DigitarContainer/EmployeeSuggestField.module.scss";
+import modal from "../VoidEntryModal/VoidEntryModal.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
 import { formatDateOnly } from "../../lib/dateFormat";
 import { formatClockTime } from "../../lib/timeFormat";
@@ -152,6 +154,7 @@ function fmtDate(iso: string | null | undefined) {
 export default function PdfPlantillasContainer() {
   const { user } = useAuth();
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
+  const canDeletePdf = canReviewOvertime(user?.role);
   const canBulkPdf =
     user?.role === "ANALISTA" || user?.role === "SUPERVISOR" || user?.role === "CORDINADOR";
   const showIndividual = user?.role !== "ANALISTA";
@@ -180,6 +183,9 @@ export default function PdfPlantillasContainer() {
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [pdfToDelete, setPdfToDelete] = useState<PdfPlantilla | null>(null);
+  const [deletingPdf, setDeletingPdf] = useState(false);
+  const [deletePdfError, setDeletePdfError] = useState<string | null>(null);
 
   const loadEmployees = useCallback(async () => {
     try {
@@ -365,6 +371,23 @@ export default function PdfPlantillasContainer() {
   function handleRedownload(p: PdfPlantilla) {
     setError(null);
     window.open(pdfPlantillaPrintPageUrl(p.id, true), "_blank", "noopener,noreferrer");
+  }
+
+  async function handleConfirmDeletePdf() {
+    if (!pdfToDelete) return;
+    setDeletingPdf(true);
+    setDeletePdfError(null);
+    try {
+      await deletePdfPlantilla(pdfToDelete.id);
+      setSuccess(`Planilla ${pdfToDelete.plantillaCode} eliminada. Sus registros quedaron libres.`);
+      setPdfToDelete(null);
+      await loadHistory();
+      if (showIndividual) await loadEmployees();
+    } catch (e) {
+      setDeletePdfError(e instanceof Error ? e.message : "No se pudo eliminar el PDF");
+    } finally {
+      setDeletingPdf(false);
+    }
   }
 
   return (
@@ -623,14 +646,29 @@ export default function PdfPlantillasContainer() {
                       <td>{new Date(p.generatedAt).toLocaleString("es-CO")}</td>
                       <td>{p.generatedBy.name}</td>
                       <td>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRedownload(p)}
-                        >
-                          Imprimir / PDF
-                        </Button>
+                        <div className={local.rowActions}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRedownload(p)}
+                          >
+                            Imprimir / PDF
+                          </Button>
+                          {canDeletePdf && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDeletePdfError(null);
+                                setPdfToDelete(p);
+                              }}
+                            >
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -640,6 +678,45 @@ export default function PdfPlantillasContainer() {
           </div>
         )}
       </section>
+
+      {pdfToDelete && (
+        <div
+          className={modal.overlay}
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deletingPdf) setPdfToDelete(null);
+          }}
+        >
+          <div className={modal.dialog} role="dialog" aria-modal="true" aria-labelledby="delete-pdf-list-title">
+            <header className={modal.header}>
+              <h2 id="delete-pdf-list-title" className={modal.title}>
+                Eliminar {pdfToDelete.plantillaCode}
+              </h2>
+              <p className={modal.warning}>
+                Se borra el PDF de {pdfToDelete.employeeFullName}. Los {pdfToDelete.entryCount}{" "}
+                registros quedan libres para generar la planilla de nuevo.
+              </p>
+            </header>
+            <div className={modal.body}>
+              {deletePdfError && <p className={modal.error}>{deletePdfError}</p>}
+            </div>
+            <div className={modal.actions}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={deletingPdf}
+                onClick={() => setPdfToDelete(null)}
+              >
+                Cancelar
+              </Button>
+              <Button type="button" size="sm" disabled={deletingPdf} onClick={() => void handleConfirmDeletePdf()}>
+                {deletingPdf ? "Eliminando…" : "Eliminar PDF"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

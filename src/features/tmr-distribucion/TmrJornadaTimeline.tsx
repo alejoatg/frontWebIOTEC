@@ -23,10 +23,30 @@ interface Props {
 export default function TmrJornadaTimeline({ ordenes, currentId, compact, onOpenOrder }: Props) {
   const model = useMemo(() => jornadaTimelineModel(ordenes), [ordenes]);
   if (!model) return null;
+  return (
+    <TimelineChart
+      model={model}
+      currentId={currentId}
+      compact={compact}
+      onOpenOrder={onOpenOrder}
+    />
+  );
+}
 
+function TimelineChart({
+  model,
+  currentId,
+  compact,
+  onOpenOrder,
+}: {
+  model: NonNullable<ReturnType<typeof jornadaTimelineModel>>;
+  currentId?: string;
+  compact?: boolean;
+  onOpenOrder?: (id: string) => void;
+}) {
   function styleFor(startMs: number, endMs: number) {
-    const left = pctOnAxis(startMs, model!);
-    const width = Math.max(0.7, pctOnAxis(endMs, model!) - left);
+    const left = pctOnAxis(startMs, model);
+    const width = Math.max(0.7, pctOnAxis(endMs, model) - left);
     return { left: `${left}%`, width: `${width}%` };
   }
 

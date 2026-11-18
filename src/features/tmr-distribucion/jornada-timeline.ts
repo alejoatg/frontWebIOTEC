@@ -1,8 +1,11 @@
 import type { TmrRow } from "./api";
-import { formatClock, formatSpan, wallDate } from "./jornada";
+import { formatClock, formatSpan, formatTs, wallDate } from "./jornada";
 
 const HOUR_MS = 3_600_000;
 const MIN_MS = 60_000;
+const DAY_MS = 24 * HOUR_MS;
+const COMPACT_DAY_WEIGHT = 1.75 * HOUR_MS;
+const DIAS_CORTOS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
 export type TimelinePhase = "alist" | "desp" | "ser" | "tmr";
 
@@ -41,16 +44,28 @@ export interface TimelineOverlap {
 export interface TimelineTick {
   ms: number;
   label: string;
+  kind: "hour" | "day";
+}
+
+export interface TimelineAxisSpan {
+  fromMs: number;
+  toMs: number;
+  weight: number;
+  compact: boolean;
+  label: string;
 }
 
 export interface JornadaTimelineModel {
   fromMs: number;
   toMs: number;
   spanMs: number;
+  axisWeight: number;
+  spans: TimelineAxisSpan[];
   ticks: TimelineTick[];
   lanes: TimelineLane[];
   overlaps: TimelineOverlap[];
   overlapMs: number;
+  multiDay: boolean;
 }
 
 function msOf(iso: string | null | undefined): number | null {
@@ -112,20 +127,92 @@ function overlapMsTotal(overlaps: TimelineOverlap[]): number {
   return total;
 }
 
-function ticksFor(fromMs: number, toMs: number): TimelineTick[] {
-  const span = toMs - fromMs;
-  const step =
-    span > 18 * HOUR_MS ? 2 * HOUR_MS : span < 3 * HOUR_MS ? 30 * MIN_MS : HOUR_MS;
-  const first = Math.floor(fromMs / step) * step;
-  const ticks: TimelineTick[] = [];
-  for (let t = first; t <= toMs + 1; t += step) {
-    if (t < fromMs - step / 4) continue;
-    ticks.push({
-      ms: t,
-      label: formatClock(new Date(t).toISOString()),
+function utcDayStart(ms: number): number {
+  const d = new Date(ms);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+function shortDate(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function dayLabel(ms: number): string {
+  return `${DIAS_CORTOS[new Date(ms).getUTCDay()]} ${shortDate(ms)}`;
+}
+
+function hourStep(duration: number, multiDay: boolean): number {
+  if (multiDay && duration >= 12 * HOUR_MS) return 3 * HOUR_MS;
+  if (duration > 18 * HOUR_MS) return 2 * HOUR_MS;
+  if (duration < 3 * HOUR_MS) return 30 * MIN_MS;
+  return HOUR_MS;
+}
+
+function buildSpans(lanes: TimelineLane[], fromMs: number, toMs: number): TimelineAxisSpan[] {
+  const firstDay = utcDayStart(fromMs);
+  const lastDay = utcDayStart(toMs);
+  const raw: TimelineAxisSpan[] = [];
+
+  for (let dayMs = firstDay; dayMs <= lastDay; dayMs += DAY_MS) {
+    const clipFrom = Math.max(fromMs, dayMs);
+    const clipTo = Math.min(toMs, dayMs + DAY_MS);
+    if (clipTo <= clipFrom) continue;
+    const laneCount = lanes.filter((lane) => lane.startMs < clipTo && lane.endMs > clipFrom).length;
+    if (!laneCount) continue;
+    raw.push({
+      fromMs: clipFrom,
+      toMs: clipTo,
+      weight: clipTo - clipFrom,
+      compact: false,
+      label: dayLabel(dayMs),
     });
   }
-  return ticks.length ? ticks : [{ ms: fromMs, label: formatClock(new Date(fromMs).toISOString()) }];
+
+  const multiDay = raw.length > 1;
+  const hasDense = raw.some((span) =>
+    lanes.filter((lane) => lane.startMs < span.toMs && lane.endMs > span.fromMs).length >= 2,
+  );
+
+  const spans = raw.map((span, index) => {
+    const laneCount = lanes.filter((lane) => lane.startMs < span.toMs && lane.endMs > span.fromMs).length;
+    const interior = index > 0 && index < raw.length - 1;
+    const compact = Boolean(multiDay && laneCount <= 1 && (hasDense || interior));
+    return {
+      ...span,
+      compact,
+      weight: compact ? COMPACT_DAY_WEIGHT : span.weight,
+      label: compact ? shortDate(span.fromMs) : span.label,
+    };
+  });
+
+  const detailWeight = spans.filter((span) => !span.compact).reduce((sum, span) => sum + span.weight, 0);
+  const compactSpans = spans.filter((span) => span.compact);
+  if (compactSpans.length && detailWeight) {
+    const each = Math.min(COMPACT_DAY_WEIGHT, Math.max(HOUR_MS, (detailWeight * 0.85) / compactSpans.length));
+    for (const span of compactSpans) span.weight = each;
+  }
+
+  return spans;
+}
+
+function ticksFor(spans: TimelineAxisSpan[]): TimelineTick[] {
+  const ticks: TimelineTick[] = [];
+  for (const span of spans) {
+    ticks.push({ ms: span.fromMs, label: span.label, kind: "day" });
+    if (span.compact) continue;
+    const duration = span.toMs - span.fromMs;
+    const step = hourStep(duration, spans.length > 1);
+    const first = Math.ceil(span.fromMs / step) * step;
+    for (let t = first; t < span.toMs - step * 0.2; t += step) {
+      if (t - span.fromMs < step * 0.35) continue;
+      ticks.push({
+        ms: t,
+        label: formatClock(new Date(t).toISOString()),
+        kind: "hour",
+      });
+    }
+  }
+  return ticks;
 }
 
 export function jornadaTimelineModel(ordenes: TmrRow[]): JornadaTimelineModel | null {
@@ -137,8 +224,8 @@ export function jornadaTimelineModel(ordenes: TmrRow[]): JornadaTimelineModel | 
   const minStart = Math.min(...lanes.map((lane) => lane.startMs));
   const maxEnd = Math.max(...lanes.map((lane) => lane.endMs));
   const pad = Math.max(15 * MIN_MS, Math.round((maxEnd - minStart) * 0.04));
-  const fromMs = minStart - pad;
-  const toMs = Math.max(maxEnd + pad, fromMs + HOUR_MS);
+  const fromMs = Math.max(utcDayStart(minStart), minStart - pad);
+  const toMs = Math.min(utcDayStart(maxEnd) + DAY_MS, Math.max(maxEnd + pad, fromMs + HOUR_MS));
 
   const overlaps: TimelineOverlap[] = [];
   for (let i = 0; i < lanes.length; i += 1) {
@@ -157,23 +244,48 @@ export function jornadaTimelineModel(ordenes: TmrRow[]): JornadaTimelineModel | 
     }
   }
 
+  const spans = buildSpans(lanes, fromMs, toMs);
+  const axisFrom = spans[0]?.fromMs ?? fromMs;
+  const axisTo = spans[spans.length - 1]?.toMs ?? toMs;
+  const axisWeight = spans.reduce((sum, span) => sum + span.weight, 0) || axisTo - axisFrom;
+
   return {
-    fromMs,
-    toMs,
-    spanMs: toMs - fromMs,
-    ticks: ticksFor(fromMs, toMs),
+    fromMs: axisFrom,
+    toMs: axisTo,
+    spanMs: axisTo - axisFrom,
+    axisWeight,
+    spans,
+    ticks: ticksFor(spans),
     lanes,
     overlaps,
     overlapMs: overlapMsTotal(overlaps),
+    multiDay: spans.length > 1,
   };
 }
 
 export function pctOnAxis(ms: number, model: JornadaTimelineModel): number {
-  if (!model.spanMs) return 0;
-  return ((ms - model.fromMs) / model.spanMs) * 100;
+  if (!model.axisWeight) return 0;
+  const clamped = Math.min(model.toMs, Math.max(model.fromMs, ms));
+  let acc = 0;
+  for (const span of model.spans) {
+    if (clamped <= span.toMs) {
+      const duration = span.toMs - span.fromMs;
+      const inner = duration ? ((clamped - span.fromMs) / duration) * span.weight : 0;
+      return ((acc + inner) / model.axisWeight) * 100;
+    }
+    acc += span.weight;
+  }
+  return 100;
 }
 
 export function overlapCaption(overlap: TimelineOverlap): string {
   const minutes = Math.round((overlap.endMs - overlap.startMs) / MIN_MS);
-  return `Orden ${overlap.aIndex + 1} y ${overlap.bIndex + 1}: ${formatClock(new Date(overlap.startMs).toISOString())}–${formatClock(new Date(overlap.endMs).toISOString())} (${formatSpan(minutes / 60)})`;
+  const sameDay = utcDayStart(overlap.startMs) === utcDayStart(overlap.endMs);
+  const start = sameDay
+    ? formatClock(new Date(overlap.startMs).toISOString())
+    : formatTs(new Date(overlap.startMs).toISOString());
+  const end = sameDay
+    ? formatClock(new Date(overlap.endMs).toISOString())
+    : formatTs(new Date(overlap.endMs).toISOString());
+  return `Orden ${overlap.aIndex + 1} y ${overlap.bIndex + 1}: ${start}–${end} (${formatSpan(minutes / 60)})`;
 }

@@ -69,7 +69,7 @@
 }
 
 .axisSpacer {
-  min-height: 3.4rem;
+  min-height: 4.6rem;
 }
 
 .axis,
@@ -81,14 +81,38 @@
 }
 
 .axis {
-  min-height: 3.4rem;
+  min-height: 4.6rem;
   background: transparent;
   overflow: visible;
 }
 
-.tick {
+.dayBand {
   position: absolute;
   top: 0;
+  height: 1.35rem;
+  box-sizing: border-box;
+  padding: 0 0.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35rem;
+  color: #0f172a;
+  background: #f1f5f9;
+  border-left: 1px solid #cbd5e1;
+}
+
+.dayCompact {
+  color: #075985;
+  background: #e0f2fe;
+  font-weight: 700;
+}
+
+.tick {
+  position: absolute;
+  top: 1.4rem;
   bottom: 0.15rem;
   width: 0;
 }
@@ -113,6 +137,11 @@
   width: 1px;
   background: #e2e8f0;
   pointer-events: none;
+}
+
+.gridDay {
+  background: #94a3b8;
+  width: 2px;
 }
 
 .label {

@@ -76,6 +76,31 @@
   font: inherit;
 }
 
+.ambitoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.ambito {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.7rem 0.8rem 0.8rem;
+}
+
+.ambito h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.ambitoNote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
 .stats {
   display: flex;
   flex-wrap: wrap;
@@ -101,6 +126,21 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.chartWide {
+  grid-column: 1 / -1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fff;
+  min-height: 16rem;
+}
+
+.chartWide h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #334155;
 }
 
 .chart {
@@ -240,6 +280,7 @@
 }
 
 @media (max-width: 900px) {
+  .ambitoGrid,
   .charts,
   .filters {
     grid-template-columns: 1fr;

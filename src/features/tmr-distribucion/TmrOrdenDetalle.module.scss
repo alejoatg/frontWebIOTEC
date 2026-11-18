@@ -19,9 +19,10 @@
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-content: start;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   flex: 1;
 }
 
@@ -33,6 +34,7 @@
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+  min-height: 0;
 }
 
 .header,
@@ -82,7 +84,7 @@
 .body {
   grid-column: 1;
   grid-row: 1;
-  overflow: auto;
+  overflow: visible;
   padding: 1rem 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -285,7 +287,7 @@
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
   }
 
   .dialogWide {

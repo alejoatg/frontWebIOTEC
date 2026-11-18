@@ -7,6 +7,7 @@ import {
   formatSpan,
   formatTs,
   jornadaContexto,
+  jornadaTotals,
   muestraJornadaLogistica,
   type JornadaDiaResumen,
 } from "./jornada";
@@ -47,7 +48,8 @@ export default function TmrJornadaContexto({ row, rows, onOpenOrder }: Props) {
   const overnight = dias.length > 1;
 
   return (
-    <aside className={styles.side}>
+    <>
+      <aside className={styles.side}>
       <header className={styles.head}>
         <h3>Jornada de la brigada</h3>
         <p>
@@ -89,7 +91,17 @@ export default function TmrJornadaContexto({ row, rows, onOpenOrder }: Props) {
           onOpenOrder={onOpenOrder}
         />
       ))}
-    </aside>
+      </aside>
+      {visible.map((dia) => (
+        <TmrJornadaTimeline
+          key={`chart-${dia.key}`}
+          ordenes={dia.ordenes}
+          currentId={row.id}
+          fullWidth
+          onOpenOrder={onOpenOrder}
+        />
+      ))}
+    </>
   );
 }
 
@@ -104,15 +116,38 @@ function DayDetail({
   showTitle: boolean;
   onOpenOrder?: (id: string) => void;
 }) {
+  const cifras = jornadaTotals(dia.ordenes);
   return (
     <section className={styles.day}>
       {showTitle ? <h4>{dia.label}</h4> : null}
-      <TmrJornadaTimeline
-        ordenes={dia.ordenes}
-        currentId={currentId}
-        compact
-        onOpenOrder={onOpenOrder}
-      />
+      <dl className={styles.cifras}>
+        <div>
+          <dt>Órdenes</dt>
+          <dd>{cifras.count}</dd>
+        </div>
+        <div>
+          <dt>Desplazamiento</dt>
+          <dd>{formatSpan(cifras.desp)}</dd>
+        </div>
+        <div>
+          <dt>Servicio</dt>
+          <dd>{formatSpan(cifras.ser)}</dd>
+        </div>
+        <div>
+          <dt>Jornada</dt>
+          <dd>{formatSpan(cifras.trabajo)}</dd>
+        </div>
+        <div>
+          <dt>Inicio–fin</dt>
+          <dd>
+            {formatClock(cifras.inicio)}–{formatClock(cifras.fin)}
+          </dd>
+        </div>
+        <div>
+          <dt>Última acción</dt>
+          <dd>{formatClock(cifras.ultimaAccion)}</dd>
+        </div>
+      </dl>
       <ol className={styles.timeline}>
         <li className={styles.marker}>
           <span>Inicio de jornada · primer desplazamiento</span>

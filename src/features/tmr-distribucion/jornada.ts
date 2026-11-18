@@ -322,14 +322,21 @@ export function muestraJornadaContexto(_row?: TmrRow): boolean {
   return true;
 }
 
+function sumHours(items: TmrRow[], key: "tmrDesp" | "tmrSer" | "tmrDuracionUten"): number {
+  return items.reduce((sum, row) => sum + (row[key] ?? 0), 0);
+}
+
 export function jornadaTotals(items: TmrRow[]) {
   const { inicio, fin } = jornadaBounds(items);
   return {
     count: items.length,
     inicio,
     fin,
+    ultimaAccion: latestIso(items.flatMap((row) => DAY_STAMPS.map((key) => row[key]))),
     trabajo: hoursBetween(inicio, fin),
-    tmrUten: items.reduce((sum, row) => sum + (row.tmrDuracionUten ?? 0), 0),
+    desp: sumHours(items, "tmrDesp"),
+    ser: sumHours(items, "tmrSer"),
+    tmrUten: sumHours(items, "tmrDuracionUten"),
     sobre: items.filter((row) => row.sobreAsignacion).length,
   };
 }

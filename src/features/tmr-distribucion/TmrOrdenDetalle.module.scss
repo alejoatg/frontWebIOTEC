@@ -19,6 +19,7 @@
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
   flex: 1;
@@ -79,6 +80,8 @@
 }
 
 .body {
+  grid-column: 1;
+  grid-row: 1;
   overflow: auto;
   padding: 1rem 1.15rem 1.25rem;
   display: flex;
@@ -282,6 +285,7 @@
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
   }
 
   .dialogWide {

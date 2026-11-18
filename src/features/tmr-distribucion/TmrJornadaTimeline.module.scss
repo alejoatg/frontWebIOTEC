@@ -1,13 +1,20 @@
 .wrap {
-  margin: 0 0 0.85rem;
-  padding: 0.7rem 0.75rem 0.65rem;
+  margin: 0.85rem 0 0;
+  padding: 0.7rem 0.85rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.compact {
-  padding: 0.55rem 0.55rem 0.5rem;
+.fullWidth {
+  grid-column: 1 / -1;
+  margin: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
 }
 
 .head {
@@ -55,41 +62,48 @@
 
 .chart {
   display: grid;
-  grid-template-columns: 4.6rem minmax(0, 1fr);
-  row-gap: 0.28rem;
-  column-gap: 0.4rem;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  row-gap: 0.32rem;
+  column-gap: 0.45rem;
   align-items: stretch;
 }
 
-.compact .chart {
-  grid-template-columns: 3.6rem minmax(0, 1fr);
-}
-
 .axisSpacer {
-  min-height: 1.05rem;
+  min-height: 3.4rem;
 }
 
 .axis,
 .track {
   position: relative;
-  min-height: 1.35rem;
+  min-height: 1.45rem;
   border-radius: 6px;
   background: #f8fafc;
 }
 
 .axis {
-  min-height: 1.15rem;
+  min-height: 3.4rem;
   background: transparent;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .tick {
   position: absolute;
   top: 0;
-  transform: translateX(-50%);
-  font-size: 0.62rem;
-  color: #64748b;
+  bottom: 0.15rem;
+  width: 0;
+}
+
+.tickText {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transform: rotate(-90deg);
+  transform-origin: left bottom;
   white-space: nowrap;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #475569;
 }
 
 .grid {
@@ -234,6 +248,6 @@
   line-height: 1.4;
 }
 
-.compact .head p {
-  display: none;
+.fullWidth .head p {
+  max-width: 46rem;
 }

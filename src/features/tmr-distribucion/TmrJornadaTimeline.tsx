@@ -16,18 +16,18 @@ import styles from "./TmrJornadaTimeline.module.scss";
 interface Props {
   ordenes: TmrRow[];
   currentId?: string;
-  compact?: boolean;
+  fullWidth?: boolean;
   onOpenOrder?: (id: string) => void;
 }
 
-export default function TmrJornadaTimeline({ ordenes, currentId, compact, onOpenOrder }: Props) {
+export default function TmrJornadaTimeline({ ordenes, currentId, fullWidth, onOpenOrder }: Props) {
   const model = useMemo(() => jornadaTimelineModel(ordenes), [ordenes]);
   if (!model) return null;
   return (
     <TimelineChart
       model={model}
       currentId={currentId}
-      compact={compact}
+      fullWidth={fullWidth}
       onOpenOrder={onOpenOrder}
     />
   );
@@ -36,12 +36,12 @@ export default function TmrJornadaTimeline({ ordenes, currentId, compact, onOpen
 function TimelineChart({
   model,
   currentId,
-  compact,
+  fullWidth,
   onOpenOrder,
 }: {
   model: NonNullable<ReturnType<typeof jornadaTimelineModel>>;
   currentId?: string;
-  compact?: boolean;
+  fullWidth?: boolean;
   onOpenOrder?: (id: string) => void;
 }) {
   function styleFor(startMs: number, endMs: number) {
@@ -55,7 +55,7 @@ function TimelineChart({
   }
 
   return (
-    <div className={compact ? `${styles.wrap} ${styles.compact}` : styles.wrap}>
+    <div className={fullWidth ? `${styles.wrap} ${styles.fullWidth}` : styles.wrap}>
       <header className={styles.head}>
         <div>
           <h4>Línea de tiempo</h4>
@@ -80,7 +80,7 @@ function TimelineChart({
               className={styles.tick}
               style={{ left: `${pctOnAxis(tick.ms, model)}%` }}
             >
-              {tick.label}
+              <span className={styles.tickText}>{tick.label}</span>
             </span>
           ))}
         </div>

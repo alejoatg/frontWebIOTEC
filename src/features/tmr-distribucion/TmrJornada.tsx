@@ -186,8 +186,21 @@ export default function TmrJornada({ rows, onOpen }: Props) {
               <small>{formatTs(totals.fin)}</small>
             </div>
             <div>
+              <strong>{formatSpan(totals.desp)}</strong>
+              Tiempo en desplazamiento
+            </div>
+            <div>
+              <strong>{formatSpan(totals.ser)}</strong>
+              Tiempo en servicio
+            </div>
+            <div>
               <strong>{formatSpan(totals.trabajo)}</strong>
               Jornada (primer desplazamiento → último cierre)
+            </div>
+            <div>
+              <strong>{formatClock(totals.ultimaAccion)}</strong>
+              Última acción
+              <small>{formatTs(totals.ultimaAccion)}</small>
             </div>
             <div>
               <strong>{formatSpan(totals.tmrUten)}</strong>
@@ -206,14 +219,6 @@ export default function TmrJornada({ rows, onOpen }: Props) {
               TMR UTEN medio del día
             </div>
           </div>
-
-          <TmrJornadaTimeline
-            ordenes={items}
-            onOpenOrder={onOpen ? (id) => {
-              const row = items.find((item) => item.id === id);
-              if (row) onOpen(row);
-            } : undefined}
-          />
 
           <ol className={styles.bitacora}>
             {items.map((row, index) => {
@@ -308,6 +313,14 @@ export default function TmrJornada({ rows, onOpen }: Props) {
               );
             })}
           </ol>
+
+          <TmrJornadaTimeline
+            ordenes={items}
+            onOpenOrder={onOpen ? (id) => {
+              const row = items.find((item) => item.id === id);
+              if (row) onOpen(row);
+            } : undefined}
+          />
         </>
       ) : (
         <p className={styles.hint}>No hay actividades para esa brigada y día.</p>

@@ -532,6 +532,13 @@ export function pdfPlantillaPrintPageUrl(id: string, autoPrint = false) {
   return `/imprimir/horas-extra/plantilla/${id}${q}`;
 }
 
+export async function deletePdfPlantilla(id: string) {
+  return request<{ id: string; plantillaCode: string; releasedEntries: number }>(
+    `/pdf-plantillas/${id}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function fetchPdfPlantillaPrintData(id: string) {
   return request<TsPlantillaPrintData>(`/pdf-plantillas/${id}/print-data`);
 }
@@ -736,6 +743,7 @@ export interface OvertimeEntry {
   workDate: string;
   status: string;
   pdfPlantillaId?: string | null;
+  pdfPlantilla?: { id: string; plantillaCode: string; entryCount: number } | null;
   /** Ausente cuando el rol no debe ver valores monetarios (SUPERVISOR/CORDINADOR). */
   amountTotal?: number;
   validationResult: string;

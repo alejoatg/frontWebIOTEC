@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
-import { fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
+import { canReviewOvertime, isOvertimeAnalyst } from "@/features/dashboard/constants/nav";
+import { deletePdfPlantilla, fetchEntry, type OvertimeEntryRow } from "../../api/overtimeApi";
 import { dateOnlyMonth, dateOnlyYear, formatDateOnly } from "../../lib/dateFormat";
 import { DETAIL_SECTIONS_NO_MONEY } from "../../lib/entrySpreadsheet";
 import {
@@ -14,6 +14,7 @@ import {
   overtimeStatusLabel,
 } from "../../lib/overtimeStatus";
 import EntryActions from "../EntryActions/EntryActions";
+import modal from "../VoidEntryModal/VoidEntryModal.module.scss";
 import styles from "./RegistroDetalleContainer.module.scss";
 import shared from "../../styles/shared.module.scss";
 
@@ -130,6 +131,10 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
   const [entry, setEntry] = useState<OvertimeEntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletePdfOpen, setDeletePdfOpen] = useState(false);
+  const [deletingPdf, setDeletingPdf] = useState(false);
+  const [deletePdfError, setDeletePdfError] = useState<string | null>(null);
+  const canDeletePdf = canReviewOvertime(user?.role);
 
   const sections = DETAIL_SECTIONS_NO_MONEY;
 
@@ -218,7 +223,79 @@ export default function RegistroDetalleContainer({ entryId }: RegistroDetalleCon
           layout="stacked"
           redirectOnCorrect
         />
+        {canDeletePdf && entry.pdfPlantilla && (
+          <div className={styles.pdfAction}>
+            <p className={styles.supersededNote}>
+              Este registro está en el PDF {entry.pdfPlantilla.plantillaCode}
+              {entry.pdfPlantilla.entryCount
+                ? ` (${entry.pdfPlantilla.entryCount} registros)`
+                : ""}
+              .
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={() => setDeletePdfOpen(true)}>
+              Eliminar PDF
+            </Button>
+          </div>
+        )}
       </div>
+
+      {deletePdfOpen && entry.pdfPlantilla && (
+        <div
+          className={modal.overlay}
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deletingPdf) setDeletePdfOpen(false);
+          }}
+        >
+          <div className={modal.dialog} role="dialog" aria-modal="true" aria-labelledby="delete-pdf-title">
+            <header className={modal.header}>
+              <h2 id="delete-pdf-title" className={modal.title}>
+                Eliminar {entry.pdfPlantilla.plantillaCode}
+              </h2>
+              <p className={modal.warning}>
+                Se borra el PDF completo. Los registros que contiene quedan libres y se pueden
+                volver a incluir en una planilla nueva.
+              </p>
+            </header>
+            <div className={modal.body}>
+              {deletePdfError && <p className={modal.error}>{deletePdfError}</p>}
+            </div>
+            <div className={modal.actions}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={deletingPdf}
+                onClick={() => setDeletePdfOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={deletingPdf}
+                onClick={() => {
+                  const plantillaId = entry.pdfPlantilla?.id;
+                  if (!plantillaId) return;
+                  setDeletingPdf(true);
+                  setDeletePdfError(null);
+                  void deletePdfPlantilla(plantillaId)
+                    .then(() => {
+                      setDeletePdfOpen(false);
+                      return load();
+                    })
+                    .catch((e: unknown) => {
+                      setDeletePdfError(e instanceof Error ? e.message : "No se pudo eliminar el PDF");
+                    })
+                    .finally(() => setDeletingPdf(false));
+                }}
+              >
+                {deletingPdf ? "Eliminando…" : "Eliminar PDF"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {messages.length > 0 && (
         <div className={styles.messagesCard}>

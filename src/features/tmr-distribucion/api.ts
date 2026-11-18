@@ -2,12 +2,15 @@ import { API_URL } from "@/lib/api";
 
 const BASE = `${API_URL}/api/tmr-distribucion`;
 
+export const TMR_EXCLUSION_MANUAL = "Validación manual";
+
 export const TMR_EXCLUSIONS = [
   "Cumple TMR",
   "No cumple el TMR",
   "Pendiente de logística especial",
   "Fuera del horario laboral",
   "Sobreasignación",
+  TMR_EXCLUSION_MANUAL,
 ] as const;
 
 export type TmrExclusion = (typeof TMR_EXCLUSIONS)[number];
@@ -87,6 +90,7 @@ export interface TmrSummary {
   cpl: number;
   fhl: number;
   sobreasignacion: number;
+  manual: number;
   sobreFlag: number;
   byUbicacion: { ubicacion: string; r8: number; rOver: number }[];
   byNucleo: {
@@ -98,6 +102,7 @@ export interface TmrSummary {
     cpl: number;
     fhl: number;
     sobre: number;
+    manual: number;
   }[];
 }
 

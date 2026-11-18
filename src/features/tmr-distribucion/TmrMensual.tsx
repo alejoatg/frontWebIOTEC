@@ -319,6 +319,10 @@ function Kpis({ item }: { item: CrewMonth }) {
         <strong>{item.sobre}</strong>
         Sobreasignación
       </div>
+      <div>
+        <strong>{item.manual}</strong>
+        Validación manual
+      </div>
     </div>
   );
 }

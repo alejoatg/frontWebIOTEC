@@ -11,8 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components";
-import { TMR_EXCLUSIONS, type TmrExclusion, type TmrRow } from "./api";
-import { formatClock, formatSpan, formatTs, muestraJornadaContexto, possibleExclusionReason } from "./jornada";
+import { TMR_EXCLUSION_MANUAL, TMR_EXCLUSIONS, type TmrExclusion, type TmrRow } from "./api";
+import { formatClock, formatSpan, formatTs, possibleExclusionReason } from "./jornada";
 import TmrJornadaContexto from "./TmrJornadaContexto";
 import styles from "./TmrOrdenDetalle.module.scss";
 
@@ -40,16 +40,18 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
   const [exclusion, setExclusion] = useState<TmrExclusion | "">(row.exclusion);
   const [observacion, setObservacion] = useState(row.observacion);
   const [notaCeo, setNotaCeo] = useState(row.notaCeo);
+  const [soporteNombre, setSoporteNombre] = useState("");
   const [saved, setSaved] = useState(false);
   const dirty =
     exclusion !== row.exclusion || observacion !== row.observacion || notaCeo !== row.notaCeo;
   const exclusionReason = possibleExclusionReason(row);
-  const showJornada = muestraJornadaContexto(row);
+  const stillAuto = row.exclusion === row.exclusionAuto;
 
   useEffect(() => {
     setExclusion(row.exclusion);
     setObservacion(row.observacion);
     setNotaCeo(row.notaCeo);
+    setSoporteNombre("");
     setSaved(false);
   }, [row.id]);
 
@@ -65,9 +67,24 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
     return () => dialog.removeEventListener("cancel", handleCancel);
   }, [onClose]);
 
+  function markManualIfStillAuto() {
+    if (stillAuto && (exclusion === row.exclusion || !exclusion)) {
+      setExclusion(TMR_EXCLUSION_MANUAL);
+    }
+  }
+
+  function resolvedExclusion(): TmrExclusion {
+    const selected = (exclusion || TMR_EXCLUSION_MANUAL) as TmrExclusion;
+    if (selected !== row.exclusion) return selected;
+    if (!stillAuto) return selected;
+    return TMR_EXCLUSION_MANUAL;
+  }
+
   function handleSave() {
+    const next = resolvedExclusion();
+    setExclusion(next);
     onSave({
-      exclusion: exclusion as TmrExclusion,
+      exclusion: next,
       observacion,
       notaCeo,
     });
@@ -77,7 +94,7 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
   return (
     <dialog
       ref={dialogRef}
-      className={showJornada ? `${styles.dialog} ${styles.dialogWide}` : styles.dialog}
+      className={`${styles.dialog} ${styles.dialogWide}`}
       onClose={onClose}
     >
       <div className={styles.content}>
@@ -95,7 +112,7 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
           </button>
         </header>
 
-        <div className={showJornada ? styles.shell : undefined}>
+        <div className={styles.shell}>
           <div className={styles.body}>
           <section>
             <h4>Identificación</h4>
@@ -277,12 +294,20 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
             </label>
             {row.exclusion !== row.exclusionAuto ? (
               <p className={styles.note}>Automática: {row.exclusionAuto || "—"}</p>
-            ) : null}
+            ) : (
+              <p className={styles.note}>
+                Al guardar el análisis, la orden pasa a {TMR_EXCLUSION_MANUAL} si no elige otra
+                exclusión.
+              </p>
+            )}
             <label>
               Observación
               <textarea
                 value={observacion}
-                onChange={(e) => setObservacion(e.target.value)}
+                onChange={(e) => {
+                  setObservacion(e.target.value);
+                  markManualIfStillAuto();
+                }}
                 rows={3}
                 placeholder="Motivo de la exclusión, espera de logística, evidencia…"
               />
@@ -291,17 +316,33 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
               Nota CEO
               <textarea
                 value={notaCeo}
-                onChange={(e) => setNotaCeo(e.target.value)}
+                onChange={(e) => {
+                  setNotaCeo(e.target.value);
+                  markManualIfStillAuto();
+                }}
                 rows={3}
                 placeholder="Nota para el cierre o el informe a gerencia…"
               />
             </label>
+            <label className={styles.fileField}>
+              Documento soporte
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.doc,.docx"
+                onChange={(e) => setSoporteNombre(e.target.files?.[0]?.name ?? "")}
+              />
+              {soporteNombre ? (
+                <span className={styles.fileName}>{soporteNombre} · aún no se guarda</span>
+              ) : (
+                <span className={styles.fileHint}>
+                  Próximamente se podrá adjuntar evidencia. Este campo aún no se guarda.
+                </span>
+              )}
+            </label>
             {saved && !dirty ? <p className={styles.saved}>Guardado en esta sesión.</p> : null}
           </section>
         </div>
-          {showJornada ? (
-            <TmrJornadaContexto row={row} rows={rows} onOpenOrder={onOpenRelated} />
-          ) : null}
+          <TmrJornadaContexto row={row} rows={rows} onOpenOrder={onOpenRelated} />
         </div>
 
         <footer className={styles.footer}>

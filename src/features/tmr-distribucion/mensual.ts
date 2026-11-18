@@ -21,6 +21,7 @@ export interface CrewMonth {
   cpl: number;
   fhl: number;
   sobre: number;
+  manual: number;
   porDia: Record<string, TmrRow[]>;
   despLargos: TmrRow[];
   ejecLargas: TmrRow[];
@@ -171,6 +172,7 @@ export function buildCrewMonths(rows: TmrRow[], month: string): CrewMonth[] {
         cpl: list.filter((row) => row.exclusion === "Pendiente de logística especial").length,
         fhl: list.filter((row) => row.exclusion === "Fuera del horario laboral").length,
         sobre: list.filter((row) => row.sobreAsignacion).length,
+        manual: list.filter((row) => row.exclusion === "Validación manual").length,
         porDia,
         despLargos: list
           .filter((row) => row.tmrDesp != null && row.tmrDesp > DESP_LARGA_H)

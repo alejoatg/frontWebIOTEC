@@ -7,10 +7,10 @@ import {
   formatSpan,
   formatTs,
   jornadaContexto,
-  muestraJornadaContexto,
   muestraJornadaLogistica,
   type JornadaDiaResumen,
 } from "./jornada";
+import TmrJornadaTimeline from "./TmrJornadaTimeline";
 import styles from "./TmrJornadaContexto.module.scss";
 
 interface Props {
@@ -29,7 +29,18 @@ export default function TmrJornadaContexto({ row, rows, onOpenOrder }: Props) {
     setTab(0);
   }, [row.id]);
 
-  if (!muestraJornadaContexto(row) || !dias.length) return null;
+  if (!dias.length) {
+    return (
+      <aside className={styles.side}>
+        <header className={styles.head}>
+          <h3>Jornada de la brigada</h3>
+          <p>
+            {row.crew || "Sin brigada"} · no hay Start ni En ruta para armar la jornada.
+          </p>
+        </header>
+      </aside>
+    );
+  }
 
   const tabSafe = Math.min(tab, dias.length - 1);
   const visible = useTabs ? [dias[tabSafe]] : dias;
@@ -96,6 +107,12 @@ function DayDetail({
   return (
     <section className={styles.day}>
       {showTitle ? <h4>{dia.label}</h4> : null}
+      <TmrJornadaTimeline
+        ordenes={dia.ordenes}
+        currentId={currentId}
+        compact
+        onOpenOrder={onOpenOrder}
+      />
       <ol className={styles.timeline}>
         <li className={styles.marker}>
           <span>Inicio de jornada · primer desplazamiento</span>

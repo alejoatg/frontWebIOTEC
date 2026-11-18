@@ -25,6 +25,7 @@ import {
   TMR_WATCH_H,
 } from "./jornada";
 import { calendarCells, monthLabel } from "./mensual";
+import TmrJornadaTimeline from "./TmrJornadaTimeline";
 import styles from "./TmrJornada.module.scss";
 
 const WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -205,6 +206,14 @@ export default function TmrJornada({ rows, onOpen }: Props) {
               TMR UTEN medio del día
             </div>
           </div>
+
+          <TmrJornadaTimeline
+            ordenes={items}
+            onOpenOrder={onOpen ? (id) => {
+              const row = items.find((item) => item.id === id);
+              if (row) onOpen(row);
+            } : undefined}
+          />
 
           <ol className={styles.bitacora}>
             {items.map((row, index) => {

@@ -189,6 +189,23 @@ export default function TmrReglasModal({ onClose }: Props) {
           </section>
 
           <section className={styles.box}>
+            <h4>Validación manual</h4>
+            <ul>
+              <li>
+                No la asigna el motor. Queda para las órdenes que el conciliador está revisando.
+              </li>
+              <li>
+                Al guardar el análisis de una orden que aún tiene la exclusión automática, pasa a{" "}
+                <strong>Validación manual</strong>.
+              </li>
+              <li>
+                Después puede dejarla en esa categoría o cambiarla a cumple, no cumple u otra
+                exclusión.
+              </li>
+            </ul>
+          </section>
+
+          <section className={styles.box}>
             <h4>TMR CEO y TMR UTEN</h4>
             <ul>
               <li>

@@ -318,8 +318,8 @@ export function muestraJornadaLogistica(row: TmrRow): boolean {
   );
 }
 
-export function muestraJornadaContexto(row: TmrRow): boolean {
-  return muestraJornadaNoCumple(row) || muestraJornadaLogistica(row);
+export function muestraJornadaContexto(_row?: TmrRow): boolean {
+  return true;
 }
 
 export function jornadaTotals(items: TmrRow[]) {

@@ -1,0 +1,239 @@
+.wrap {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.75rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.compact {
+  padding: 0.55rem 0.55rem 0.5rem;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.head h4 {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #0f172a;
+}
+
+.head p {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.overlapStat,
+.okStat {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+}
+
+.overlapStat {
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.okStat {
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+}
+
+.chart {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  row-gap: 0.28rem;
+  column-gap: 0.4rem;
+  align-items: stretch;
+}
+
+.compact .chart {
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+}
+
+.axisSpacer {
+  min-height: 1.05rem;
+}
+
+.axis,
+.track {
+  position: relative;
+  min-height: 1.35rem;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.axis {
+  min-height: 1.15rem;
+  background: transparent;
+  overflow: hidden;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e2e8f0;
+  pointer-events: none;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  font-size: 0.68rem;
+  color: #334155;
+  line-height: 1.15;
+}
+
+.label strong {
+  font-size: 0.7rem;
+  color: #0f172a;
+}
+
+.label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #94a3b8;
+}
+
+.labelOn strong {
+  color: #9a3412;
+}
+
+.track {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.trackOn {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.trackBtn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.bar,
+.overlap,
+.overlapBand {
+  position: absolute;
+  top: 18%;
+  height: 64%;
+  border-radius: 4px;
+  min-width: 3px;
+}
+
+.alist {
+  background: #5eead4;
+}
+
+.desp {
+  background: #60a5fa;
+}
+
+.ser {
+  background: #a78bfa;
+}
+
+.tmr {
+  background: #94a3b8;
+}
+
+.overlap {
+  top: 8%;
+  height: 84%;
+  background: repeating-linear-gradient(
+    -55deg,
+    rgba(234, 88, 12, 0.28),
+    rgba(234, 88, 12, 0.28) 4px,
+    rgba(234, 88, 12, 0.08) 4px,
+    rgba(234, 88, 12, 0.08) 8px
+  );
+  border: 1px solid rgba(194, 65, 12, 0.45);
+  pointer-events: none;
+}
+
+.overlapBand {
+  top: 16%;
+  height: 68%;
+  background: #ea580c;
+  opacity: 0.85;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.overlapSwatch {
+  background: repeating-linear-gradient(
+    -55deg,
+    #ea580c,
+    #ea580c 3px,
+    #fed7aa 3px,
+    #fed7aa 6px
+  );
+}
+
+.overlapList {
+  margin: 0.4rem 0 0;
+  padding: 0 0 0 1rem;
+  font-size: 0.7rem;
+  color: #9a3412;
+  line-height: 1.4;
+}
+
+.compact .head p {
+  display: none;
+}

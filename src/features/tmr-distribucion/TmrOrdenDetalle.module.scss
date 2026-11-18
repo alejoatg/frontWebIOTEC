@@ -238,13 +238,29 @@
 }
 
 .edit select,
-.edit textarea {
+.edit textarea,
+.edit input[type="file"] {
   font: inherit;
   font-weight: 400;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
   background: #fff;
+}
+
+.fileField {
+  gap: 0.35rem;
+}
+
+.fileHint,
+.fileName {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.fileName {
+  color: #334155;
 }
 
 .edit textarea {

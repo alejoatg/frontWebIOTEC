@@ -16,6 +16,7 @@ import { Button } from "@/components";
 import {
   downloadTmrExcel,
   previewTmr,
+  TMR_EXCLUSION_MANUAL,
   TMR_EXCLUSIONS,
   type TmrOverride,
   type TmrPreview,
@@ -105,6 +106,10 @@ export default function TmrContainer() {
     });
   }, [rows, query, exclusion, municipio, crew]);
 
+  const manualCount = useMemo(
+    () => rows.filter((row) => row.exclusion === TMR_EXCLUSION_MANUAL).length,
+    [rows],
+  );
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const pageSafe = Math.min(page, pages - 1);
   const slice = filtered.slice(pageSafe * PAGE, pageSafe * PAGE + PAGE);
@@ -277,6 +282,10 @@ export default function TmrContainer() {
             <div className={styles.stat}>
               <strong>{summary.sobreasignacion}</strong>
               Sobreasignación
+            </div>
+            <div className={styles.stat}>
+              <strong>{manualCount}</strong>
+              Validación manual
             </div>
             <div className={styles.stat}>
               <strong>{Object.keys(edited).length}</strong>

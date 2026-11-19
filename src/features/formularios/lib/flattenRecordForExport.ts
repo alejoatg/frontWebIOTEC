@@ -1,5 +1,11 @@
 import type { FormReportConfig } from "../config/formReportTypes";
-import { bogotaCalendarDate, fechaDiligenciamientoDisplay, humanizeFieldKey } from "./formatters";
+import {
+  bogotaCalendarDate,
+  bogotaDateTimeParts,
+  fechaDiligenciamientoDisplay,
+  humanizeFieldKey,
+  type BogotaDateTimeParts,
+} from "./formatters";
 import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
 
 export interface ExportColumn {
@@ -11,8 +17,12 @@ export interface ExportCell {
   text: string;
   /** Primera URL para hipervínculo en Excel (si aplica). */
   link?: string;
+  /** Todas las URLs del campo, cuando hay más de una. */
+  links?: string[];
   /** `text` es YYYY-MM-DD; en Excel se escribe como fecha sin hora. */
   dateOnly?: boolean;
+  /** Hora de Colombia; en Excel se escribe como fecha y hora. */
+  dateTime?: BogotaDateTimeParts;
 }
 
 /** Campos de día calendario (no instantes como syncedAt). */
@@ -25,6 +35,23 @@ function calendarDateCell(value: unknown): ExportCell {
   const calendar = bogotaCalendarDate(value);
   if (!calendar) return formatValue("", value);
   return { text: calendar, dateOnly: true };
+}
+
+function dateTimeCell(value: unknown): ExportCell | undefined {
+  const parts = bogotaDateTimeParts(value);
+  if (!parts) return undefined;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    text: `${pad(parts.day)}/${pad(parts.month)}/${parts.year} ${pad(parts.hour)}:${pad(parts.minute)}`,
+    dateTime: parts,
+  };
+}
+
+const DATE_TIME_KEYS = new Set(["syncedAt", "startedAt", "completedAt"]);
+
+function isDateTimeKey(key: string, config: FormReportConfig): boolean {
+  if (DATE_TIME_KEYS.has(key)) return true;
+  return config.listColumns.some((col) => col.key === key && col.format === "datetime");
 }
 
 const SKIP_KEYS = new Set([
@@ -62,13 +89,16 @@ function toViewableUrl(url: string, label: string): string {
 
 function formatUrlEntry(url: string, label: string): ExportCell {
   const viewUrl = toViewableUrl(url, label);
-  return { text: `${label}: ${viewUrl}`, link: viewUrl };
+  return { text: viewUrl, link: viewUrl, links: [viewUrl] };
 }
 
 function formatValue(key: string, value: unknown): ExportCell {
   if (value === undefined || value === null || value === "") {
     return { text: "" };
   }
+
+  const instant = dateTimeCell(value);
+  if (instant) return instant;
 
   if (isHttpUrl(value)) {
     return formatUrlEntry(value, linkLabel(key));
@@ -85,6 +115,7 @@ function formatValue(key: string, value: unknown): ExportCell {
         return {
           text: parts.map((p) => p.text).join("\n"),
           link: parts[0]?.link,
+          links: parts.map((p) => p.link).filter((url): url is string => Boolean(url)),
         };
       }
       return { text: value.join(", ") };
@@ -119,6 +150,7 @@ function formatValue(key: string, value: unknown): ExportCell {
         return {
           text: parts.map((p) => p.text).join("\n"),
           link: parts[0]?.link,
+          links: parts.map((p) => p.link).filter((url): url is string => Boolean(url)),
         };
       }
     }
@@ -220,6 +252,10 @@ export function flattenRecordForExport(
     }
     if (isCalendarDateKey(key, config)) {
       cells[key] = calendarDateCell(value);
+      continue;
+    }
+    if (isDateTimeKey(key, config)) {
+      cells[key] = dateTimeCell(value) ?? formatValue(key, value);
       continue;
     }
     cells[key] = formatValue(key, value);

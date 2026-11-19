@@ -15,6 +15,45 @@ export function bogotaCalendarDate(value: unknown): string | undefined {
   return date.toLocaleDateString("en-CA", { timeZone: BOGOTA });
 }
 
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/;
+
+export interface BogotaDateTimeParts {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+/** Instante (ISO con hora) en hora de Colombia. Un día suelto no cuenta. */
+export function bogotaDateTimeParts(value: unknown): BogotaDateTimeParts | undefined {
+  if (value == null || value === "") return undefined;
+  const raw = String(value).trim();
+  if (!ISO_INSTANT.test(raw)) return undefined;
+  const date = new Date(raw.includes(" ") ? raw.replace(" ", "T") : raw);
+  if (Number.isNaN(date.getTime())) return undefined;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BOGOTA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value);
+  let hour = pick("hour");
+  if (hour === 24) hour = 0;
+  return {
+    year: pick("year"),
+    month: pick("month"),
+    day: pick("day"),
+    hour,
+    minute: pick("minute"),
+  };
+}
+
 export function formatDateTime(s: string | null | undefined): string {
   if (!s) return "—";
   const date = new Date(s);

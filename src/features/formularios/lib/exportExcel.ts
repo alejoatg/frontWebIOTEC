@@ -34,10 +34,23 @@ export function exportRowsToExcel(
   XLSX.writeFile(workbook, fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`);
 }
 
-function applyHyperlink(cell: XLSX.CellObject, url: string, display: string) {
-  cell.v = display;
-  cell.t = "s";
-  cell.l = { Target: url, Tooltip: "Abrir enlace" };
+function excelFormulaString(value: string): string {
+  return value.replace(/"/g, '""');
+}
+
+/** Texto de enlace con el estilo de hipervínculo de Excel (azul, subrayado). */
+function applyClickable(cell: XLSX.CellObject, links: string[]) {
+  const urls = links.map((url) => url.trim()).filter(Boolean);
+  if (urls.length === 0) return;
+  const label = urls.length === 1 ? "Clic para abrir" : `Clic para abrir (${urls.length} enlaces)`;
+  cell.f = `HYPERLINK("${excelFormulaString(urls[0])}","${excelFormulaString(label)}")`;
+  cell.v = label;
+  cell.t = "str";
+  cell.l = { Target: urls[0], Tooltip: "Abrir enlace" };
+  delete cell.w;
+  if (urls.length > 1) {
+    cell.c = [{ a: "IOTEC", t: urls.map((url, index) => `${index + 1}. ${url}`).join("\n") }];
+  }
 }
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -59,6 +72,22 @@ function applyDateOnly(cell: XLSX.CellObject, isoDate: string) {
   delete cell.w;
 }
 
+/** Serial de Excel para fecha y hora de reloj, sin zona horaria. */
+function excelDateTimeSerial(parts: { year: number; month: number; day: number; hour: number; minute: number }): number {
+  const utc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
+  return (utc - Date.UTC(1899, 11, 30)) / 86400000;
+}
+
+function applyDateTime(
+  cell: XLSX.CellObject,
+  parts: { year: number; month: number; day: number; hour: number; minute: number },
+) {
+  cell.t = "n";
+  cell.v = excelDateTimeSerial(parts);
+  cell.z = "dd/mm/yyyy hh:mm";
+  delete cell.w;
+}
+
 export function exportFormRecordsToExcel(
   columns: ExportColumn[],
   matrix: ExportCell[][],
@@ -77,11 +106,14 @@ export function exportFormRecordsToExcel(
         applyDateOnly(target, cell.text);
         return;
       }
-      if (!cell.link || cell.text.includes("\n")) return;
-      const label = cell.text.includes(": ")
-        ? cell.text.slice(0, cell.text.indexOf(": "))
-        : "Abrir enlace";
-      applyHyperlink(target, cell.link, label);
+      if (cell.dateTime) {
+        applyDateTime(target, cell.dateTime);
+        return;
+      }
+      const links = cell.links?.length ? cell.links : cell.link ? [cell.link] : [];
+      if (links.length > 0) {
+        applyClickable(target, links);
+      }
     });
   });
 

@@ -40,6 +40,25 @@ function applyHyperlink(cell: XLSX.CellObject, url: string, display: string) {
   cell.l = { Target: url, Tooltip: "Abrir enlace" };
 }
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Serial de Excel para un día calendario, sin componente de hora. */
+function excelDateSerial(isoDate: string): number | undefined {
+  const match = isoDate.match(DATE_ONLY);
+  if (!match) return undefined;
+  const utc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return (utc - Date.UTC(1899, 11, 30)) / 86400000;
+}
+
+function applyDateOnly(cell: XLSX.CellObject, isoDate: string) {
+  const serial = excelDateSerial(isoDate);
+  if (serial == null) return;
+  cell.t = "n";
+  cell.v = serial;
+  cell.z = "dd/mm/yyyy";
+  delete cell.w;
+}
+
 export function exportFormRecordsToExcel(
   columns: ExportColumn[],
   matrix: ExportCell[][],
@@ -51,10 +70,14 @@ export function exportFormRecordsToExcel(
 
   matrix.forEach((rowCells, rowIndex) => {
     rowCells.forEach((cell, colIndex) => {
-      if (!cell.link || cell.text.includes("\n")) return;
       const ref = XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex });
       const target = sheet[ref];
       if (!target) return;
+      if (cell.dateOnly) {
+        applyDateOnly(target, cell.text);
+        return;
+      }
+      if (!cell.link || cell.text.includes("\n")) return;
       const label = cell.text.includes(": ")
         ? cell.text.slice(0, cell.text.indexOf(": "))
         : "Abrir enlace";

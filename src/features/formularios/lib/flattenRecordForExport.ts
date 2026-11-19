@@ -1,5 +1,5 @@
 import type { FormReportConfig } from "../config/formReportTypes";
-import { fechaDiligenciamientoDisplay, humanizeFieldKey } from "./formatters";
+import { bogotaCalendarDate, fechaDiligenciamientoDisplay, humanizeFieldKey } from "./formatters";
 import { mediaViewPageUrl } from "@/lib/mediaViewUrl";
 
 export interface ExportColumn {
@@ -11,6 +11,20 @@ export interface ExportCell {
   text: string;
   /** Primera URL para hipervínculo en Excel (si aplica). */
   link?: string;
+  /** `text` es YYYY-MM-DD; en Excel se escribe como fecha sin hora. */
+  dateOnly?: boolean;
+}
+
+/** Campos de día calendario (no instantes como syncedAt). */
+function isCalendarDateKey(key: string, config: FormReportConfig): boolean {
+  if (key === "fecha" || /^fecha[_A-Z]/.test(key) || /Vencimiento$/.test(key)) return true;
+  return config.listColumns.some((col) => col.key === key && col.format === "shortDate");
+}
+
+function calendarDateCell(value: unknown): ExportCell {
+  const calendar = bogotaCalendarDate(value);
+  if (!calendar) return formatValue("", value);
+  return { text: calendar, dateOnly: true };
 }
 
 const SKIP_KEYS = new Set([
@@ -201,7 +215,11 @@ export function flattenRecordForExport(
     if (SKIP_KEYS.has(key)) continue;
     if (key === "fecha") {
       const shown = fechaDiligenciamientoDisplay(row);
-      cells[key] = { text: shown ?? "" };
+      cells[key] = shown ? { text: shown, dateOnly: true } : { text: "" };
+      continue;
+    }
+    if (isCalendarDateKey(key, config)) {
+      cells[key] = calendarDateCell(value);
       continue;
     }
     cells[key] = formatValue(key, value);

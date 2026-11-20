@@ -290,7 +290,10 @@ export default function AgregarTrabajadorForm({ employeeId }: Props) {
           isActive: form.isActive,
         });
       } else {
-        await createEmployee(payload);
+        const created = await createEmployee(payload);
+        router.push(`/dashboard/talento-humano/trabajadores/${created.id}/salario`);
+        router.refresh();
+        return;
       }
       router.push("/dashboard/talento-humano/trabajadores");
       router.refresh();

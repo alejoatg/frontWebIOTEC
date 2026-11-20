@@ -17,6 +17,14 @@
   max-width: 16rem;
 }
 
+.inputWide {
+  width: 100%;
+  max-width: none;
+  min-width: 16rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.875rem;
+}
+
 .list {
   position: fixed;
   z-index: 200;

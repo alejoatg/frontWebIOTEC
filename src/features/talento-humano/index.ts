@@ -2,6 +2,7 @@ export { default as TalentoHumanoNav } from "./components/TalentoHumanoNav/Talen
 export { default as TrabajadoresListContainer } from "./components/TrabajadoresListContainer";
 export { default as CargosAreasContainer } from "./components/CargosAreasContainer";
 export { default as AgregarTrabajadorForm } from "./components/AgregarTrabajadorForm";
+export { default as AsignarSalarioForm } from "./components/AsignarSalarioForm";
 export { useEmployees } from "./hooks/useEmployees";
 export { useHrOrg } from "./hooks/useHrOrg";
 export type {

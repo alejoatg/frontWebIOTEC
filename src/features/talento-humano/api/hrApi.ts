@@ -67,6 +67,22 @@ export async function createEmployee(
   return response.json();
 }
 
+export async function assignEmployeeSalary(
+  id: string,
+  data: { baseSalary: number; startDate?: string; changeReason?: string },
+) {
+  const response = await fetch(`${API_URL}/api/employees/${id}/salary`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    await parseError(response, "Error al asignar el salario");
+  }
+  return response.json() as Promise<{ id: string; baseSalary: number }>;
+}
+
 export async function updateEmployee(
   id: string,
   data: UpdateEmployeePayload,

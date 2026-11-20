@@ -1,12 +1,5 @@
-"use client";
-
-import { Card } from "@/components";
-import { PdfPlantillasContainer } from "@/features/contabilidad/horas-extra";
+import { redirect } from "next/navigation";
 
 export default function PdfHorasExtraPage() {
-  return (
-    <Card title="Planillas PDF (PGFI-001-04)">
-      <PdfPlantillasContainer />
-    </Card>
-  );
+  redirect("/dashboard/contabilidad/horas-extra/pdf/generar");
 }

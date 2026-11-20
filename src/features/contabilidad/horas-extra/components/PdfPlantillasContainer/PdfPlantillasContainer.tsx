@@ -200,12 +200,15 @@ function fmtDate(iso: string | null | undefined) {
   return formatDateOnly(iso) || "—";
 }
 
-export default function PdfPlantillasContainer() {
+export default function PdfPlantillasContainer({
+  view,
+}: {
+  view: "generar" | "imprimir";
+}) {
   const { user } = useAuth();
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const canDeletePdf = canReviewOvertime(user?.role);
   const now = new Date();
-  const [tab, setTab] = useState<"generar" | "imprimir">("generar");
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [dateFrom, setDateFrom] = useState("");
@@ -437,31 +440,10 @@ export default function PdfPlantillasContainer() {
         }}
       />
 
-      <div className={local.tabs} role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "generar"}
-          className={tab === "generar" ? local.tabActive : local.tab}
-          onClick={() => setTab("generar")}
-        >
-          Generar PDFs
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "imprimir"}
-          className={tab === "imprimir" ? local.tabActive : local.tab}
-          onClick={() => setTab("imprimir")}
-        >
-          Imprimir PDFs
-        </button>
-      </div>
-
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}
 
-      {tab === "generar" && (
+      {view === "generar" && (
       <div className={local.filtersPanel}>
         <p className={styles.hint}>
           Busque al trabajador por cédula o nombre y selecciónelo. El PDF incluye sus registros
@@ -530,7 +512,7 @@ export default function PdfPlantillasContainer() {
       </div>
       )}
 
-      {tab === "generar" && (
+      {view === "generar" && (
       <section className={local.section}>
         <h3 className={local.sectionTitle}>
           Registros a incluir
@@ -581,7 +563,7 @@ export default function PdfPlantillasContainer() {
       </section>
       )}
 
-      {tab === "imprimir" && (
+      {view === "imprimir" && (
       <section className={local.section}>
         <div className={local.historyHeader}>
           <h3 className={local.sectionTitle}>Planillas PDF generadas</h3>

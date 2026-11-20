@@ -10,7 +10,8 @@ const ANALYST_HREFS = new Set([
   "/dashboard/contabilidad/horas-extra/digitar",
   "/dashboard/contabilidad/horas-extra/mis-registros",
   "/dashboard/contabilidad/horas-extra/grupo",
-  "/dashboard/contabilidad/horas-extra/pdf",
+  "/dashboard/contabilidad/horas-extra/pdf/generar",
+  "/dashboard/contabilidad/horas-extra/pdf/imprimir",
 ]);
 
 const LINKS = [
@@ -39,7 +40,8 @@ const LINKS = [
     reviewOnly: true,
   },
   { href: "/dashboard/contabilidad/horas-extra/estadisticas", label: "Estadísticas" },
-  { href: "/dashboard/contabilidad/horas-extra/pdf", label: "PDF" },
+  { href: "/dashboard/contabilidad/horas-extra/pdf/generar", label: "Generar PDFs" },
+  { href: "/dashboard/contabilidad/horas-extra/pdf/imprimir", label: "Imprimir PDFs" },
   {
     href: "/dashboard/contabilidad/horas-extra/parametros",
     label: "Parámetros",

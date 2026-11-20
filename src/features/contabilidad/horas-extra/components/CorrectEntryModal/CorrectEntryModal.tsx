@@ -17,6 +17,7 @@ import {
 } from "../../lib/overtimeCalculator";
 import { isSundayOrHoliday } from "../../lib/colombiaHolidays";
 import { toDateInputValue } from "../../lib/dateFormat";
+import HalfHourSelect, { selectClock } from "../DigitarContainer/HalfHourSelect";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { canReviewOvertime } from "@/features/dashboard/constants/nav";
 import styles from "./CorrectEntryModal.module.scss";
@@ -81,8 +82,8 @@ function toForm(entry: OvertimeEntryRow): FormState {
   return {
     documentNumber: entry.employeeDocumentNumber ?? "",
     workDate: toDateInputValue(entry.workDate),
-    startTime: entry.startTime ?? "",
-    endTime: entry.endTime ?? "",
+    startTime: selectClock(entry.startTime ?? ""),
+    endTime: selectClock(entry.endTime ?? ""),
     hoursRd: String(entry.hoursRd ?? 0),
     hoursRn: String(entry.hoursRn ?? 0),
     hoursTsd: String(entry.hoursTsd ?? 0),
@@ -274,21 +275,21 @@ export default function CorrectEntryModal({
                     />
                   </div>
                   <div className={styles.field}>
-                    <label htmlFor="corr-startTime">Hora inicio (militar)</label>
-                    <input
+                    <label htmlFor="corr-startTime">Hora inicio</label>
+                    <HalfHourSelect
                       id="corr-startTime"
+                      className={styles.timeSelect}
                       value={form.startTime}
-                      placeholder="0630"
-                      onChange={(e) => update("startTime", e.target.value)}
+                      onChange={(value) => update("startTime", value)}
                     />
                   </div>
                   <div className={styles.field}>
-                    <label htmlFor="corr-endTime">Hora fin (militar)</label>
-                    <input
+                    <label htmlFor="corr-endTime">Hora fin</label>
+                    <HalfHourSelect
                       id="corr-endTime"
+                      className={styles.timeSelect}
                       value={form.endTime}
-                      placeholder="1430"
-                      onChange={(e) => update("endTime", e.target.value)}
+                      onChange={(value) => update("endTime", value)}
                     />
                   </div>
                 </div>

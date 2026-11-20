@@ -45,7 +45,7 @@ function applyClickable(cell: XLSX.CellObject, links: string[]) {
   const label = urls.length === 1 ? "Clic para abrir" : `Clic para abrir (${urls.length} enlaces)`;
   cell.f = `HYPERLINK("${excelFormulaString(urls[0])}","${excelFormulaString(label)}")`;
   cell.v = label;
-  cell.t = "str";
+  cell.t = "s";
   cell.l = { Target: urls[0], Tooltip: "Abrir enlace" };
   delete cell.w;
   if (urls.length > 1) {

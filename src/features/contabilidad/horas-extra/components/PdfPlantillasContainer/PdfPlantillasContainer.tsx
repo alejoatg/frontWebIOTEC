@@ -12,6 +12,7 @@ import {
   fetchPdfPlantillaEligible,
   fetchPdfPlantillaEmployees,
   fetchPdfPlantillas,
+  generatePdfBatch,
   pdfPeriodZipUrl,
   pdfPlantillaPrintPageUrl,
   type OvertimeEntryRow,
@@ -158,8 +159,10 @@ function PdfWorkerSuggest({
                   <button
                     type="button"
                     className={index === highlight ? suggest.optionActive : suggest.option}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => pick(worker)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pick(worker);
+                    }}
                   >
                     <span className={suggest.doc}>{worker.documentNumber}</span>
                     <span className={suggest.name}>
@@ -208,6 +211,7 @@ export default function PdfPlantillasContainer({
   const { user } = useAuth();
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const canDeletePdf = canReviewOvertime(user?.role);
+  const isAnalyst = user?.role === "ANALISTA";
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -215,6 +219,7 @@ export default function PdfPlantillasContainer({
   const [dateTo, setDateTo] = useState("");
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<PdfPlantillaEmployee | null>(null);
+  const pickedLabelRef = useRef("");
   const [employees, setEmployees] = useState<PdfPlantillaEmployee[]>([]);
   const [employeeId, setEmployeeId] = useState("");
   const [eligible, setEligible] = useState<OvertimeEntryRow[]>([]);
@@ -230,6 +235,7 @@ export default function PdfPlantillasContainer({
   const [loadingEligible, setLoadingEligible] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingBatch, setGeneratingBatch] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -240,8 +246,9 @@ export default function PdfPlantillasContainer({
   const loadEmployees = useCallback(async () => {
     try {
       setEmployees(await fetchPdfPlantillaEmployees(year, month));
-    } catch {
+    } catch (e) {
       setEmployees([]);
+      setError(e instanceof Error ? e.message : "No se pudieron cargar los trabajadores");
     }
   }, [year, month]);
 
@@ -269,6 +276,7 @@ export default function PdfPlantillasContainer({
     setEmployeeId("");
     setEmployeeQuery("");
     setSelectedEmployee(null);
+    pickedLabelRef.current = "";
     setEligible([]);
     setEligibleMeta(null);
     setDateFrom("");
@@ -354,10 +362,6 @@ export default function PdfPlantillasContainer({
       setError("Selecciona un trabajador");
       return;
     }
-    if (eligible.length === 0) {
-      setError("No hay registros para incluir. Filtra primero.");
-      return;
-    }
     setGenerating(true);
     setError(null);
     setSuccess(null);
@@ -375,6 +379,7 @@ export default function PdfPlantillasContainer({
       setEmployeeId("");
       setEmployeeQuery("");
       setSelectedEmployee(null);
+      pickedLabelRef.current = "";
       await loadHistory();
       await loadEmployees();
       window.open(pdfPlantillaPrintPageUrl(created.id, true), "_blank", "noopener,noreferrer");
@@ -382,6 +387,26 @@ export default function PdfPlantillasContainer({
       setError(e instanceof Error ? e.message : "Error al generar PDF");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleGenerateBatch() {
+    setGeneratingBatch(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const result = await generatePdfBatch(year, month);
+      setSuccess(
+        result.created === 0
+          ? result.message
+          : `${result.message}. Correos enviados: ${result.emailed}.`,
+      );
+      await loadHistory();
+      await loadEmployees();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al generar los PDF");
+    } finally {
+      setGeneratingBatch(false);
     }
   }
 
@@ -443,7 +468,22 @@ export default function PdfPlantillasContainer({
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}
 
-      {view === "generar" && (
+      {view === "generar" && isAnalyst && (
+      <div className={local.filtersPanel}>
+        <p className={styles.hint}>
+          Genera un PDF por cada trabajador de los digitadores asignados, con sus registros
+          aprobados que aún no están en un PDF. Cada PDF se envía a quien lo genera, a quien
+          digitó y al analista del grupo. No se envía al brigadista.
+        </p>
+        <div className={local.filterActions}>
+          <Button type="button" onClick={handleGenerateBatch} disabled={generatingBatch}>
+            {generatingBatch ? "Generando PDFs…" : "Generar PDFs"}
+          </Button>
+        </div>
+      </div>
+      )}
+
+      {view === "generar" && !isAnalyst && (
       <div className={local.filtersPanel}>
         <p className={styles.hint}>
           Busque al trabajador por cédula o nombre y selecciónelo. El PDF incluye sus registros
@@ -458,6 +498,8 @@ export default function PdfPlantillasContainer({
               locked={selectedEmployee != null && employeeQuery === workerLabel(selectedEmployee)}
               onChange={(value) => {
                 setEmployeeQuery(value);
+                if (value === pickedLabelRef.current) return;
+                pickedLabelRef.current = "";
                 setSelectedEmployee(null);
                 setEmployeeId("");
                 setSuccess(null);
@@ -470,8 +512,10 @@ export default function PdfPlantillasContainer({
                     fullName: worker.fullName,
                     entryCount: worker.entryCount ?? 0,
                   };
+                const label = workerLabel(employee);
+                pickedLabelRef.current = label;
                 setSelectedEmployee(employee);
-                setEmployeeQuery(workerLabel(employee));
+                setEmployeeQuery(label);
                 setEmployeeId(employee.employeeId);
                 setSuccess(null);
               }}
@@ -504,7 +548,8 @@ export default function PdfPlantillasContainer({
             type="button"
             variant="primary"
             onClick={handleGenerate}
-            disabled={generating || !employeeId || eligible.length === 0}
+            disabled={generating || !employeeId}
+            title={employeeId ? undefined : "Seleccione un trabajador de la lista"}
           >
             {generating ? "Generando…" : "Generar e imprimir"}
           </Button>
@@ -512,7 +557,7 @@ export default function PdfPlantillasContainer({
       </div>
       )}
 
-      {view === "generar" && (
+      {view === "generar" && !isAnalyst && (
       <section className={local.section}>
         <h3 className={local.sectionTitle}>
           Registros a incluir

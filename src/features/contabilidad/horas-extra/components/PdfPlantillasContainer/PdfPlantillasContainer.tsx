@@ -180,19 +180,11 @@ function PdfWorkerSuggest({
   );
 }
 
-function plantillaOverlapsRange(
-  plantilla: PdfPlantilla,
-  year: number,
-  month: number,
-  filterFrom: string,
-  filterTo: string,
-) {
+function plantillaOverlapsRange(plantilla: PdfPlantilla, filterFrom: string, filterTo: string) {
   if (!filterFrom && !filterTo) return true;
-  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-  const start = (plantilla.dateFrom ?? monthStart).slice(0, 10);
-  const end = (plantilla.dateTo ?? monthEnd).slice(0, 10);
+  const start = plantilla.includedFrom?.slice(0, 10);
+  const end = plantilla.includedTo?.slice(0, 10);
+  if (!start || !end) return false;
   if (filterFrom && end < filterFrom) return false;
   if (filterTo && start > filterTo) return false;
   return true;
@@ -212,6 +204,8 @@ export default function PdfPlantillasContainer({
   const canSeeMoney = canSeeOvertimeMoney(user?.role);
   const canDeletePdf = canReviewOvertime(user?.role);
   const isAnalyst = user?.role === "ANALISTA";
+  const canGenerateAll =
+    isAnalyst || user?.role === "SUPERVISOR" || user?.role === "CORDINADOR";
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -252,15 +246,20 @@ export default function PdfPlantillasContainer({
     }
   }, [year, month]);
 
+  const historyRequestRef = useRef(0);
   const loadHistory = useCallback(async () => {
+    const requestId = ++historyRequestRef.current;
     setLoadingHistory(true);
+    setPlantillas([]);
     try {
-      setPlantillas(await fetchPdfPlantillas({ year, month }));
+      const rows = await fetchPdfPlantillas({ year, month });
+      if (requestId === historyRequestRef.current) setPlantillas(rows);
     } catch (e) {
+      if (requestId !== historyRequestRef.current) return;
       setError(e instanceof Error ? e.message : "Error al cargar historial");
       setPlantillas([]);
     } finally {
-      setLoadingHistory(false);
+      if (requestId === historyRequestRef.current) setLoadingHistory(false);
     }
   }, [year, month]);
 
@@ -312,9 +311,9 @@ export default function PdfPlantillasContainer({
         const docMatch = digits.length > 0 && plantilla.employeeDocumentNumber.includes(digits);
         if (!nameMatch && !docMatch) return false;
       }
-      return plantillaOverlapsRange(plantilla, year, month, historyDateFrom, historyDateTo);
+      return plantillaOverlapsRange(plantilla, historyDateFrom, historyDateTo);
     });
-  }, [plantillas, historyEmployeeId, historyQuery, historyDateFrom, historyDateTo, year, month]);
+  }, [plantillas, historyEmployeeId, historyQuery, historyDateFrom, historyDateTo]);
 
   useEffect(() => {
     if (!employeeId) {
@@ -468,12 +467,14 @@ export default function PdfPlantillasContainer({
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}
 
-      {view === "generar" && isAnalyst && (
+      {view === "generar" && canGenerateAll && (
       <div className={local.filtersPanel}>
         <p className={styles.hint}>
-          Genera un PDF por cada trabajador de los digitadores asignados, con sus registros
-          aprobados que aún no están en un PDF. Cada PDF se envía a quien lo genera, a quien
-          digitó y al analista del grupo. No se envía al brigadista.
+          {isAnalyst
+            ? "Genera un PDF por cada trabajador de los digitadores asignados"
+            : "Genera un PDF por cada trabajador al que usted digitó horas"}
+          , con sus registros aprobados que aún no están en un PDF. Cada PDF se envía a quien
+          lo genera, a quien digitó y al analista del grupo. No se envía al brigadista.
         </p>
         <div className={local.filterActions}>
           <Button type="button" onClick={handleGenerateBatch} disabled={generatingBatch}>
@@ -689,7 +690,7 @@ export default function PdfPlantillasContainer({
                   <th>Código</th>
                   <th>Trabajador</th>
                   <th>Cédula</th>
-                  <th>Fechas filtro</th>
+                  <th>Fechas incluidas</th>
                   <th>Registros</th>
                   <th>Generado</th>
                   <th>Por</th>
@@ -712,9 +713,9 @@ export default function PdfPlantillasContainer({
                       <td>{p.employeeFullName}</td>
                       <td>{p.employeeDocumentNumber}</td>
                       <td>
-                        {p.dateFrom || p.dateTo
-                          ? `${fmtDate(p.dateFrom)} → ${fmtDate(p.dateTo)}`
-                          : "Todo el periodo"}
+                        {p.includedFrom
+                          ? `${fmtDate(p.includedFrom)} → ${fmtDate(p.includedTo)}`
+                          : "—"}
                       </td>
                       <td>{p.entryCount}</td>
                       <td>{new Date(p.generatedAt).toLocaleString("es-CO")}</td>

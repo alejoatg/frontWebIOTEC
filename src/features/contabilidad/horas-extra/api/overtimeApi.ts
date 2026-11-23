@@ -967,6 +967,9 @@ export interface PdfPlantilla {
   plantillaCode: string;
   dateFrom: string | null;
   dateTo: string | null;
+  /** Primera y última fecha laboral que trae el PDF. */
+  includedFrom?: string | null;
+  includedTo?: string | null;
   entryCount: number;
   generatedAt: string;
   generatedBy: { id: string; name: string; email: string };

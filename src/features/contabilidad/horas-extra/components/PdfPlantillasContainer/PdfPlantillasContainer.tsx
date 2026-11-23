@@ -12,6 +12,7 @@ import {
   fetchPdfPlantillaEligible,
   fetchPdfPlantillaEmployees,
   fetchPdfPlantillas,
+  fetchPeriod,
   generatePdfBatch,
   pdfPeriodZipUrl,
   pdfPlantillaPrintPageUrl,
@@ -209,6 +210,7 @@ export default function PdfPlantillasContainer({
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [cutoffLabel, setCutoffLabel] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [employeeQuery, setEmployeeQuery] = useState("");
@@ -261,6 +263,20 @@ export default function PdfPlantillasContainer({
     } finally {
       if (requestId === historyRequestRef.current) setLoadingHistory(false);
     }
+  }, [year, month]);
+
+  useEffect(() => {
+    let active = true;
+    fetchPeriod(year, month)
+      .then((period) => {
+        if (active) setCutoffLabel(period?.pdfCutoffDate ? formatDateOnly(period.pdfCutoffDate) : null);
+      })
+      .catch(() => {
+        if (active) setCutoffLabel(null);
+      });
+    return () => {
+      active = false;
+    };
   }, [year, month]);
 
   useEffect(() => {
@@ -463,6 +479,12 @@ export default function PdfPlantillasContainer({
           setMonth(m);
         }}
       />
+
+      {view === "generar" && cutoffLabel && (
+        <p className={styles.hint}>
+          Se incluyen registros hasta el {cutoffLabel}. Fecha de corte definida por contabilidad.
+        </p>
+      )}
 
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
       {success && <div className={`${styles.alert} ${styles.alertSuccess}`}>{success}</div>}

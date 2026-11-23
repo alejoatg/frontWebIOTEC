@@ -43,6 +43,11 @@ const LINKS = [
   { href: "/dashboard/contabilidad/horas-extra/pdf/generar", label: "Generar PDFs" },
   { href: "/dashboard/contabilidad/horas-extra/pdf/imprimir", label: "Imprimir PDFs" },
   {
+    href: "/dashboard/contabilidad/horas-extra/pdf/firmas",
+    label: "Firmas PDF",
+    adminOnly: true,
+  },
+  {
     href: "/dashboard/contabilidad/horas-extra/parametros",
     label: "Parámetros",
     reviewOnly: true,
@@ -74,6 +79,7 @@ export default function HorasExtraNav() {
   const links = LINKS.filter((l) => {
     if (analyst) return ANALYST_HREFS.has(l.href);
     if ("analystOnly" in l && l.analystOnly) return false;
+    if ("adminOnly" in l && l.adminOnly) return user?.role === "ADMIN";
     return !("reviewOnly" in l && l.reviewOnly) || showReview;
   });
 

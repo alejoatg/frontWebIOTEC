@@ -9,12 +9,20 @@ export interface AnalystGroupModalProps {
   analyst: UserListItem;
   digitizers: UserListItem[];
   onClose: () => void;
+  title?: string;
+  hint?: string;
+  loadIds?: (userId: string) => Promise<string[]>;
+  saveIds?: (userId: string, ids: string[]) => Promise<void>;
 }
 
 export default function AnalystGroupModal({
   analyst,
   digitizers,
   onClose,
+  title,
+  hint,
+  loadIds = fetchAnalystDigitizerIds,
+  saveIds = saveAnalystDigitizers,
 }: AnalystGroupModalProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +33,7 @@ export default function AnalystGroupModal({
     let active = true;
     setLoading(true);
     setError(null);
-    fetchAnalystDigitizerIds(analyst.id)
+    loadIds(analyst.id)
       .then((ids) => {
         if (active) setSelected(ids);
       })
@@ -38,7 +46,7 @@ export default function AnalystGroupModal({
     return () => {
       active = false;
     };
-  }, [analyst.id]);
+  }, [analyst.id, loadIds]);
 
   function toggle(id: string) {
     setSelected((current) =>
@@ -50,7 +58,7 @@ export default function AnalystGroupModal({
     setSaving(true);
     setError(null);
     try {
-      await saveAnalystDigitizers(analyst.id, selected);
+      await saveIds(analyst.id, selected);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar");
@@ -69,11 +77,11 @@ export default function AnalystGroupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 id="analyst-group-title" className={styles.title}>
-          Digitadores de {analyst.name}
+          {title ?? `Digitadores de ${analyst.name}`}
         </h3>
         <p className={styles.hint}>
-          Este analista verá, descargará y podrá anular los registros pendientes
-          de los supervisores y coordinadores marcados.
+          {hint ??
+            "Este analista verá, descargará y podrá anular los registros pendientes de los supervisores y coordinadores marcados."}
         </p>
         {loading && <p className={styles.hint}>Cargando…</p>}
         {error && <p className={styles.error}>{error}</p>}

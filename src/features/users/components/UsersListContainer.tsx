@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { updateUserRole } from "../api";
+import {
+  fetchCoordinatorSupervisorIds,
+  saveCoordinatorSupervisors,
+  updateUserRole,
+} from "../api";
 import { useUsers } from "../hooks/useUsers";
 import type { UserListItem, UserRole } from "../types";
 import AnalystGroupModal from "./AnalystGroupModal/AnalystGroupModal";
@@ -44,7 +48,7 @@ export default function UsersListContainer() {
     try {
       await updateUserRole(user.id, role);
       await refetch();
-      if (role === "ANALISTA") setGroupUser({ ...user, role });
+      if (role === "ANALISTA" || role === "CORDINADOR") setGroupUser({ ...user, role });
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "No se pudo cambiar el rol");
     } finally {
@@ -82,10 +86,21 @@ export default function UsersListContainer() {
         onRoleChange={handleRoleChange}
         onEditGroup={setGroupUser}
       />
-      {groupUser && (
+      {groupUser?.role === "ANALISTA" && (
         <AnalystGroupModal
           analyst={groupUser}
           digitizers={digitizers}
+          onClose={() => setGroupUser(null)}
+        />
+      )}
+      {groupUser?.role === "CORDINADOR" && (
+        <AnalystGroupModal
+          analyst={groupUser}
+          digitizers={users.filter((user) => user.isActive && user.role === "SUPERVISOR")}
+          title={`Supervisores de ${groupUser.name}`}
+          hint="Este coordinador podrá firmar las planillas de los supervisores marcados. Un supervisor firma una sola vez; el coordinador firma las de su grupo."
+          loadIds={fetchCoordinatorSupervisorIds}
+          saveIds={saveCoordinatorSupervisors}
           onClose={() => setGroupUser(null)}
         />
       )}

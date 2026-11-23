@@ -18,6 +18,7 @@ import RecalculateModal from "../RecalculateModal/RecalculateModal";
 import EmployeeSuggestField from "../DigitarContainer/EmployeeSuggestField";
 import styles from "../../styles/shared.module.scss";
 import tabStyles from "./ParametrosContainer.module.scss";
+import CortePdfPanel from "./CortePdfPanel";
 
 type Tab = "catalog" | "assignments";
 
@@ -306,6 +307,7 @@ export default function ParametrosContainer() {
 
   return (
     <div>
+      <CortePdfPanel />
       <p className={tabStyles.intro}>
         Catálogo contable (cargo + área + proceso + sueldo) e importación desde{" "}
         <strong>INFORMACION_CONTABLE.xlsx</strong> (hojas CATALOGO y LISTADO TRABAJADORES).

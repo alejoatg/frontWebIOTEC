@@ -111,6 +111,13 @@ export async function fetchPeriod(year: number, month: number) {
   return request<OvertimePeriodDetail | null>(`/periods/${year}/${month}`);
 }
 
+export async function savePdfCutoff(year: number, month: number, cutoffDate: string | null) {
+  return request<OvertimePeriodDetail>(`/periods/${year}/${month}/pdf-cutoff`, {
+    method: "PUT",
+    body: JSON.stringify({ cutoffDate }),
+  });
+}
+
 export async function fetchBatches(year: number, month: number) {
   return request<OvertimeBatch[]>(`/batches?year=${year}&month=${month}`);
 }
@@ -539,6 +546,60 @@ export async function deletePdfPlantilla(id: string) {
   );
 }
 
+export interface PdfSignature {
+  id: string;
+  slot: "TECNICO" | "SUPERVISOR" | "CORDINADOR" | "CONTABILIDAD";
+  signerEmail: string;
+  signerName: string;
+  signerGoogleId: string;
+  signerRole: string;
+  signedAt: string;
+  authChannel: string;
+  googleAssertedAt: string | null;
+  googleAudience: string | null;
+  testMode: boolean;
+  imagePng?: string;
+}
+
+export interface PdfFirmaItem {
+  id: string;
+  plantillaCode: string;
+  employeeFullName: string;
+  employeeDocumentNumber: string;
+  entryCount: number;
+  generatedAt: string;
+  signatures: PdfSignature[];
+}
+
+export async function fetchPdfFirmas(params: {
+  year: number;
+  month: number;
+  search?: string;
+  tags?: string[];
+}) {
+  const q = new URLSearchParams({
+    year: String(params.year),
+    month: String(params.month),
+  });
+  if (params.search?.trim()) q.set("search", params.search.trim());
+  if (params.tags?.length) q.set("tags", params.tags.join(","));
+  return request<{ signingEnabled: boolean; items: PdfFirmaItem[] }>(`/pdf-firmas?${q}`);
+}
+
+export async function fetchPdfFirmaDetail(plantillaId: string) {
+  return request<{ signingEnabled: boolean } & PdfFirmaItem>(`/pdf-firmas/${plantillaId}`);
+}
+
+export async function signPdfFirma(
+  plantillaId: string,
+  body: { slot: PdfSignature["slot"]; imagePng: string; idToken?: string },
+) {
+  return request<PdfSignature>(`/pdf-firmas/${plantillaId}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchPdfPlantillaPrintData(id: string) {
   return request<TsPlantillaPrintData>(`/pdf-plantillas/${id}/print-data`);
 }
@@ -571,10 +632,12 @@ export interface OvertimePeriod {
   month: number;
   periodCode: string;
   status: "OPEN" | "CLOSED";
+  pdfCutoffDate?: string | null;
 }
 
 export interface OvertimePeriodDetail extends OvertimePeriod {
   entryCounts?: Record<string, number>;
+  pdfIncludedThrough?: string | null;
 }
 
 export interface ImportPreview {

@@ -27,12 +27,19 @@ export default function HorasExtraGate({ children }: { children: React.ReactNode
   const router = useRouter();
   const analyst = isOvertimeAnalyst(user?.role);
   const allowed = !analyst || analystMayOpen(pathname);
+  const firmas = pathname.startsWith("/dashboard/contabilidad/horas-extra/pdf/firmas");
+  const firmasBlocked = firmas && user?.role !== "ADMIN";
 
   useEffect(() => {
-    if (loading || !analyst || allowed) return;
+    if (loading) return;
+    if (firmasBlocked) {
+      router.replace("/dashboard/contabilidad/horas-extra");
+      return;
+    }
+    if (!analyst || allowed) return;
     router.replace(GROUP_HOME);
-  }, [loading, analyst, allowed, router]);
+  }, [loading, analyst, allowed, firmasBlocked, router]);
 
-  if (!loading && analyst && !allowed) return null;
+  if (!loading && (firmasBlocked || (analyst && !allowed))) return null;
   return <>{children}</>;
 }

@@ -114,9 +114,9 @@ export default function UsersTable({
                 </select>
               </td>
               <td className={styles.cellActions}>
-                {user.role === "ANALISTA" ? (
+                {user.role === "ANALISTA" || user.role === "CORDINADOR" ? (
                   <button type="button" className={styles.groupBtn} onClick={() => onEditGroup(user)}>
-                    Digitadores
+                    {user.role === "ANALISTA" ? "Digitadores" : "Supervisores"}
                   </button>
                 ) : (
                   "—"

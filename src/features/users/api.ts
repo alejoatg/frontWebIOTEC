@@ -33,6 +33,29 @@ export async function fetchAnalystDigitizerIds(userId: string): Promise<string[]
   return data.digitizerIds ?? [];
 }
 
+export async function fetchCoordinatorSupervisorIds(userId: string): Promise<string[]> {
+  const response = await fetch(`${API_URL}/api/overtime/coordinator/assignments/${userId}`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "No se pudo cargar el grupo"));
+  }
+  const data = (await response.json()) as { supervisorIds?: string[] };
+  return data.supervisorIds ?? [];
+}
+
+export async function saveCoordinatorSupervisors(userId: string, supervisorIds: string[]) {
+  const response = await fetch(`${API_URL}/api/overtime/coordinator/assignments/${userId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ supervisorIds }),
+  });
+  if (!response.ok) {
+    throw new Error(await readError(response, "No se pudo guardar el grupo"));
+  }
+}
+
 export async function saveAnalystDigitizers(userId: string, digitizerIds: string[]) {
   const response = await fetch(`${API_URL}/api/overtime/analyst/assignments/${userId}`, {
     method: "PUT",

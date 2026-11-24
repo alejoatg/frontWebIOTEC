@@ -19,9 +19,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!pendingLoginSuccess) return;
     let cancelled = false;
     (async () => {
-      await refetch();
+      const nextUser = await refetch();
       if (!cancelled) {
-        router.replace("/dashboard");
+        router.replace(
+          nextUser?.role === "EXTERNO" ? "/dashboard/flujos" : "/dashboard",
+        );
       }
     })();
     return () => {

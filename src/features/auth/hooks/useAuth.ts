@@ -8,7 +8,7 @@ export interface UseAuthResult {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<User | null>;
 }
 
 export function useAuth(): UseAuthResult {
@@ -20,6 +20,7 @@ export function useAuth(): UseAuthResult {
     const nextUser = await getCurrentUser();
     setUser(nextUser);
     setLoading(false);
+    return nextUser;
   }, []);
 
   useEffect(() => {

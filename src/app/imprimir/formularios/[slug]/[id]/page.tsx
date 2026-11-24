@@ -5,6 +5,11 @@ import { getFormReportBySlug } from "@/features/formularios/config/formReportsRe
 import { fetchFormReportById } from "@/features/formularios/api/formReportsApi";
 import FormSubmissionPrint from "@/features/formularios/components/shared/FormSubmissionPrint";
 import type { FormReportConfig } from "@/features/formularios/config/formReportTypes";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import {
+  isExternoRole,
+  isFormReportVisibleToRole,
+} from "@/features/formularios/lib/externoAccess";
 
 interface PageProps {
   params: Promise<{ slug: string; id: string }>;
@@ -18,17 +23,26 @@ export default function ImprimirFormularioDetallePage({
   const { slug, id } = use(params);
   const { print: printFlag } = use(searchParams);
   const autoPrint = printFlag === "1";
+  const { user } = useAuth();
 
   const config = getFormReportBySlug(slug) as FormReportConfig | undefined;
+  const externoBlocked =
+    isExternoRole(user?.role) && !isFormReportVisibleToRole(config, "EXTERNO");
 
   const [record, setRecord] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!config || !id) {
+    if (!config || !id || externoBlocked) {
       setLoading(false);
-      setError(config ? "Registro no encontrado" : "Formulario no configurado");
+      setError(
+        externoBlocked
+          ? "Formulario no autorizado"
+          : config
+            ? "Registro no encontrado"
+            : "Formulario no configurado",
+      );
       return;
     }
     setLoading(true);
@@ -41,7 +55,7 @@ export default function ImprimirFormularioDetallePage({
     } finally {
       setLoading(false);
     }
-  }, [config, id]);
+  }, [config, id, externoBlocked]);
 
   useEffect(() => {
     void load();
@@ -53,10 +67,10 @@ export default function ImprimirFormularioDetallePage({
     return () => clearTimeout(t);
   }, [autoPrint, loading, record]);
 
-  if (!config) {
+  if (!config || externoBlocked) {
     return (
       <div style={{ padding: "2rem", textAlign: "center", color: "#b91c1c" }}>
-        Formulario no configurado
+        {externoBlocked ? "Formulario no autorizado" : "Formulario no configurado"}
       </div>
     );
   }

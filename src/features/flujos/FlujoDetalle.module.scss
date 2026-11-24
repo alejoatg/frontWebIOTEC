@@ -1,0 +1,181 @@
+.container {
+  padding: 1.5rem;
+  max-width: 56rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    color: #3b82f6;
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.report {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.header {
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  margin: 0 0 0.75rem;
+  color: #374151;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.PROGRAMADO {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.EN_CAMPO {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.REPROGRAMADO {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.ATENDIDO {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ANULADO {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f9fafb;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin: 0 0 0.5rem;
+}
+
+.fieldList {
+  margin: 0;
+}
+
+.fieldRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+
+  span {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  strong {
+    margin: 0;
+    font-weight: 500;
+    color: #111827;
+    text-align: right;
+    word-break: break-word;
+  }
+}
+
+.evidenceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.evidenceItem {
+  margin: 0;
+
+  figcaption {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+}
+
+.photoImg {
+  max-height: 10rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.signatureImg {
+  max-height: 6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.evidenceLink {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.mapWrap {
+  margin: 0.75rem 0 1rem;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.loading {
+  color: #6b7280;
+}

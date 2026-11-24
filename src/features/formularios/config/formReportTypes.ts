@@ -59,6 +59,11 @@ export interface FormReportConfig {
   /** Transforma detalle del API */
   mapDetailRecord?: (row: Record<string, unknown>) => Record<string, unknown>;
   buildQueryParams: (filter: Record<string, unknown>) => URLSearchParams;
+  /**
+   * Si está definido, el rol EXTERNO solo ve este reporte cuando su rol
+   * aparece aquí. El resto de roles de UTEN siguen viendo todos los reportes.
+   */
+  visibleToRoles?: string[];
 }
 
 export type FormReportListResponse = PaginatedResponse<Record<string, unknown>>;

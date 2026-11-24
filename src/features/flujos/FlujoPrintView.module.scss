@@ -1,0 +1,93 @@
+.sheet {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 16px 20px 28px;
+  background: #fff;
+  color: #111827;
+  font-size: 12px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.logo {
+  height: 42px;
+  width: auto;
+}
+
+.orgName {
+  margin: 0;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.subtitle {
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  color: #4b5563;
+}
+
+.section {
+  margin-bottom: 14px;
+  break-inside: avoid;
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  font-size: 13px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+}
+
+.fieldRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.fieldRow span {
+  color: #6b7280;
+}
+
+.fieldRow strong {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.photo {
+  max-height: 90px;
+  border: 1px solid #e5e7eb;
+}
+
+@media print {
+  .sheet {
+    max-width: none;
+    padding: 0;
+  }
+}

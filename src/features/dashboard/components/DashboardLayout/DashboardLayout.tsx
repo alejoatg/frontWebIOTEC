@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   PanelLeftClose,
@@ -17,6 +17,7 @@ import {
   IdCard,
   Timer,
   Zap,
+  ClipboardList,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getLogoutUrl } from "@/lib/auth";
@@ -24,6 +25,10 @@ import { APP_TITLE } from "@/lib/branding";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { EmployeeLinkBanner } from "@/features/auth/components/EmployeeLinkBanner";
 import { getNavItemsForRole } from "../../constants/nav";
+import {
+  isExternoDashboardPathAllowed,
+  isExternoRole,
+} from "@/features/formularios/lib/externoAccess";
 import styles from "./DashboardLayout.module.scss";
 
 const ICON_MAP = {
@@ -39,6 +44,7 @@ const ICON_MAP = {
   IdCard,
   Timer,
   Zap,
+  ClipboardList,
 } as const;
 
 export interface DashboardLayoutProps {
@@ -51,16 +57,29 @@ export default function DashboardLayout({
   title = APP_TITLE,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, refetch } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const needsEmployeeLink = user && !user.employeeLinked;
+  const isExterno = isExternoRole(user?.role);
+  const needsEmployeeLink = user && !user.employeeLinked && !isExterno;
   const navItems = getNavItemsForRole(user?.role);
+
+  useEffect(() => {
+    if (!isExterno || !pathname) return;
+    if (!isExternoDashboardPathAllowed(pathname)) {
+      router.replace("/dashboard/flujos");
+    }
+  }, [isExterno, pathname, router]);
 
   return (
     <div className={styles.wrapper}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/dashboard" className={styles.brandLink} aria-label="Inicio">
+          <Link
+            href={isExterno ? "/dashboard/flujos" : "/dashboard"}
+            className={styles.brandLink}
+            aria-label="Inicio"
+          >
             <BrandLogo width={32} className={styles.brandLogo} />
           </Link>
           <h1 className={styles.title}>{title}</h1>

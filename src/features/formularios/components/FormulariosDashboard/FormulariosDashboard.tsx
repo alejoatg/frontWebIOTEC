@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { AlertTriangle, Bike, FileText, Zap, Map } from "lucide-react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { FORM_REPORTS } from "../../config/formReportsRegistry";
 import { FORMULARIOS_CARDS } from "../../constants";
+import {
+  isExternoRole,
+  isFormReportVisibleToRole,
+} from "../../lib/externoAccess";
 import styles from "./FormulariosDashboard.module.scss";
 
 const ICON_MAP = {
@@ -14,17 +20,31 @@ const ICON_MAP = {
 } as const;
 
 export default function FormulariosDashboard() {
+  const { user } = useAuth();
+  const isExterno = isExternoRole(user?.role);
+  const cards = isExterno
+    ? FORMULARIOS_CARDS.filter((card) => {
+        const form = FORM_REPORTS.find((item) => item.id === card.id);
+        return isFormReportVisibleToRole(form, "EXTERNO");
+      })
+    : FORMULARIOS_CARDS;
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2 className={styles.title}>Formularios ODK</h2>
+        <h2 className={styles.title}>{isExterno ? "Formularios" : "Formularios ODK"}</h2>
         <p className={styles.subtitle}>
-          Consulta los registros de los formularios legacy de ODK Central
+          {isExterno
+            ? "Consulta los envíos de los formatos autorizados."
+            : "Consulta los registros de los formularios legacy de ODK Central"}
         </p>
       </div>
 
+      {cards.length === 0 ? (
+        <p className={styles.subtitle}>No hay formularios autorizados por ahora.</p>
+      ) : (
       <div className={styles.grid}>
-        {FORMULARIOS_CARDS.map((card) => {
+        {cards.map((card) => {
           const Icon = ICON_MAP[card.icon as keyof typeof ICON_MAP] ?? FileText;
           return (
             <Link
@@ -45,6 +65,7 @@ export default function FormulariosDashboard() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

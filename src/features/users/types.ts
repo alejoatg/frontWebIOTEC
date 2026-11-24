@@ -10,7 +10,8 @@ export type UserRole =
   | "HSE"
   | "TALENTO_HUMANO"
   | "CONTABILIDAD"
-  | "ANALISTA";
+  | "ANALISTA"
+  | "EXTERNO";
 
 /**
  * Usuario del listado (datos devueltos por GET /api/users).

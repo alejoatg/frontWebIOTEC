@@ -12,6 +12,7 @@ export const ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
   { value: "TECNICO", label: "Técnico" },
   { value: "LIDER_BRIGADA", label: "Líder de brigada" },
   { value: "HSE", label: "HSE" },
+  { value: "EXTERNO", label: "Externo" },
 ];
 
 export interface UsersTableProps {
@@ -32,6 +33,7 @@ const ROLE_LABELS: Record<string, string> = {
   COLABORADOR: "Colaborador",
   CONTABILIDAD: "Contabilidad",
   ANALISTA: "Analista",
+  EXTERNO: "Externo",
 };
 
 function formatDate(dateString: string | null): string {

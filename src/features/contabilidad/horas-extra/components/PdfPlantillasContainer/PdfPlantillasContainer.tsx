@@ -11,7 +11,6 @@ import {
   downloadAuthenticatedFile,
   fetchPdfPlantillaEligible,
   fetchPdfPlantillas,
-  fetchPlanillaFacets,
   fetchPeriod,
   generatePdfBatch,
   pdfPeriodZipUrl,
@@ -25,7 +24,7 @@ import styles from "../../styles/shared.module.scss";
 import suggest from "../DigitarContainer/EmployeeSuggestField.module.scss";
 import modal from "../VoidEntryModal/VoidEntryModal.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
-import { formatDateOnly } from "../../lib/dateFormat";
+import { formatDateOnly, toDateInputValue } from "../../lib/dateFormat";
 import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import { formatClockTime } from "../../lib/timeFormat";
 
@@ -211,12 +210,9 @@ export default function PdfPlantillasContainer({
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [cutoffLabel, setCutoffLabel] = useState<string | null>(null);
+  const [cutoffDate, setCutoffDate] = useState<string | null>(null);
+  const [cutoffKnown, setCutoffKnown] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [digitizers, setDigitizers] = useState<Array<{ id: string; name: string }>>([]);
-  const [submittedById, setSubmittedById] = useState("");
-  const [entryStatus, setEntryStatus] = useState("APPROVED");
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<{
     employeeId: string;
@@ -264,31 +260,33 @@ export default function PdfPlantillasContainer({
 
   useEffect(() => {
     let active = true;
+    setCutoffKnown(false);
+    setCutoffDate(null);
     fetchPeriod(year, month)
       .then((period) => {
-        if (active) setCutoffLabel(period?.pdfCutoffDate ? formatDateOnly(period.pdfCutoffDate) : null);
+        if (!active) return;
+        setCutoffDate(period?.pdfCutoffDate ? toDateInputValue(period.pdfCutoffDate) : null);
+        setCutoffKnown(true);
       })
       .catch(() => {
-        if (active) setCutoffLabel(null);
+        if (!active) return;
+        setCutoffDate(null);
+        setCutoffKnown(true);
       });
     return () => {
       active = false;
     };
   }, [year, month]);
 
-  useEffect(() => {
-    let active = true;
-    fetchPlanillaFacets(year, month)
-      .then((data) => {
-        if (active) setDigitizers(data.digitizers);
-      })
-      .catch(() => {
-        if (active) setDigitizers([]);
-      });
-    return () => {
-      active = false;
-    };
+  const monthEnd = useMemo(() => {
+    const last = new Date(Date.UTC(year, month, 0));
+    const y = last.getUTCFullYear();
+    const m = String(last.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(last.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }, [year, month]);
+  const fixedDateTo = cutoffDate || monthEnd;
+  const fixedDateLabel = formatDateOnly(`${fixedDateTo}T00:00:00.000Z`);
 
   useEffect(() => {
     loadHistory();
@@ -301,9 +299,6 @@ export default function PdfPlantillasContainer({
     setEligible([]);
     setEligibleMeta(null);
     setDateFrom("");
-    setDateTo("");
-    setSubmittedById("");
-    setEntryStatus("APPROVED");
     setHistoryQuery("");
     setHistoryEmployeeId("");
     setHistoryDateFrom("");
@@ -340,7 +335,7 @@ export default function PdfPlantillasContainer({
   }, [plantillas, historyEmployeeId, historyQuery, historyDateFrom, historyDateTo]);
 
   useEffect(() => {
-    if (!employeeId) {
+    if (!employeeId || !cutoffKnown) {
       setEligible([]);
       setEligibleMeta(null);
       return;
@@ -353,9 +348,7 @@ export default function PdfPlantillasContainer({
       month,
       employeeId,
       dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-      submittedById: submittedById || undefined,
-      status: entryStatus || undefined,
+      dateTo: fixedDateTo,
     })
       .then((data) => {
         if (cancelled) return;
@@ -365,11 +358,7 @@ export default function PdfPlantillasContainer({
           documentNumber: data.employee.documentNumber,
         });
         if (data.total === 0) {
-          setError(
-            entryStatus === "APPROVED"
-              ? "No hay registros aprobados sin planilla PDF para ese trabajador"
-              : "No hay registros en ese estado para ese trabajador",
-          );
+          setError("No hay registros aprobados sin planilla PDF para ese trabajador");
         }
       })
       .catch((e: unknown) => {
@@ -384,15 +373,11 @@ export default function PdfPlantillasContainer({
     return () => {
       cancelled = true;
     };
-  }, [employeeId, dateFrom, dateTo, submittedById, entryStatus, year, month]);
+  }, [employeeId, dateFrom, fixedDateTo, cutoffKnown, year, month]);
 
   async function handleGenerate() {
     if (!employeeId) {
       setError("Selecciona un trabajador");
-      return;
-    }
-    if (entryStatus !== "APPROVED") {
-      setError("El PDF solo incluye registros aprobados. Deje el estado en aprobados para generar.");
       return;
     }
     setGenerating(true);
@@ -404,8 +389,7 @@ export default function PdfPlantillasContainer({
         month,
         employeeId,
         dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        submittedById: submittedById || undefined,
+        dateTo: fixedDateTo,
       });
       setSuccess(`Planilla ${created.plantillaCode} generada (${created.entryCount} registros)`);
       setEligible([]);
@@ -495,10 +479,11 @@ export default function PdfPlantillasContainer({
         }}
       />
 
-      {view === "generar" && cutoffLabel && (
-        <p className={styles.hint}>
-          Se incluyen registros hasta el {cutoffLabel}. Fecha de corte definida por contabilidad.
-        </p>
+      {view === "generar" && cutoffKnown && cutoffDate && (
+        <div className={`${styles.alert} ${styles.alertInfo}`}>
+          Fecha de corte de generación de PDF por Contabilidad: {fixedDateLabel}. Registros
+          superiores a esta fecha aún no se pueden incluir en plantillas PDF.
+        </div>
       )}
 
       {error && <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>}
@@ -510,7 +495,8 @@ export default function PdfPlantillasContainer({
           {isAnalyst
             ? "Genera un PDF por cada trabajador de los digitadores asignados"
             : "Genera un PDF por cada trabajador al que usted digitó horas"}
-          , con sus registros aprobados que aún no están en un PDF. Cada PDF se envía a quien
+          , con sus registros aprobados que aún no están en un PDF.
+          Cada PDF se envía a quien
           lo genera, a quien digitó y al analista del grupo. No se envía al brigadista.
         </p>
         <div className={local.filterActions}>
@@ -525,7 +511,7 @@ export default function PdfPlantillasContainer({
       <div className={local.filtersPanel}>
         <p className={styles.hint}>
           Busque al trabajador por cédula o nombre y selecciónelo. El PDF incluye sus registros
-          aprobados que aún no están en una planilla, dentro de la fecha y de quien digitó.
+          aprobados que aún no están en una planilla, hasta el {fixedDateLabel}.
         </p>
         <div className={local.filtersGrid}>
           <div className={`${local.filterField} ${local.workerSearch}`}>
@@ -564,32 +550,7 @@ export default function PdfPlantillasContainer({
           </label>
           <label className={local.filterField}>
             <span>Fecha hasta</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
-          </label>
-          <label className={local.filterField}>
-            <span>Quien digitó</span>
-            <select value={submittedById} onChange={(e) => setSubmittedById(e.target.value)}>
-              <option value="">Todos</option>
-              {digitizers.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={local.filterField}>
-            <span>Estado</span>
-            <select value={entryStatus} onChange={(e) => setEntryStatus(e.target.value)}>
-              <option value="APPROVED">Aprobados sin PDF</option>
-              <option value="PENDING">Pendiente</option>
-              <option value="REJECTED">Rechazado</option>
-              <option value="VOIDED">Anulado</option>
-              <option value="SUPERSEDED">Corregido</option>
-            </select>
+            <input type="date" value={cutoffKnown ? fixedDateTo : ""} readOnly disabled />
           </label>
         </div>
         <div className={local.filterActions}>
@@ -597,14 +558,8 @@ export default function PdfPlantillasContainer({
             type="button"
             variant="primary"
             onClick={handleGenerate}
-            disabled={generating || !employeeId || entryStatus !== "APPROVED"}
-            title={
-              !employeeId
-                ? "Seleccione un trabajador de la lista"
-                : entryStatus !== "APPROVED"
-                  ? "El PDF solo incluye registros aprobados"
-                  : undefined
-            }
+            disabled={generating || !employeeId}
+            title={employeeId ? undefined : "Seleccione un trabajador de la lista"}
           >
             {generating ? "Generando…" : "Generar e imprimir"}
           </Button>
@@ -640,9 +595,7 @@ export default function PdfPlantillasContainer({
                     {loadingEligible
                       ? "Cargando registros…"
                       : employeeId
-                        ? entryStatus === "APPROVED"
-                          ? "Sin registros aprobados pendientes de PDF"
-                          : "Sin registros en ese estado"
+                        ? "Sin registros aprobados pendientes de PDF"
                         : "Busque y seleccione un trabajador"}
                   </td>
                 </tr>

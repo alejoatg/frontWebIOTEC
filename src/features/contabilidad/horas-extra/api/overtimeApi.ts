@@ -460,6 +460,8 @@ export async function fetchPdfPlantillaEligible(params: {
   employeeId: string;
   dateFrom?: string;
   dateTo?: string;
+  submittedById?: string;
+  status?: string;
 }) {
   const q = new URLSearchParams({
     year: String(params.year),
@@ -468,6 +470,8 @@ export async function fetchPdfPlantillaEligible(params: {
   });
   if (params.dateFrom) q.set("dateFrom", params.dateFrom);
   if (params.dateTo) q.set("dateTo", params.dateTo);
+  if (params.submittedById) q.set("submittedById", params.submittedById);
+  if (params.status) q.set("status", params.status);
   return request<PdfPlantillaEligible>(`/pdf-plantillas/eligible?${q}`);
 }
 
@@ -523,6 +527,7 @@ export async function createPdfPlantilla(body: {
   employeeId: string;
   dateFrom?: string;
   dateTo?: string;
+  submittedById?: string;
 }) {
   return request<PdfPlantilla>(`/pdf-plantillas`, {
     method: "POST",

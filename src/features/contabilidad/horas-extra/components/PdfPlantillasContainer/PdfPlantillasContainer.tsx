@@ -10,22 +10,23 @@ import {
   deletePdfPlantilla,
   downloadAuthenticatedFile,
   fetchPdfPlantillaEligible,
-  fetchPdfPlantillaEmployees,
   fetchPdfPlantillas,
+  fetchPlanillaFacets,
   fetchPeriod,
   generatePdfBatch,
   pdfPeriodZipUrl,
   pdfPlantillaPrintPageUrl,
   type OvertimeEntryRow,
   type PdfPlantilla,
-  type PdfPlantillaEmployee,
 } from "../../api/overtimeApi";
+import EmployeeSuggestField from "../DigitarContainer/EmployeeSuggestField";
 import PeriodSelector from "../PeriodSelector/PeriodSelector";
 import styles from "../../styles/shared.module.scss";
 import suggest from "../DigitarContainer/EmployeeSuggestField.module.scss";
 import modal from "../VoidEntryModal/VoidEntryModal.module.scss";
 import local from "./PdfPlantillasContainer.module.scss";
 import { formatDateOnly } from "../../lib/dateFormat";
+import { overtimeStatusLabel } from "../../lib/overtimeStatus";
 import { formatClockTime } from "../../lib/timeFormat";
 
 function fmtMoney(n: number | undefined) {
@@ -213,10 +214,15 @@ export default function PdfPlantillasContainer({
   const [cutoffLabel, setCutoffLabel] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [digitizers, setDigitizers] = useState<Array<{ id: string; name: string }>>([]);
+  const [submittedById, setSubmittedById] = useState("");
+  const [entryStatus, setEntryStatus] = useState("APPROVED");
   const [employeeQuery, setEmployeeQuery] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<PdfPlantillaEmployee | null>(null);
-  const pickedLabelRef = useRef("");
-  const [employees, setEmployees] = useState<PdfPlantillaEmployee[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<{
+    employeeId: string;
+    documentNumber: string;
+    fullName: string;
+  } | null>(null);
   const [employeeId, setEmployeeId] = useState("");
   const [eligible, setEligible] = useState<OvertimeEntryRow[]>([]);
   const [eligibleMeta, setEligibleMeta] = useState<{
@@ -238,15 +244,6 @@ export default function PdfPlantillasContainer({
   const [pdfToDelete, setPdfToDelete] = useState<PdfPlantilla | null>(null);
   const [deletingPdf, setDeletingPdf] = useState(false);
   const [deletePdfError, setDeletePdfError] = useState<string | null>(null);
-
-  const loadEmployees = useCallback(async () => {
-    try {
-      setEmployees(await fetchPdfPlantillaEmployees(year, month));
-    } catch (e) {
-      setEmployees([]);
-      setError(e instanceof Error ? e.message : "No se pudieron cargar los trabajadores");
-    }
-  }, [year, month]);
 
   const historyRequestRef = useRef(0);
   const loadHistory = useCallback(async () => {
@@ -280,8 +277,18 @@ export default function PdfPlantillasContainer({
   }, [year, month]);
 
   useEffect(() => {
-    loadEmployees();
-  }, [loadEmployees]);
+    let active = true;
+    fetchPlanillaFacets(year, month)
+      .then((data) => {
+        if (active) setDigitizers(data.digitizers);
+      })
+      .catch(() => {
+        if (active) setDigitizers([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [year, month]);
 
   useEffect(() => {
     loadHistory();
@@ -291,11 +298,12 @@ export default function PdfPlantillasContainer({
     setEmployeeId("");
     setEmployeeQuery("");
     setSelectedEmployee(null);
-    pickedLabelRef.current = "";
     setEligible([]);
     setEligibleMeta(null);
     setDateFrom("");
     setDateTo("");
+    setSubmittedById("");
+    setEntryStatus("APPROVED");
     setHistoryQuery("");
     setHistoryEmployeeId("");
     setHistoryDateFrom("");
@@ -346,6 +354,8 @@ export default function PdfPlantillasContainer({
       employeeId,
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
+      submittedById: submittedById || undefined,
+      status: entryStatus || undefined,
     })
       .then((data) => {
         if (cancelled) return;
@@ -355,7 +365,11 @@ export default function PdfPlantillasContainer({
           documentNumber: data.employee.documentNumber,
         });
         if (data.total === 0) {
-          setError("No hay registros aprobados sin planilla PDF para ese trabajador");
+          setError(
+            entryStatus === "APPROVED"
+              ? "No hay registros aprobados sin planilla PDF para ese trabajador"
+              : "No hay registros en ese estado para ese trabajador",
+          );
         }
       })
       .catch((e: unknown) => {
@@ -370,11 +384,15 @@ export default function PdfPlantillasContainer({
     return () => {
       cancelled = true;
     };
-  }, [employeeId, dateFrom, dateTo, year, month]);
+  }, [employeeId, dateFrom, dateTo, submittedById, entryStatus, year, month]);
 
   async function handleGenerate() {
     if (!employeeId) {
       setError("Selecciona un trabajador");
+      return;
+    }
+    if (entryStatus !== "APPROVED") {
+      setError("El PDF solo incluye registros aprobados. Deje el estado en aprobados para generar.");
       return;
     }
     setGenerating(true);
@@ -387,6 +405,7 @@ export default function PdfPlantillasContainer({
         employeeId,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
+        submittedById: submittedById || undefined,
       });
       setSuccess(`Planilla ${created.plantillaCode} generada (${created.entryCount} registros)`);
       setEligible([]);
@@ -394,9 +413,7 @@ export default function PdfPlantillasContainer({
       setEmployeeId("");
       setEmployeeQuery("");
       setSelectedEmployee(null);
-      pickedLabelRef.current = "";
       await loadHistory();
-      await loadEmployees();
       window.open(pdfPlantillaPrintPageUrl(created.id, true), "_blank", "noopener,noreferrer");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar PDF");
@@ -417,7 +434,6 @@ export default function PdfPlantillasContainer({
           : `${result.message}. Correos enviados: ${result.emailed}.`,
       );
       await loadHistory();
-      await loadEmployees();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar los PDF");
     } finally {
@@ -461,7 +477,6 @@ export default function PdfPlantillasContainer({
       setSuccess(`Planilla ${pdfToDelete.plantillaCode} eliminada. Sus registros quedaron libres.`);
       setPdfToDelete(null);
       await loadHistory();
-      await loadEmployees();
     } catch (e) {
       setDeletePdfError(e instanceof Error ? e.message : "No se pudo eliminar el PDF");
     } finally {
@@ -510,45 +525,35 @@ export default function PdfPlantillasContainer({
       <div className={local.filtersPanel}>
         <p className={styles.hint}>
           Busque al trabajador por cédula o nombre y selecciónelo. El PDF incluye sus registros
-          aprobados que aún no están en una planilla.
+          aprobados que aún no están en una planilla, dentro de la fecha y de quien digitó.
         </p>
         <div className={local.filtersGrid}>
-          <label className={`${local.filterField} ${local.workerSearch}`}>
+          <div className={`${local.filterField} ${local.workerSearch}`}>
             <span>Trabajador</span>
-            <PdfWorkerSuggest
-              workers={employees}
+            <EmployeeSuggestField
+              mode="name"
               value={employeeQuery}
-              locked={selectedEmployee != null && employeeQuery === workerLabel(selectedEmployee)}
+              placeholder="Cédula o nombre…"
               onChange={(value) => {
                 setEmployeeQuery(value);
-                if (value === pickedLabelRef.current) return;
-                pickedLabelRef.current = "";
                 setSelectedEmployee(null);
                 setEmployeeId("");
                 setSuccess(null);
               }}
-              onPick={(worker) => {
-                const employee =
-                  employees.find((item) => item.employeeId === worker.employeeId) ?? {
-                    employeeId: worker.employeeId,
-                    documentNumber: worker.documentNumber,
-                    fullName: worker.fullName,
-                    entryCount: worker.entryCount ?? 0,
-                  };
-                const label = workerLabel(employee);
-                pickedLabelRef.current = label;
+              onPick={(employee) => {
                 setSelectedEmployee(employee);
-                setEmployeeQuery(label);
+                setEmployeeQuery(`${employee.documentNumber} — ${employee.fullName}`);
                 setEmployeeId(employee.employeeId);
                 setSuccess(null);
               }}
+              onCommit={() => undefined}
             />
             {selectedEmployee ? (
               <span className={local.selectedHint}>
                 Seleccionado: {selectedEmployee.fullName} · {selectedEmployee.documentNumber}
               </span>
             ) : null}
-          </label>
+          </div>
           <label className={local.filterField}>
             <span>Fecha desde</span>
             <input
@@ -565,14 +570,41 @@ export default function PdfPlantillasContainer({
               onChange={(e) => setDateTo(e.target.value)}
             />
           </label>
+          <label className={local.filterField}>
+            <span>Quien digitó</span>
+            <select value={submittedById} onChange={(e) => setSubmittedById(e.target.value)}>
+              <option value="">Todos</option>
+              {digitizers.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={local.filterField}>
+            <span>Estado</span>
+            <select value={entryStatus} onChange={(e) => setEntryStatus(e.target.value)}>
+              <option value="APPROVED">Aprobados sin PDF</option>
+              <option value="PENDING">Pendiente</option>
+              <option value="REJECTED">Rechazado</option>
+              <option value="VOIDED">Anulado</option>
+              <option value="SUPERSEDED">Corregido</option>
+            </select>
+          </label>
         </div>
         <div className={local.filterActions}>
           <Button
             type="button"
             variant="primary"
             onClick={handleGenerate}
-            disabled={generating || !employeeId}
-            title={employeeId ? undefined : "Seleccione un trabajador de la lista"}
+            disabled={generating || !employeeId || entryStatus !== "APPROVED"}
+            title={
+              !employeeId
+                ? "Seleccione un trabajador de la lista"
+                : entryStatus !== "APPROVED"
+                  ? "El PDF solo incluye registros aprobados"
+                  : undefined
+            }
           >
             {generating ? "Generando…" : "Generar e imprimir"}
           </Button>
@@ -608,7 +640,9 @@ export default function PdfPlantillasContainer({
                     {loadingEligible
                       ? "Cargando registros…"
                       : employeeId
-                        ? "Sin registros aprobados pendientes de PDF"
+                        ? entryStatus === "APPROVED"
+                          ? "Sin registros aprobados pendientes de PDF"
+                          : "Sin registros en ese estado"
                         : "Busque y seleccione un trabajador"}
                   </td>
                 </tr>
@@ -621,7 +655,7 @@ export default function PdfPlantillasContainer({
                     <td>{formatClockTime(row.startTime) || "—"}</td>
                     <td>{formatClockTime(row.endTime) || "—"}</td>
                     {canSeeMoney && <td>{fmtMoney(row.amountTotal)}</td>}
-                    <td>{row.status}</td>
+                    <td>{overtimeStatusLabel(row.status)}</td>
                   </tr>
                 ))
               )}

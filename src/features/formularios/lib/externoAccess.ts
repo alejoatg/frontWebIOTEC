@@ -22,7 +22,10 @@ const EXTERNO_BLOCKED_SLUGS = new Set([
 
 /** Rutas del dashboard que un EXTERNO puede abrir. */
 export function isExternoDashboardPathAllowed(pathname: string): boolean {
-  if (pathname === "/dashboard/flujos" || pathname.startsWith("/dashboard/flujos/")) {
+  if (
+    pathname === "/dashboard/flujos/atencion" ||
+    pathname.startsWith("/dashboard/flujos/atencion/")
+  ) {
     return true;
   }
   if (pathname === "/dashboard/formularios") return false;

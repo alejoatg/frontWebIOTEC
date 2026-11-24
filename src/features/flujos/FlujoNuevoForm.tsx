@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { createFlujoProgramacion } from "./api";
+import { ATENCION_PATH } from "./constants";
 import { colombiaToday } from "./status";
 import styles from "./FlujoNuevoForm.module.scss";
 
@@ -81,7 +82,7 @@ export default function FlujoNuevoForm() {
         fecha: form.fecha,
         recepciona: opt(form.recepciona),
       });
-      router.replace(`/dashboard/flujos/${created.id}`);
+      router.replace(`${ATENCION_PATH}/${created.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
       setSaving(false);
@@ -90,7 +91,7 @@ export default function FlujoNuevoForm() {
 
   return (
     <div className={styles.container}>
-      <Link href="/dashboard/flujos" className={styles.backLink}>
+      <Link href={ATENCION_PATH} className={styles.backLink}>
         <ArrowLeft size={18} />
         Volver al listado
       </Link>
@@ -142,7 +143,7 @@ export default function FlujoNuevoForm() {
           />
         </div>
         <div className={styles.actions}>
-          <Button type="button" variant="outline" onClick={() => router.push("/dashboard/flujos")}>
+          <Button type="button" variant="outline" onClick={() => router.push(ATENCION_PATH)}>
             Cancelar
           </Button>
           <Button type="submit" disabled={saving}>

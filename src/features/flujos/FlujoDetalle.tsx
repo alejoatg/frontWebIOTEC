@@ -97,7 +97,7 @@ export default function FlujoDetalle({ id }: { id: string }) {
     return (
       <div>
         <p className={styles.error}>{error || "Registro no encontrado"}</p>
-        <Link href="/dashboard/flujos" className={styles.backLink}>
+        <Link href="/dashboard/flujos/atencion" className={styles.backLink}>
           Volver al listado
         </Link>
       </div>
@@ -111,7 +111,7 @@ export default function FlujoDetalle({ id }: { id: string }) {
 
   return (
     <div className={styles.container}>
-      <Link href="/dashboard/flujos" className={styles.backLink}>
+      <Link href="/dashboard/flujos/atencion" className={styles.backLink}>
         <ArrowLeft size={20} />
         Volver al listado
       </Link>

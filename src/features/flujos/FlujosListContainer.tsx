@@ -3,16 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileSpreadsheet, Plus } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, Plus } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { downloadFlujosExcel, fetchFlujos } from "./api";
+import { ATENCION_PATH } from "./constants";
 import { currentMonthRange, FLUJO_STATUS_LABEL, FLUJO_STATUS_OPTIONS } from "./status";
 import type { FlujoListFilter, FlujoListResponse } from "./types";
 import styles from "./FlujosListContainer.module.scss";
 
 export default function FlujosListContainer() {
   const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const month = currentMonthRange();
   const [fechaDesde, setFechaDesde] = useState(month.fechaDesde);
   const [fechaHasta, setFechaHasta] = useState(month.fechaHasta);
@@ -70,12 +74,18 @@ export default function FlujosListContainer() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h2 className={styles.title}>Flujos · Atención de abejas</h2>
+          {isAdmin ? (
+            <Link href="/dashboard/flujos" className={styles.backLink}>
+              <ArrowLeft size={18} />
+              Volver a Flujos
+            </Link>
+          ) : null}
+          <h2 className={styles.title}>Atención de abejas</h2>
           <p className={styles.subtitle}>
             Programación web, visitas de campo y radicado consecutivo ATN.
           </p>
         </div>
-        <Button onClick={() => router.push("/dashboard/flujos/nuevo")}>
+        <Button onClick={() => router.push(`${ATENCION_PATH}/nuevo`)}>
           <Plus size={18} />
           Nueva programación
         </Button>
@@ -164,7 +174,7 @@ export default function FlujosListContainer() {
               {data.data.map((row) => (
                 <tr key={row.id} className={styles.row}>
                   <td>
-                    <Link href={`/dashboard/flujos/${row.id}`} className={styles.link}>
+                    <Link href={`${ATENCION_PATH}/${row.id}`} className={styles.link}>
                       Ver
                     </Link>
                   </td>

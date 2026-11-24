@@ -5,7 +5,13 @@ export const DASHBOARD_NAV_ITEMS = [
     path: "/dashboard/flujos",
     label: "Flujos",
     icon: "ClipboardList",
-    roles: ["ADMIN", "CORDINADOR", "EXTERNO"],
+    roles: ["ADMIN"],
+  },
+  {
+    path: "/dashboard/flujos/atencion",
+    label: "Atención",
+    icon: "ClipboardList",
+    roles: ["EXTERNO"],
   },
   {
     path: "/dashboard/motorcycles",
@@ -55,7 +61,7 @@ export type DashboardNavItem = (typeof DASHBOARD_NAV_ITEMS)[number];
 
 export function getNavItemsForRole(role: string | undefined) {
   if (role === "EXTERNO") {
-    return DASHBOARD_NAV_ITEMS.filter((item) => item.path === "/dashboard/flujos");
+    return DASHBOARD_NAV_ITEMS.filter((item) => item.path === "/dashboard/flujos/atencion");
   }
   if (!role) return [...DASHBOARD_NAV_ITEMS];
   return DASHBOARD_NAV_ITEMS.filter(

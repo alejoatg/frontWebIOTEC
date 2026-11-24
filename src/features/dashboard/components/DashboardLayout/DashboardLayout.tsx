@@ -67,7 +67,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isExterno || !pathname) return;
     if (!isExternoDashboardPathAllowed(pathname)) {
-      router.replace("/dashboard/flujos");
+      router.replace("/dashboard/flujos/atencion");
     }
   }, [isExterno, pathname, router]);
 
@@ -76,7 +76,7 @@ export default function DashboardLayout({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <Link
-            href={isExterno ? "/dashboard/flujos" : "/dashboard"}
+            href={isExterno ? "/dashboard/flujos/atencion" : "/dashboard"}
             className={styles.brandLink}
             aria-label="Inicio"
           >

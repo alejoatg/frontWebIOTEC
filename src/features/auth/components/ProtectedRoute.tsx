@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       const nextUser = await refetch();
       if (!cancelled) {
         router.replace(
-          nextUser?.role === "EXTERNO" ? "/dashboard/flujos" : "/dashboard",
+          nextUser?.role === "EXTERNO" ? "/dashboard/flujos/atencion" : "/dashboard",
         );
       }
     })();

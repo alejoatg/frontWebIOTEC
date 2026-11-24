@@ -42,7 +42,19 @@ function porcentaje(hechos: number, total: number): number {
   return Math.round((hechos / total) * 100);
 }
 
-function Progreso({ hechos, total, etiqueta }: { hechos: number; total: number; etiqueta: string }) {
+function Progreso({
+  hechos,
+  total,
+  etiqueta,
+  ordenPublico,
+  sinOrdenPublico,
+}: {
+  hechos: number;
+  total: number;
+  etiqueta: string;
+  ordenPublico: number;
+  sinOrdenPublico: number;
+}) {
   const pct = porcentaje(hechos, total);
   return (
     <div className={styles.progress}>
@@ -52,6 +64,14 @@ function Progreso({ hechos, total, etiqueta }: { hechos: number; total: number; 
         </strong>
         <span>{etiqueta}</span>
         <b>{pct}%</b>
+      </div>
+      <div className={styles.progressSplit}>
+        <span>
+          Orden público <b>{ordenPublico}</b>
+        </span>
+        <span>
+          Sin orden público <b>{sinOrdenPublico}</b>
+        </span>
       </div>
       <div className={styles.progressTrack} aria-hidden>
         <div className={styles.progressBar} style={{ width: `${pct}%` }} />
@@ -379,6 +399,7 @@ export default function ExclusionesContainer() {
   const totalOp = casos.filter((item) => item.ordenPublico).length;
   const hechosOp = casos.filter((item) => item.ordenPublico && agrupados.has(item.caso)).length;
   const totalCasos = casos.length;
+  const totalSinOp = totalCasos - totalOp;
   const hechosCasos = procesados.length;
   const contratista = preview?.contratistas.find((item) => item.nombre === responsable);
   const repetidos = useMemo(() => {
@@ -397,14 +418,14 @@ export default function ExclusionesContainer() {
             n: 2 as const,
             title: "Orden público",
             detail: preview
-              ? `${hechosOp} de ${totalOp} · ${porcentaje(hechosOp, totalOp)}%`
+              ? `${hechosOp} de ${totalOp} · ${porcentaje(hechosOp, totalOp)}% · OP ${totalOp} · sin OP ${totalSinOp}`
               : "Agrupar circuitos",
           },
           {
             n: 3 as const,
             title: "Individuales y cierre",
             detail: preview
-              ? `${hechosCasos} de ${totalCasos} · ${porcentaje(hechosCasos, totalCasos)}%`
+              ? `${hechosCasos} de ${totalCasos} · ${porcentaje(hechosCasos, totalCasos)}% · OP ${totalOp} · sin OP ${totalSinOp}`
               : "Resto y consolidado",
           },
         ].map((item) => {
@@ -563,7 +584,13 @@ export default function ExclusionesContainer() {
 
       {step === 2 && cargaLista ? (
         <>
-          <Progreso hechos={hechosOp} total={totalOp} etiqueta="casos de orden público agrupados" />
+          <Progreso
+            hechos={hechosOp}
+            total={totalOp}
+            etiqueta="casos de orden público agrupados"
+            ordenPublico={totalOp}
+            sinOrdenPublico={totalSinOp}
+          />
           <p className={styles.hint}>
             {pendientesOp.length} casos de orden público sin agrupar. Elija municipios y circuitos. Si una nota asocia
             otro caso, entra en el mismo Excel.
@@ -734,7 +761,13 @@ export default function ExclusionesContainer() {
 
       {step === 3 && cargaLista ? (
         <>
-          <Progreso hechos={hechosCasos} total={totalCasos} etiqueta="casos del contratista ya generados" />
+          <Progreso
+            hechos={hechosCasos}
+            total={totalCasos}
+            etiqueta="casos del contratista ya generados"
+            ordenPublico={totalOp}
+            sinOrdenPublico={totalSinOp}
+          />
           <p className={styles.hint}>
             {restantes.length} casos siguen pendientes, incluidos los de orden público que no se agruparon. Cada
             continuación sale en un Excel. Al final, el consolidado marca Entregado a Mto = 1 solo en los casos ya generados.

@@ -315,6 +315,19 @@
   font-size: 0.85rem;
 }
 
+.progressSplit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  font-size: 0.85rem;
+  color: #115e59;
+}
+
+.progressSplit b {
+  color: #134e4a;
+  font-variant-numeric: tabular-nums;
+}
+
 .progressHead b {
   margin-left: auto;
   font-size: 1.15rem;

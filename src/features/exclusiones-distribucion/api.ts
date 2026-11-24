@@ -100,6 +100,7 @@ export async function downloadOrdenPublico(
     circuitos: string[];
     descripcion: string;
     excludeCaseIds: string[];
+    caseIds?: string[];
     soportes: File[];
   },
 ): Promise<string[]> {
@@ -110,6 +111,7 @@ export async function downloadOrdenPublico(
     circuitos: JSON.stringify(payload.circuitos),
     descripcion: payload.descripcion,
     excludeCaseIds: JSON.stringify(payload.excludeCaseIds),
+    ...(payload.caseIds?.length ? { caseIds: JSON.stringify(payload.caseIds) } : {}),
   });
   for (const soporte of payload.soportes) fd.append("soportes", soporte);
   const res = await fetch(`${BASE}/orden-publico`, {

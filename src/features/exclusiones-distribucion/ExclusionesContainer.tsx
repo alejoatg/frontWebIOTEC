@@ -27,6 +27,31 @@ interface Agrupacion {
   circuitos: string[];
   descripcion: string;
   caseIds: string[];
+  excludeCaseIds: string[];
+  soportes: File[];
+}
+
+function porcentaje(hechos: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((hechos / total) * 100);
+}
+
+function Progreso({ hechos, total, etiqueta }: { hechos: number; total: number; etiqueta: string }) {
+  const pct = porcentaje(hechos, total);
+  return (
+    <div className={styles.progress}>
+      <div className={styles.progressHead}>
+        <strong>
+          {hechos} de {total}
+        </strong>
+        <span>{etiqueta}</span>
+        <b>{pct}%</b>
+      </div>
+      <div className={styles.progressTrack} aria-hidden>
+        <div className={styles.progressBar} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
 }
 
 function circuitKey(name: string): string {
@@ -86,6 +111,7 @@ export default function ExclusionesContainer() {
   const [coordinador, setCoordinador] = useState("");
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [descargandoId, setDescargandoId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [municipios, setMunicipios] = useState<string[]>([]);
@@ -98,6 +124,7 @@ export default function ExclusionesContainer() {
   const [agrupaciones, setAgrupaciones] = useState<Agrupacion[]>([]);
   const [individuales, setIndividuales] = useState<string[]>([]);
   const [individualTotal, setIndividualTotal] = useState(0);
+  const [lotesDescargados, setLotesDescargados] = useState<number[]>([]);
 
   const options = { strictAssociation, cleanNotes, template };
   const cargaLista = Boolean(preview && responsable !== null && coordinador);
@@ -175,6 +202,7 @@ export default function ExclusionesContainer() {
     setAgrupaciones([]);
     setIndividuales([]);
     setIndividualTotal(0);
+    setLotesDescargados([]);
     setMunicipios([]);
     setMunicipioQuery("");
     setCircuitos([]);
@@ -221,6 +249,8 @@ export default function ExclusionesContainer() {
     }
     setGenerating(true);
     setError(null);
+    const excludeCaseIds = [...agrupados];
+    const fotos = [...soportes];
     try {
       const caseIds = await downloadOrdenPublico(file, options, {
         responsable,
@@ -228,8 +258,8 @@ export default function ExclusionesContainer() {
         municipios,
         circuitos,
         descripcion: razon,
-        excludeCaseIds: [...agrupados],
-        soportes,
+        excludeCaseIds,
+        soportes: fotos,
       });
       setAgrupaciones((current) => [
         ...current,
@@ -239,6 +269,8 @@ export default function ExclusionesContainer() {
           circuitos: [...circuitos],
           descripcion: razon,
           caseIds: caseIds.length ? caseIds : casosSeleccion,
+          excludeCaseIds,
+          soportes: fotos,
         },
       ]);
       setCircuitos([]);
@@ -251,9 +283,32 @@ export default function ExclusionesContainer() {
     }
   }
 
+  async function descargarAgrupacion(item: Agrupacion) {
+    if (!file || responsable === null || !coordinador) return;
+    setDescargandoId(item.id);
+    setError(null);
+    try {
+      await downloadOrdenPublico(file, options, {
+        responsable,
+        coordinador,
+        municipios: item.municipios,
+        circuitos: item.circuitos,
+        descripcion: item.descripcion,
+        excludeCaseIds: item.excludeCaseIds,
+        caseIds: item.caseIds,
+        soportes: item.soportes,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al descargar el Excel");
+    } finally {
+      setDescargandoId(null);
+    }
+  }
+
   async function handleIndividuales(batchIndex: number) {
     if (!file || responsable === null || !coordinador) return;
     setGenerating(true);
+    setDescargandoId(`lote-${batchIndex}`);
     setError(null);
     try {
       const result = await downloadIndividuales(file, options, {
@@ -265,16 +320,21 @@ export default function ExclusionesContainer() {
       });
       setIndividuales((current) => [...new Set([...current, ...result.cases])]);
       setIndividualTotal(result.total);
+      setLotesDescargados((current) =>
+        current.includes(batchIndex) ? current : [...current, batchIndex].sort((a, b) => a - b),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar individuales");
     } finally {
       setGenerating(false);
+      setDescargandoId(null);
     }
   }
 
   async function handleConsolidado() {
     if (!file || responsable === null || !coordinador || procesados.length === 0) return;
     setGenerating(true);
+    setDescargandoId("consolidado");
     setError(null);
     try {
       await downloadConsolidado(file, options, {
@@ -286,9 +346,14 @@ export default function ExclusionesContainer() {
       setError(e instanceof Error ? e.message : "Error al generar el consolidado");
     } finally {
       setGenerating(false);
+      setDescargandoId(null);
     }
   }
 
+  const totalOp = casos.filter((item) => item.ordenPublico).length;
+  const hechosOp = casos.filter((item) => item.ordenPublico && agrupados.has(item.caso)).length;
+  const totalCasos = casos.length;
+  const hechosCasos = procesados.length;
   const contratista = preview?.contratistas.find((item) => item.nombre === responsable);
   const repetidos = useMemo(() => {
     if (!preview || responsable === null) return [];
@@ -305,12 +370,16 @@ export default function ExclusionesContainer() {
           {
             n: 2 as const,
             title: "Orden público",
-            detail: preview ? `${pendientesOp.length} casos sueltos` : "Agrupar circuitos",
+            detail: preview
+              ? `${hechosOp} de ${totalOp} · ${porcentaje(hechosOp, totalOp)}%`
+              : "Agrupar circuitos",
           },
           {
             n: 3 as const,
             title: "Individuales y cierre",
-            detail: preview ? `${restantes.length} casos` : "Resto y consolidado",
+            detail: preview
+              ? `${hechosCasos} de ${totalCasos} · ${porcentaje(hechosCasos, totalCasos)}%`
+              : "Resto y consolidado",
           },
         ].map((item) => {
           const locked = item.n > 1 && !cargaLista;
@@ -468,6 +537,7 @@ export default function ExclusionesContainer() {
 
       {step === 2 && cargaLista ? (
         <>
+          <Progreso hechos={hechosOp} total={totalOp} etiqueta="casos de orden público agrupados" />
           <p className={styles.hint}>
             {pendientesOp.length} casos de orden público sin agrupar. Elija municipios y circuitos. Si una nota asocia
             otro caso, entra en el mismo Excel.
@@ -562,7 +632,7 @@ export default function ExclusionesContainer() {
             />
           </div>
           <div>
-            <Button type="button" disabled={generating || !circuitos.length || !municipios.length} onClick={() => void crearAgrupacion()}>
+            <Button type="button" disabled={generating || descargandoId !== null || !circuitos.length || !municipios.length} onClick={() => void crearAgrupacion()}>
               {generating ? "Generando…" : "Crear agrupación y descargar"}
             </Button>
           </div>
@@ -574,6 +644,7 @@ export default function ExclusionesContainer() {
                     <th>Municipios</th>
                     <th>Circuitos</th>
                     <th>Casos</th>
+                    <th>Excel</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -583,6 +654,17 @@ export default function ExclusionesContainer() {
                       <td>{item.municipios.join(", ")}</td>
                       <td>{item.circuitos.join(", ")}</td>
                       <td>{item.caseIds.length}</td>
+                      <td>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={generating || descargandoId !== null}
+                          onClick={() => void descargarAgrupacion(item)}
+                        >
+                          {descargandoId === item.id ? "Descargando…" : "Descargar Excel"}
+                        </Button>
+                      </td>
                       <td>
                         <button
                           type="button"
@@ -608,6 +690,7 @@ export default function ExclusionesContainer() {
 
       {step === 3 && cargaLista ? (
         <>
+          <Progreso hechos={hechosCasos} total={totalCasos} etiqueta="casos del contratista ya generados" />
           <p className={styles.hint}>
             {restantes.length} casos siguen pendientes, incluidos los de orden público que no se agruparon. Cada
             continuación sale en un Excel. Al final, el consolidado marca Entregado a Mto = 1 solo en los casos ya generados.
@@ -646,9 +729,56 @@ export default function ExclusionesContainer() {
               </Button>
             )}
             <Button type="button" variant="outline" disabled={generating || procesados.length === 0} onClick={() => void handleConsolidado()}>
-              Descargar ConsolidadoUTEN
+              Descargar Excel del consolidado
             </Button>
           </div>
+          {lotesDescargados.length > 0 || procesados.length > 0 ? (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Documento</th>
+                    <th>Casos</th>
+                    <th>Excel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lotesDescargados.map((index) => (
+                    <tr key={index}>
+                      <td>Individuales, lote {index + 1}</td>
+                      <td>ZIP</td>
+                      <td>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={generating || descargandoId !== null}
+                          onClick={() => void handleIndividuales(index)}
+                        >
+                          {descargandoId === `lote-${index}` ? "Descargando…" : "Descargar ZIP"}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td>ConsolidadoUTEN</td>
+                    <td>{procesados.length}</td>
+                    <td>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={generating || descargandoId !== null || procesados.length === 0}
+                        onClick={() => void handleConsolidado()}
+                      >
+                        {descargandoId === "consolidado" ? "Descargando…" : "Descargar Excel"}
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>

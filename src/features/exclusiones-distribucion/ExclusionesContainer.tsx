@@ -21,6 +21,12 @@ const COORDINADORES = [
   { id: "julio-torres", nombre: "Julio Torres" },
 ] as const;
 
+interface LoteGenerado {
+  index: number;
+  individuales: number;
+  continuacion: number;
+}
+
 interface Agrupacion {
   id: string;
   municipios: string[];
@@ -124,7 +130,7 @@ export default function ExclusionesContainer() {
   const [agrupaciones, setAgrupaciones] = useState<Agrupacion[]>([]);
   const [individuales, setIndividuales] = useState<string[]>([]);
   const [individualTotal, setIndividualTotal] = useState(0);
-  const [lotesDescargados, setLotesDescargados] = useState<number[]>([]);
+  const [lotesDescargados, setLotesDescargados] = useState<LoteGenerado[]>([]);
 
   const options = { strictAssociation, cleanNotes, template };
   const cargaLista = Boolean(preview && responsable !== null && coordinador);
@@ -136,18 +142,29 @@ export default function ExclusionesContainer() {
   const agrupados = useMemo(() => new Set(agrupaciones.flatMap((item) => item.caseIds)), [agrupaciones]);
   const pendientesOp = casos.filter((item) => item.ordenPublico && !agrupados.has(item.caso));
   const restantes = casos.filter((item) => !agrupados.has(item.caso));
+  const circuitosUsados = useMemo(
+    () => new Set(agrupaciones.flatMap((item) => item.circuitos).map(circuitKey)),
+    [agrupaciones],
+  );
   const circuitosDisponibles = useMemo(() => {
     const names = new Set<string>();
     for (const item of pendientesOp) {
-      for (const name of item.circuitos) if (name.trim()) names.add(name.trim());
+      for (const name of item.circuitos) {
+        const trimmed = name.trim();
+        if (!trimmed || circuitosUsados.has(circuitKey(trimmed))) continue;
+        names.add(trimmed);
+      }
     }
     return [...names].sort((a, b) => a.localeCompare(b, "es"));
-  }, [pendientesOp]);
+  }, [pendientesOp, circuitosUsados]);
 
   const listaCircuitos = useMemo(() => {
+    const elegidos = new Set(circuitos.map(circuitKey));
     const query = circuitKey(circuitoQuery);
-    return circuitosDisponibles.filter((name) => !query || circuitKey(name).includes(query));
-  }, [circuitoQuery, circuitosDisponibles]);
+    return circuitosDisponibles.filter(
+      (name) => !elegidos.has(circuitKey(name)) && (!query || circuitKey(name).includes(query)),
+    );
+  }, [circuitoQuery, circuitos, circuitosDisponibles]);
 
   const municipiosDisponibles = useMemo(
     () =>
@@ -321,7 +338,14 @@ export default function ExclusionesContainer() {
       setIndividuales((current) => [...new Set([...current, ...result.cases])]);
       setIndividualTotal(result.total);
       setLotesDescargados((current) =>
-        current.includes(batchIndex) ? current : [...current, batchIndex].sort((a, b) => a - b),
+        [
+          ...current.filter((item) => item.index !== batchIndex),
+          {
+            index: batchIndex,
+            individuales: result.individuales,
+            continuacion: result.continuacion,
+          },
+        ].sort((a, b) => a.index - b.index),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar individuales");
@@ -350,6 +374,8 @@ export default function ExclusionesContainer() {
     }
   }
 
+  const resumenIndividuales = lotesDescargados.reduce((sum, lote) => sum + lote.individuales, 0);
+  const resumenContinuacion = lotesDescargados.reduce((sum, lote) => sum + lote.continuacion, 0);
   const totalOp = casos.filter((item) => item.ordenPublico).length;
   const hechosOp = casos.filter((item) => item.ordenPublico && agrupados.has(item.caso)).length;
   const totalCasos = casos.length;
@@ -569,6 +595,20 @@ export default function ExclusionesContainer() {
             </div>
             <div className={styles.field}>
               <label>Circuitos pendientes</label>
+              {circuitos.length > 0 ? (
+                <div className={styles.chips}>
+                  {circuitos.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      className={styles.chip}
+                      onClick={() => toggle(circuitos, name, setCircuitos)}
+                    >
+                      {name} ×
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <input
                 type="search"
                 value={circuitoQuery}
@@ -577,7 +617,11 @@ export default function ExclusionesContainer() {
               />
               <div className={styles.pickList}>
                 {listaCircuitos.length === 0 ? (
-                  <p className={styles.hint}>No hay circuitos con ese texto.</p>
+                  <p className={styles.hint}>
+                    {circuitoQuery
+                      ? "No hay circuitos con ese texto."
+                      : "No quedan circuitos pendientes."}
+                  </p>
                 ) : null}
                 {listaCircuitos.map((name) => (
                   <label key={name}>
@@ -732,6 +776,25 @@ export default function ExclusionesContainer() {
               Descargar Excel del consolidado
             </Button>
           </div>
+          {lotesDescargados.length > 0 ? (
+            <div className={styles.resumen}>
+              <p className={styles.resumenTitle}>Resumen de lo generado</p>
+              <div className={styles.stats}>
+                <div className={styles.stat}>
+                  <strong>{resumenIndividuales}</strong>
+                  Documentos individuales
+                </div>
+                <div className={styles.stat}>
+                  <strong>{resumenContinuacion}</strong>
+                  Asociados por continuación
+                </div>
+              </div>
+              <p className={styles.hint}>
+                Un documento individual es un Excel con un solo caso. Los asociados por continuación no tienen archivo
+                propio: salen en el Excel del caso que los menciona.
+              </p>
+            </div>
+          ) : null}
           {lotesDescargados.length > 0 || procesados.length > 0 ? (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -743,9 +806,9 @@ export default function ExclusionesContainer() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lotesDescargados.map((index) => (
-                    <tr key={index}>
-                      <td>Individuales, lote {index + 1}</td>
+                  {lotesDescargados.map((lote) => (
+                    <tr key={lote.index}>
+                      <td>Individuales, lote {lote.index + 1}</td>
                       <td>ZIP</td>
                       <td>
                         <Button
@@ -753,9 +816,9 @@ export default function ExclusionesContainer() {
                           size="sm"
                           variant="outline"
                           disabled={generating || descargandoId !== null}
-                          onClick={() => void handleIndividuales(index)}
+                          onClick={() => void handleIndividuales(lote.index)}
                         >
-                          {descargandoId === `lote-${index}` ? "Descargando…" : "Descargar ZIP"}
+                          {descargandoId === `lote-${lote.index}` ? "Descargando…" : "Descargar ZIP"}
                         </Button>
                       </td>
                     </tr>

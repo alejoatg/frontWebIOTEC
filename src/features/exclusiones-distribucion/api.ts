@@ -133,7 +133,7 @@ export async function downloadIndividuales(
     batchSize: number;
     batchIndex: number;
   },
-): Promise<{ cases: string[]; total: number }> {
+): Promise<{ cases: string[]; total: number; individuales: number; continuacion: number }> {
   const res = await fetch(`${BASE}/individuales`, {
     method: "POST",
     credentials: "include",
@@ -147,7 +147,12 @@ export async function downloadIndividuales(
   });
   if (!res.ok) throw new Error(await errorMessage(res));
   const cases = await saveBlob(res, `exclusiones-individuales-lote-${payload.batchIndex + 1}.zip`);
-  return { cases, total: Number(res.headers.get("X-Exclusion-Total") ?? cases.length) };
+  return {
+    cases,
+    total: Number(res.headers.get("X-Exclusion-Total") ?? cases.length),
+    individuales: Number(res.headers.get("X-Exclusion-Individual-Docs") ?? 0),
+    continuacion: Number(res.headers.get("X-Exclusion-Continuation-Cases") ?? 0),
+  };
 }
 
 export async function downloadConsolidado(

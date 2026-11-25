@@ -101,6 +101,16 @@ export default function TmrJornadaContexto({ row, rows, onOpenOrder }: Props) {
           onOpenOrder={onOpenOrder}
         />
       ))}
+      {visible.map((dia) => (
+        <TmrJornadaTimeline
+          key={`campo-${dia.key}`}
+          mode="campo"
+          ordenes={dia.ordenes}
+          currentId={row.id}
+          fullWidth
+          onOpenOrder={onOpenOrder}
+        />
+      ))}
     </>
   );
 }
@@ -171,6 +181,10 @@ function DayDetail({
                   job {orden.jobSerial || "—"}
                   {orden.caseSerial ? ` · caso ${orden.caseSerial}` : ""}
                   {orden.municipality ? ` · ${orden.municipality}` : ""}
+                </p>
+                <p className={styles.snip}>
+                  <strong>Actividad. </strong>
+                  {orden.workType || "—"}
                 </p>
                 <dl className={styles.times}>
                   <div>

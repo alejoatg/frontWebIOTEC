@@ -78,22 +78,39 @@ function segment(kind: TimelinePhase, start: number | null, end: number | null):
   return { kind, startMs: start, endMs: end };
 }
 
-function laneFromOrder(row: TmrRow, index: number): TimelineLane | null {
+export type TimelineMode = "completa" | "campo";
+
+function laneFromOrder(row: TmrRow, index: number, mode: TimelineMode): TimelineLane | null {
   const start = msOf(row.startTime);
   const assigned = msOf(row.assignedAt);
   const enRoute = msOf(row.enRouteAt);
   const site = msOf(row.arrivedSiteAt);
   const done = msOf(row.completedAt) ?? msOf(row.closedAt);
 
-  const segments = [
-    segment("alist", assigned ?? start, enRoute),
-    segment("desp", enRoute, site),
-    segment("ser", site, done),
-  ].filter((item): item is TimelineSegment => Boolean(item));
+  const segments =
+    mode === "campo"
+      ? [
+          segment("desp", enRoute, site),
+          segment("ser", site, done),
+        ].filter((item): item is TimelineSegment => Boolean(item))
+      : [
+          segment("alist", assigned ?? start, enRoute),
+          segment("desp", enRoute, site),
+          segment("ser", site, done),
+        ].filter((item): item is TimelineSegment => Boolean(item));
 
   if (!segments.length) {
-    const fallback = segment("tmr", start ?? enRoute ?? assigned, done ?? site);
-    if (fallback) segments.push(fallback);
+    if (mode === "campo" && enRoute) {
+      const end = done ?? site;
+      segments.push({
+        kind: "tmr",
+        startMs: enRoute,
+        endMs: end && end > enRoute ? end : enRoute + 5 * MIN_MS,
+      });
+    } else {
+      const fallback = segment("tmr", start ?? enRoute ?? assigned, done ?? site);
+      if (fallback) segments.push(fallback);
+    }
   }
   if (!segments.length) return null;
 
@@ -215,9 +232,12 @@ function ticksFor(spans: TimelineAxisSpan[]): TimelineTick[] {
   return ticks;
 }
 
-export function jornadaTimelineModel(ordenes: TmrRow[]): JornadaTimelineModel | null {
+export function jornadaTimelineModel(
+  ordenes: TmrRow[],
+  mode: TimelineMode = "completa",
+): JornadaTimelineModel | null {
   const lanes = ordenes
-    .map((row, index) => laneFromOrder(row, index))
+    .map((row, index) => laneFromOrder(row, index, mode))
     .filter((lane): lane is TimelineLane => Boolean(lane));
   if (!lanes.length) return null;
 

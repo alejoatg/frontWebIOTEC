@@ -2,16 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  Legend,
-  LinearScale,
-  Tooltip,
-} from "chart.js";
-import { Bar, Pie } from "react-chartjs-2";
 import { Button } from "@/components";
 import {
   downloadTmrExcel,
@@ -21,11 +11,12 @@ import {
   type TmrPreview,
   type TmrRow,
 } from "./api";
+import TmrEstadistica from "./TmrEstadistica";
 import TmrJornada from "./TmrJornada";
 import TmrReincidencias from "./TmrReincidencias";
 import TmrOrdenDetalle from "./TmrOrdenDetalle";
 import TmrReglasModal from "./TmrReglasModal";
-import { kpisByAmbito, type TmrKpis } from "./tmrKpis";
+import { orderTouchesDay } from "./jornada";
 import styles from "./TmrContainer.module.scss";
 
 const TmrMensual = dynamic(() => import("./TmrMensual"), {
@@ -38,9 +29,9 @@ const TmrMapa = dynamic(() => import("./TmrMapa"), {
   loading: () => <p className={styles.hint}>Preparando mapa…</p>,
 });
 
-ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
-
 const PAGE = 40;
+
+type TmrSection = "listado" | "estadistica" | "jornada" | "reincidencias" | "mensual" | "mapa";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -57,90 +48,6 @@ function hours(value: number | null): string {
   return value == null || !Number.isFinite(value) ? "—" : value.toFixed(2);
 }
 
-function pct(part: number, total: number): string {
-  if (!total) return "0 %";
-  return `${((part / total) * 100).toFixed(1)} %`;
-}
-
-const PIE_COLORS = ["#0f766e", "#b91c1c", "#d97706", "#2563eb", "#64748b", "#7c3aed"];
-
-function AmbitoKpis({ title, kpis }: { title: string; kpis: TmrKpis }) {
-  return (
-    <section className={styles.ambito}>
-      <h3>{title}</h3>
-      <div className={styles.stats}>
-        <div className={styles.stat}>
-          <strong>{kpis.uten}</strong>
-          Jobs UTEN
-        </div>
-        <div className={styles.stat}>
-          <strong>{pct(kpis.r8Frio, kpis.uten)}</strong>
-          R{"<"}8 H frío
-        </div>
-        <div className={styles.stat}>
-          <strong>{pct(kpis.r8Validado, kpis.uten)}</strong>
-          R{"<"}8 H validado
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.cumple}</strong>
-          Cumple
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.noCumple}</strong>
-          No cumple
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.cpl}</strong>
-          Logística especial
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.fhl}</strong>
-          Fuera de horario
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.sobreasignacion}</strong>
-          Sobreasignación
-        </div>
-        <div className={styles.stat}>
-          <strong>{kpis.manual}</strong>
-          Validación manual
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ExclusionPie({ kpis }: { kpis: TmrKpis }) {
-  return (
-    <Pie
-      data={{
-        labels: [
-          "Cumple",
-          "No cumple",
-          "Logística especial",
-          "Fuera de horario",
-          "Sobreasignación",
-          "Validación manual",
-        ],
-        datasets: [
-          {
-            data: [
-              kpis.cumple,
-              kpis.noCumple,
-              kpis.cpl,
-              kpis.fhl,
-              kpis.sobreasignacion,
-              kpis.manual,
-            ],
-            backgroundColor: PIE_COLORS,
-          },
-        ],
-      }}
-      options={{ plugins: { legend: { position: "bottom" } } }}
-    />
-  );
-}
-
 export default function TmrContainer() {
   const [preview, setPreview] = useState<TmrPreview | null>(null);
   const [rows, setRows] = useState<TmrRow[]>([]);
@@ -151,8 +58,9 @@ export default function TmrContainer() {
   const [exclusion, setExclusion] = useState("");
   const [municipio, setMunicipio] = useState("");
   const [crew, setCrew] = useState("");
+  const [fecha, setFecha] = useState("");
   const [page, setPage] = useState(0);
-  const [section, setSection] = useState<"listado" | "jornada" | "reincidencias" | "mensual" | "mapa">("listado");
+  const [section, setSection] = useState<TmrSection>("listado");
   const [mensualOn, setMensualOn] = useState(false);
   const [mapaOn, setMapaOn] = useState(false);
   const [mensualBusy, setMensualBusy] = useState(false);
@@ -177,15 +85,15 @@ export default function TmrContainer() {
       if (exclusion && row.exclusion !== exclusion) return false;
       if (municipio && row.municipality !== municipio) return false;
       if (crew && row.crew !== crew) return false;
+      if (fecha && !orderTouchesDay(row, fecha)) return false;
       if (!q) return true;
       return [row.caseSerial, row.jobSerial, row.crew, row.municipality, row.nucleo]
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
-  }, [rows, query, exclusion, municipio, crew]);
+  }, [rows, query, exclusion, municipio, crew, fecha]);
 
-  const kpisAmbito = useMemo(() => kpisByAmbito(rows), [rows]);
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const pageSafe = Math.min(page, pages - 1);
   const slice = filtered.slice(pageSafe * PAGE, pageSafe * PAGE + PAGE);
@@ -290,6 +198,13 @@ export default function TmrContainer() {
         </button>
         <button
           type="button"
+          className={section === "estadistica" ? styles.tabOn : styles.tab}
+          onClick={() => setSection("estadistica")}
+        >
+          Estadística
+        </button>
+        <button
+          type="button"
           className={section === "jornada" ? styles.tabOn : styles.tab}
           onClick={() => setSection("jornada")}
         >
@@ -324,61 +239,17 @@ export default function TmrContainer() {
         </p>
       ) : null}
 
+      {summary && section === "estadistica" ? (
+        <TmrEstadistica
+          rows={rows}
+          summary={summary}
+          editedCount={Object.keys(edited).length}
+          onOpenReglas={() => setReglasOpen(true)}
+        />
+      ) : null}
+
       {summary && section === "listado" ? (
         <>
-          <div className={styles.ambitoGrid}>
-            <AmbitoKpis title="Rural" kpis={kpisAmbito.rural} />
-            <AmbitoKpis title="Urbano" kpis={kpisAmbito.urbano} />
-            {kpisAmbito.otro.uten > 0 ? (
-              <AmbitoKpis title="Sin rural/urbano" kpis={kpisAmbito.otro} />
-            ) : null}
-          </div>
-          <p className={styles.ambitoNote}>
-            {summary.uten} jobs UTEN en total
-            {Object.keys(edited).length ? ` · ${Object.keys(edited).length} editadas en esta sesión` : ""}
-            . Rural y urbano van por separado según la ubicación de la orden.
-          </p>
-
-          <div className={styles.charts}>
-            <div className={styles.chart}>
-              <div className={styles.chartHead}>
-                <h3>Exclusión · Rural</h3>
-                <button type="button" className={styles.chartLink} onClick={() => setReglasOpen(true)}>
-                  Ver reglas
-                </button>
-              </div>
-              <ExclusionPie kpis={kpisAmbito.rural} />
-            </div>
-            <div className={styles.chart}>
-              <h3>Exclusión · Urbano</h3>
-              <ExclusionPie kpis={kpisAmbito.urbano} />
-            </div>
-            <div className={styles.chartWide}>
-              <h3>R{"<"}8 / R{">"}8 por ubicación</h3>
-              <Bar
-                data={{
-                  labels: summary.byUbicacion.map((item) => item.ubicacion),
-                  datasets: [
-                    {
-                      label: "R<8 H",
-                      data: summary.byUbicacion.map((item) => item.r8),
-                      backgroundColor: "#0f766e",
-                    },
-                    {
-                      label: "R>8 H",
-                      data: summary.byUbicacion.map((item) => item.rOver),
-                      backgroundColor: "#b91c1c",
-                    },
-                  ],
-                }}
-                options={{
-                  plugins: { legend: { position: "bottom" } },
-                  scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-                }}
-              />
-            </div>
-          </div>
-
           <div className={styles.filters}>
             <div className={styles.field}>
               <label>Buscar</label>
@@ -442,6 +313,17 @@ export default function TmrContainer() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className={styles.field}>
+              <label>Fecha</label>
+              <input
+                type="date"
+                value={fecha}
+                onChange={(e) => {
+                  setFecha(e.target.value);
+                  setPage(0);
+                }}
+              />
             </div>
           </div>
 

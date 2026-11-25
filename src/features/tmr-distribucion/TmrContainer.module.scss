@@ -67,6 +67,7 @@
 
 .field input[type="text"],
 .field input[type="search"],
+.field input[type="date"],
 .field select,
 .field textarea {
   width: 100%;
@@ -76,10 +77,15 @@
   font: inherit;
 }
 
-.ambitoGrid {
+.ambitoGrid,
+.ambitoGrid3 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
+}
+
+.ambitoGrid3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .ambito {
@@ -122,10 +128,16 @@
   color: #0f172a;
 }
 
-.charts {
+.charts,
+.chartsCompact {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.chartsCompact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
 }
 
 .chartWide {
@@ -135,6 +147,21 @@
   padding: 0.75rem;
   background: #fff;
   min-height: 16rem;
+}
+
+.chartsCompact .chartWide {
+  min-height: 0;
+  padding: 0.55rem 0.65rem 0.65rem;
+}
+
+.chartBox {
+  position: relative;
+  height: 10.5rem;
+}
+
+.chartBoxWide {
+  position: relative;
+  height: 12rem;
 }
 
 .chartWide h3 {
@@ -149,6 +176,17 @@
   padding: 0.75rem;
   background: #fff;
   min-height: 16rem;
+}
+
+.chartsCompact .chart {
+  min-height: 0;
+  padding: 0.55rem 0.65rem 0.7rem;
+}
+
+.chartsCompact .chart h3,
+.chartsCompact .chartHead h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
 }
 
 .chartHead {
@@ -188,7 +226,7 @@
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -279,9 +317,19 @@
   color: #475569;
 }
 
+@media (max-width: 1100px) {
+  .ambitoGrid3,
+  .chartsCompact,
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .ambitoGrid,
+  .ambitoGrid3,
   .charts,
+  .chartsCompact,
   .filters {
     grid-template-columns: 1fr;
   }

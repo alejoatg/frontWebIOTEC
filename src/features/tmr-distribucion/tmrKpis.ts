@@ -65,6 +65,7 @@ export function kpisByAmbito(rows: TmrRow[]) {
     else otro.push(row);
   }
   return {
+    general: kpisFromRows(rows),
     rural: kpisFromRows(rural),
     urbano: kpisFromRows(urbano),
     otro: kpisFromRows(otro),

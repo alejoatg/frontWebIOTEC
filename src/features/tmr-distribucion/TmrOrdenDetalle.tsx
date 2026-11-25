@@ -12,7 +12,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components";
 import { TMR_EXCLUSION_MANUAL, TMR_EXCLUSIONS, type TmrExclusion, type TmrRow } from "./api";
-import { formatClock, formatSpan, formatTs, possibleExclusionReason } from "./jornada";
+import {
+  formatClock,
+  formatDayLabel,
+  formatSpan,
+  formatTs,
+  possibleExclusionReason,
+  relatedDayKeys,
+} from "./jornada";
 import TmrJornadaContexto from "./TmrJornadaContexto";
 import styles from "./TmrOrdenDetalle.module.scss";
 
@@ -46,6 +53,7 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
     exclusion !== row.exclusion || observacion !== row.observacion || notaCeo !== row.notaCeo;
   const exclusionReason = possibleExclusionReason(row);
   const stillAuto = row.exclusion === row.exclusionAuto;
+  const fechasRelacionadas = relatedDayKeys(row);
 
   useEffect(() => {
     setExclusion(row.exclusion);
@@ -148,6 +156,14 @@ export default function TmrOrdenDetalle({ row, rows = [], onClose, onOpenRelated
               <div>
                 <dt>Día (Start)</dt>
                 <dd>{row.dia || "—"}</dd>
+              </div>
+              <div>
+                <dt>Fechas relacionadas</dt>
+                <dd>
+                  {fechasRelacionadas.length
+                    ? fechasRelacionadas.map((key) => formatDayLabel(key)).join(" · ")
+                    : "—"}
+                </dd>
               </div>
             </dl>
           </section>

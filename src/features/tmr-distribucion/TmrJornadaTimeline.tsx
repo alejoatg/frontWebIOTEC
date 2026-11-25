@@ -8,6 +8,7 @@ import {
   pctOnAxis,
   TIMELINE_PHASE_LABEL,
   type TimelineLane,
+  type TimelineMode,
   type TimelineOverlap,
 } from "./jornada-timeline";
 import { formatSpan, formatTs } from "./jornada";
@@ -17,17 +18,31 @@ interface Props {
   ordenes: TmrRow[];
   currentId?: string;
   fullWidth?: boolean;
+  mode?: TimelineMode;
+  title?: string;
+  hint?: string;
   onOpenOrder?: (id: string) => void;
 }
 
-export default function TmrJornadaTimeline({ ordenes, currentId, fullWidth, onOpenOrder }: Props) {
-  const model = useMemo(() => jornadaTimelineModel(ordenes), [ordenes]);
+export default function TmrJornadaTimeline({
+  ordenes,
+  currentId,
+  fullWidth,
+  mode = "completa",
+  title,
+  hint,
+  onOpenOrder,
+}: Props) {
+  const model = useMemo(() => jornadaTimelineModel(ordenes, mode), [ordenes, mode]);
   if (!model) return null;
   return (
     <TimelineChart
       model={model}
       currentId={currentId}
       fullWidth={fullWidth}
+      mode={mode}
+      title={title}
+      hint={hint}
       onOpenOrder={onOpenOrder}
     />
   );
@@ -37,11 +52,17 @@ function TimelineChart({
   model,
   currentId,
   fullWidth,
+  mode,
+  title,
+  hint,
   onOpenOrder,
 }: {
   model: NonNullable<ReturnType<typeof jornadaTimelineModel>>;
   currentId?: string;
   fullWidth?: boolean;
+  mode: TimelineMode;
+  title?: string;
+  hint?: string;
   onOpenOrder?: (id: string) => void;
 }) {
   function styleFor(startMs: number, endMs: number, minWidth = 0.7) {
@@ -58,10 +79,12 @@ function TimelineChart({
     <div className={fullWidth ? `${styles.wrap} ${styles.fullWidth}` : styles.wrap}>
       <header className={styles.head}>
         <div>
-          <h4>Línea de tiempo</h4>
+          <h4>{title ?? (mode === "campo" ? "Línea de tiempo en campo" : "Línea de tiempo")}</h4>
           <p>
-            Cada barra es una orden. Los tramos de color son alistamiento, desplazamiento y
-            servicio. El sombreado marca solapes entre órdenes.
+            {hint ??
+              (mode === "campo"
+                ? "Solo tiempos de brigada en campo: En ruta, en sitio y cierre. No se usa la fecha ni la hora de asignación."
+                : "Cada barra es una orden. Los tramos de color son alistamiento, desplazamiento y servicio. El sombreado marca solapes entre órdenes.")}
             {model.multiDay
               ? " Si una orden se extiende varios días, esos días se marcan por fecha y no se despliegan hora por hora."
               : ""}
@@ -179,10 +202,12 @@ function TimelineChart({
       </div>
 
       <ul className={styles.legend}>
-        <li>
-          <span className={`${styles.swatch} ${styles.alist}`} />
-          Alistamiento
-        </li>
+        {mode === "campo" ? null : (
+          <li>
+            <span className={`${styles.swatch} ${styles.alist}`} />
+            Alistamiento
+          </li>
+        )}
         <li>
           <span className={`${styles.swatch} ${styles.desp}`} />
           Desplazamiento

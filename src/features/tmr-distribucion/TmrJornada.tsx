@@ -436,9 +436,14 @@ function JornadaCalendario({
               <span>{cell.day}</span>
               {stat ? (
                 <>
-                  <strong>{stat.count} act.</strong>
-                  <small>desp {formatSpanShort(stat.desp)}</small>
-                  <small>ejec {formatSpanShort(stat.ejec)}</small>
+                  <strong title={`Desplazamiento total ${formatSpan(stat.desp)}`}>
+                    {formatSpan(stat.desp)}
+                  </strong>
+                  <small>desp</small>
+                  <strong title={`Ejecución total ${formatSpan(stat.ejec)}`}>
+                    {formatSpan(stat.ejec)}
+                  </strong>
+                  <small>ejec · {stat.count} act.</small>
                 </>
               ) : null}
             </button>

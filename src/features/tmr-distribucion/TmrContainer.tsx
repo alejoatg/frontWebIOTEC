@@ -251,7 +251,7 @@ export default function TmrContainer() {
       {summary && section === "listado" ? (
         <>
           <div className={styles.filters}>
-            <div className={styles.field}>
+            <div className={`${styles.field} ${styles.filterSearch}`}>
               <label>Buscar</label>
               <input
                 type="search"

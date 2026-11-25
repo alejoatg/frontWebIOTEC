@@ -181,13 +181,16 @@
 
 .cal strong {
   font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
 }
 
 .cal small {
   display: block;
-  font-size: 0.64rem;
-  line-height: 1.2;
+  font-size: 0.62rem;
+  line-height: 1.15;
   color: inherit;
+  opacity: 0.85;
 }
 
 .idle {

@@ -1090,6 +1090,89 @@ export const FORM_REPORTS: FormReportConfig[] = [
     },
   },
   {
+    id: "fr-1152-predios-no-encontrados",
+    slug: "predios-no-encontrados",
+    title: "Acta de predios no encontrados",
+    subtitle: "FR.1152 v01 — Informe u acta de predios no encontrados (Lectura y Reparto)",
+    icon: "ClipboardCheck",
+    color: "#0369a1",
+    apiBasePath: "/api/predios-no-encontrados",
+    excelFileName: "predios-no-encontrados",
+    detailTitle: (r) =>
+      `${String(r.nombreCliente ?? "Cliente")} · ${String(r.contrato ?? "—")}`,
+    filterFields: [
+      { type: "dateRange" },
+      { type: "text", key: "zona", label: "Zona", placeholder: "Zona" },
+      { type: "text", key: "municipio", label: "Municipio", placeholder: "Municipio" },
+      { type: "text", key: "contrato", label: "Contrato", placeholder: "Contrato" },
+      { type: "text", key: "producto", label: "Producto", placeholder: "Producto" },
+      { type: "text", key: "medidor", label: "Medidor", placeholder: "Medidor" },
+      { type: "text", key: "cliente", label: "Cliente", placeholder: "Nombre o cédula" },
+    ],
+    listColumns: [
+      { key: "fechaVisita", label: "Fecha visita", format: "shortDate" },
+      { key: "nombreCliente", label: "Cliente" },
+      { key: "cedula", label: "Cédula" },
+      { key: "contrato", label: "Contrato" },
+      { key: "producto", label: "Producto" },
+      { key: "municipio", label: "Municipio" },
+      { key: "zona", label: "Zona" },
+      { key: "resultadoVisita", label: "Resultado" },
+      { key: "submittedBy", label: "Enviado por", accessor: (r) => (r.submittedBy as { name?: string })?.name },
+      { key: "syncedAt", label: "Sincronizado", format: "datetime" },
+    ],
+    detailSections: [
+      {
+        title: "Información del cliente",
+        keys: [
+          "nombreCliente", "cedula", "noContacto", "fechaVinculacion", "direccion",
+          "municipio", "municipioOtro", "barrio", "zona", "coordenadasInstalacion", "respLyr",
+        ],
+      },
+      {
+        title: "Información producto",
+        keys: ["contrato", "ciclo", "osf", "medidor", "transformador", "producto", "rutaOsf"],
+      },
+      {
+        title: "Información de la instalación",
+        keys: [
+          "fechaVisita", "usuarioAtiende", "medidorEncontrado", "direccionReal", "rutaReal",
+          "productoVecinoAnterior", "productoVecinoPosterior", "cicloReal", "transformadorReal",
+          "transformadorMedidorDobleFacturado", "condicionesInstalacion", "referenciaCercana",
+          "respuestaContactoTelefonico", "resultadoVisita", "condicionesPredio",
+        ],
+      },
+      {
+        title: "Firmas",
+        keys: ["ejecutadoNombre", "ejecutadoCargo", "revisadoNombre", "revisadoCargo", "fecha"],
+      },
+    ],
+    evidenceFields: [
+      { label: "Evidencia fotográfica", key: "evidenciaFotosUrls", multiple: true },
+      { label: "Firma ejecutado", key: "firmaEjecutadoUrl" },
+      { label: "Firma revisado", key: "firmaRevisadoUrl" },
+    ],
+    locationField: {
+      latKey: "coordenadasVisitaLat",
+      lngKey: "coordenadasVisitaLng",
+      label: "Coordenadas de la visita",
+    },
+    buildQueryParams: (filter) => {
+      const params = new URLSearchParams();
+      if (filter.fechaDesde) params.append("fechaDesde", String(filter.fechaDesde));
+      if (filter.fechaHasta) params.append("fechaHasta", String(filter.fechaHasta));
+      appendOptional(params, filter, [
+        "zona",
+        "municipio",
+        "contrato",
+        "producto",
+        "medidor",
+        "cliente",
+      ]);
+      return params;
+    },
+  },
+  {
     id: "checklist-conectores-cargas",
     slug: "checklist-conectores-cargas",
     title: "Checklist Conectores en Cargas",
